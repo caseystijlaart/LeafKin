@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>LeafKin</title>
+  <meta name="description" content="Care reminders, care guides and growth timelines for your plants.">
+  <meta name="theme-color" content="#2f5d3a" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#111814" media="(prefers-color-scheme: dark)">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="LeafKin">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Atkinson+Hyperlegible:wght@400;700&family=JetBrains+Mono:wght@500&display=swap">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <div class="splash" id="splash" aria-hidden="true">
+    <svg viewBox="0 0 200 260" width="200" height="260">
+      <path class="soil" pathLength="1" d="M36 150 Q100 143 164 150"/>
+      <g class="roots">
+        <path pathLength="1" style="--d:.25s" d="M100 150 C100 175 96 198 100 236"/>
+        <path pathLength="1" style="--d:.4s" d="M100 164 C92 171 80 176 66 190 C61 194 56 196 50 197"/>
+        <path pathLength="1" style="--d:.5s" d="M100 168 C110 176 122 181 136 197"/>
+        <path pathLength="1" style="--d:.7s" d="M99 190 C90 198 84 207 78 223"/>
+        <path pathLength="1" style="--d:.8s" d="M100 197 C108 205 114 213 120 227"/>
+      </g>
+      <path class="stem" pathLength="1" d="M100 150 C100 130 98 110 100 72"/>
+      <path class="lf l1" style="--d:1.05s" d="M99 120 C86 106 66 106 54 114 C68 127 86 128 99 120 Z"/>
+      <path class="lf l2" style="--d:1.25s" d="M100 98 C112 82 134 80 148 88 C134 103 114 106 100 98 Z"/>
+      <path class="lf l3" style="--d:1.45s" d="M100 73 C92 59 94 47 102 38 C110 48 108 62 100 73 Z"/>
+    </svg>
+    <p class="splash-name">LeafKin</p>
+  </div>
+
+  <div class="wrap">
+    <header class="top">
+      <div>
+        <h1>LeafKin</h1>
+        <p class="today" id="today"></p>
+      </div>
+      <button class="btn icon-btn" id="settingsBtn" aria-label="Settings">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Zm7.4-2.5a7.6 7.6 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7.5 7.5 0 0 0-1.7-1L15 3.5h-4l-.4 2.5a7.5 7.5 0 0 0-1.7 1l-2.4-1-2 3.4 2 1.6a7.6 7.6 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7.5 7.5 0 0 0 1.7 1l.4 2.5h4l.4-2.5a7.5 7.5 0 0 0 1.7-1l2.4 1 2-3.4-2-1.6Z"/></svg>
+      </button>
+    </header>
+
+    <div class="install" id="installHint" hidden>
+      <p><b>Install LeafKin:</b> tap the Share button <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" style="vertical-align:-3px"><path fill="currentColor" d="M12 3 7.5 7.5l1.4 1.4L11 6.8V15h2V6.8l2.1 2.1 1.4-1.4L12 3Zm-7 9v8h14v-8h-2v6H7v-6H5Z"/></svg> in Safari, then <b>Add to Home Screen</b>. Your plants stay on this device.</p>
+      <button class="x" id="installClose" aria-label="Dismiss">×</button>
+    </div>
+
+    <div class="summary" id="summary"></div>
+
+    <div class="list" id="list">
+      <div class="empty" id="emptyState" hidden>
+        <h2>No plants yet</h2>
+        <p class="muted">Add your first plant with its watering and feeding rhythm. LeafKin sorts your plants by what needs attention first.</p>
+        <button class="btn primary" id="emptyAdd">Add a plant</button>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn primary fab" id="addBtn">+ Add plant</button>
+  <div id="sheetRoot"></div>
+  <div id="toastRoot" aria-live="polite"></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
