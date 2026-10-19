@@ -24,6 +24,7 @@ js/db.js                on-device storage (the only file to swap for Supabase la
 js/care-library.js      care labels, autocomplete, scan matching
 js/plant-data.js        the plant care profiles (add new plants here)
 js/plantnet.js          Pl@ntNet species identification
+js/config.js            site settings filled in at deploy time (keep empty in git)
 js/health.js            symptom-based health check
 js/util.js              dates, image resizing, calendar export
 icons/                  app icons
@@ -50,7 +51,12 @@ Service workers only run on `https://` or `localhost`.
 
 1. Create an account at [my.plantnet.org](https://my.plantnet.org) and generate an API key (free plan: 500 identifications per day).
 2. In the key settings, tick **expose my API key** and add `https://caseystijlaart.github.io` under **Authorized domains** (add `http://localhost:8080` too for local testing).
-3. In LeafKin, open **Settings** and paste the key. It's stored on the device only and never committed.
+3. In this repo: **Settings → Secrets and variables → Actions → New repository secret**, name `PLANTNET_API_KEY`, paste the key.
+4. Re-run the deploy (push to `main`, or **Actions → Deploy to GitHub Pages → Run workflow**).
+
+The workflow writes the key into `js/config.js` on the published site only; the file in the repo stays empty. Every device then scans without setup. A key typed in the app's Settings overrides it on that device.
+
+Note: anyone who opens the site can see the key in its source. The authorized-domain setting stops other websites from using it; to also block use from scripts and servers, list an IP range in the key's authorized IPs.
 
 ## Install on iPhone / iPad
 

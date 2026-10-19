@@ -4,7 +4,7 @@ import { PLANTS, LIGHT, SUN, SUN_SHORT, WATER, HUMIDITY, PET, searchPlants, matc
 import * as plantnet from "./plantnet.js";
 import { SYMPTOMS, assess, STATUS_LABEL } from "./health.js";
 
-const APP_VERSION = "1.1.0";
+const APP_VERSION = "1.1.1";
 const $ = (s, root = document) => root.querySelector(s);
 const state = { plants: [] };
 const isWinter = () => [10, 11, 0, 1].includes(new Date().getMonth());
@@ -590,15 +590,18 @@ async function openSettings() {
   const mb = est?.usage ? (est.usage / 1048576).toFixed(1) : null;
   const canBadge = "setAppBadge" in navigator && "Notification" in window;
   const perm = "Notification" in window ? Notification.permission : "unsupported";
-  const key = plantnet.getKey();
+  const key = plantnet.deviceKey();
+  const siteKey = plantnet.hasSiteKey();
   const s = sheet("settings", `
     <div class="sheet-head"><h2>Settings</h2><button class="x" data-close aria-label="Close">×</button></div>
     <div class="card">
       <h3>Plant scanning</h3>
-      <p>Scanning uses Pl@ntNet, which is free for up to 500 scans a day. Paste your API key from my.plantnet.org.</p>
+      ${siteKey && !key ? `<p>Scanning is ready on every device. It uses Pl@ntNet, free for up to 500 scans a day.</p>
+      <details><summary class="hint" style="cursor:pointer">Use a different key on this device</summary>` : `<p>Scanning uses Pl@ntNet, free for up to 500 scans a day. Paste your API key from my.plantnet.org.</p>`}
       <div class="field"><label for="pnKey">Pl@ntNet API key</label><input id="pnKey" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="2b10…" value="${esc(key)}"></div>
       <div class="btnrow"><button class="btn grow" id="pnSave">Save key</button>${key ? `<button class="btn danger" id="pnClear">Remove</button>` : ""}</div>
-      <p class="hint" id="pnMsg">The key is stored on this device only.</p>
+      <p class="hint" id="pnMsg">${siteKey ? "A key saved here is only used on this device." : "The key is stored on this device only."}</p>
+      ${siteKey && !key ? `</details>` : ""}
     </div>
     <div class="card">
       <h3>Reminders</h3>

@@ -1,11 +1,15 @@
 // Pl@ntNet species identification, called straight from the browser.
-// The API key lives only on this device (Settings). In my.plantnet.org, tick "expose my API key"
-// and add the site's address (e.g. https://caseystijlaart.github.io) under Authorized domains.
+// The site's key comes from config.js (written at deploy time from a GitHub secret).
+// A key entered in Settings on a device overrides it.
+// In my.plantnet.org, tick "expose my API key" and add https://caseystijlaart.github.io under Authorized domains.
+import { PLANTNET_KEY } from "./config.js";
 
 const KEY = "leafkin.plantnetKey";
 const ENDPOINT = "https://my-api.plantnet.org/v2/identify/all";
 
-export function getKey() { try { return localStorage.getItem(KEY) || ""; } catch { return ""; } }
+export function deviceKey() { try { return localStorage.getItem(KEY) || ""; } catch { return ""; } }
+export const hasSiteKey = () => !!PLANTNET_KEY;
+export function getKey() { return deviceKey() || PLANTNET_KEY; }
 export function setKey(v) { try { v ? localStorage.setItem(KEY, v.trim()) : localStorage.removeItem(KEY); } catch {} }
 
 export class IdentifyError extends Error {
@@ -38,7 +42,7 @@ export async function identify(blob) {
 }
 
 export const errorText = (code) => ({
-  no_key: "Add your free Pl@ntNet API key in Settings to scan plants.",
+  no_key: "Scanning isn\u2019t set up yet. Add a Pl@ntNet API key in Settings.",
   offline: "You're offline. Scanning needs an internet connection.",
   blocked: "Pl@ntNet refused the request. Check that this site's address is listed under Authorized domains for your key.",
   bad_key: "Pl@ntNet didn't accept the API key. Check it in Settings.",

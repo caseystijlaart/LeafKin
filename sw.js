@@ -1,6 +1,6 @@
 // LeafKin service worker: caches the app shell so it opens offline.
 // Bump VERSION whenever app files change, so phones pick up the new version.
-const VERSION = "leafkin-v1.1.0";
+const VERSION = "leafkin-v1.1.1";
 const SHELL = [
   "./",
   "./index.html",
@@ -11,6 +11,7 @@ const SHELL = [
   "./js/util.js",
   "./js/care-library.js",
   "./js/plant-data.js",
+  "./js/config.js",
   "./js/plantnet.js",
   "./js/health.js",
   "./icons/icon-192.png",

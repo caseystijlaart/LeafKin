@@ -26,6 +26,16 @@ jobs:
         run: |
           mkdir -p _site
           cp -r index.html manifest.webmanifest sw.js css js icons _site/
+      - name: Add the Pl@ntNet key from repository secrets
+        env:
+          PLANTNET_API_KEY: ${{ secrets.PLANTNET_API_KEY }}
+        run: |
+          if [ -n "$PLANTNET_API_KEY" ]; then
+            node -e 'process.stdout.write("export const PLANTNET_KEY = " + JSON.stringify(process.env.PLANTNET_API_KEY.trim()) + ";\n")' > _site/js/config.js
+            echo "Pl@ntNet key added."
+          else
+            echo "::warning::PLANTNET_API_KEY secret is not set; scanning will ask for a key in Settings."
+          fi
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
