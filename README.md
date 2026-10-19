@@ -12,6 +12,9 @@ A plant care app that installs on your iPhone home screen as a Progressive Web A
 - **Growth timeline**: dated photos and heights, a height chart, and a then-and-now comparison
 - Spot-aware care: room and window position set the light, and the light adjusts the watering and feeding interval
 - Compact list grouped by what's due, with search and room filters for big collections
+- Winter care (Nov–Feb): watering stretched by half, feeding paused (can be switched off)
+- Swipe a plant right when watered, left when the soil is still damp (checks again in 2 days); after two damp rounds in a row the interval grows by a day
+- Repotting reminder in spring when it's been about 2 years; a small camera mark when a plant's last photo is a month old
 - Optional icon badge, backup and restore
 - Works offline once installed. All data stays on the device (IndexedDB).
 
@@ -30,6 +33,7 @@ js/plantnet.js          Pl@ntNet species identification
 js/config.js            site settings filled in at deploy time (keep empty in git)
 js/health.js            symptom-based health check
 js/conditions.js        spot → light → watering adjustment
+js/schedule.js          due dates: winter care, snooze, repotting, photo nudge
 js/util.js              dates, image resizing
 icons/                  app icons
 .github/workflows/      GitHub Pages deploy
@@ -69,6 +73,14 @@ Note: anyone who opens the site can see the key in its source. The authorized-do
 ## Install on iPhone / iPad
 
 Open the site in Safari → Share → **Add to Home Screen**. Data saved in the installed app is kept separately from Safari, so install first, then add your plants.
+
+## Versioning
+
+- Patch (1.4.0 → 1.4.1): fixes and small tweaks
+- Minor (1.4.x → 1.5.0): a new feature
+- Major (→ 2.0.0): a big change, such as moving to Supabase with sync and push notifications
+
+Keep `APP_VERSION` in `js/app.js` and `VERSION` in `sw.js` in step.
 
 ## Not in this version
 

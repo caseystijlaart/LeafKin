@@ -1,6 +1,7 @@
 // Health check without AI: the symptoms you tick, combined with the plant's care profile and
 // watering log, point to the most likely causes and a few short fixes.
 import { daysBetween, dueIn } from "./util.js";
+import { waterInterval } from "./schedule.js";
 
 export const SYMPTOMS = [
   ["yellow_lower", "Yellow lower leaves"],
@@ -24,7 +25,7 @@ const winter = (d = new Date()) => [10, 11, 0, 1].includes(d.getMonth());
 export function assess(plant, symptoms) {
   const set = new Set(symptoms);
   const c = plant.care || {};
-  const W = plant.waterEvery || 0;
+  const W = waterInterval(plant) || 0;
   const sinceWater = plant.lastWatered ? daysBetween(plant.lastWatered, new Date()) : null;
   const thirsty = W && sinceWater !== null && dueIn(plant.lastWatered, W) < -Math.ceil(W * 0.3);
   const justWatered = W && sinceWater !== null && sinceWater <= Math.floor(W / 2);
