@@ -47,6 +47,10 @@ Service workers only run on `https://` or `localhost`.
 1. Repo **Settings → Pages → Source: GitHub Actions**.
 2. Merge into `main`. The workflow publishes the site to `https://caseystijlaart.github.io/LeafKin/`.
 
+### Testing a branch on your phone
+
+Pushes to `pwa-*` branches deploy too. Allow them once under **Settings → Environments → github-pages → Deployment branches and tags → Add rule** with the pattern `pwa-*`. There is only one site, so a branch deploy replaces what `main` published; push to `main` again to go back.
+
 ## Plant scanning (Pl@ntNet, free)
 
 1. Create an account at [my.plantnet.org](https://my.plantnet.org) and generate an API key (free plan: 500 identifications per day).

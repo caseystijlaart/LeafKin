@@ -2,7 +2,9 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    # pwa-* branches deploy too, for testing on a phone before merging.
+    # Only one site exists, so a branch deploy replaces what main published.
+    branches: [main, "pwa-*"]
   workflow_dispatch:
 
 permissions:
