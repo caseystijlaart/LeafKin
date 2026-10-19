@@ -10,7 +10,9 @@ A plant care app that installs on your iPhone home screen as a Progressive Web A
 - Watering and feeding reminders in the app, sorted by what needs attention first, with one-tap logging and undo
 - **Health check**: take a photo, tick what you see, and get the likely causes and a few short fixes
 - **Growth timeline**: dated photos and heights, a height chart, and a then-and-now comparison
-- Calendar file with repeating reminders, optional icon badge, backup and restore
+- Spot-aware care: room and window position set the light, and the light adjusts the watering and feeding interval
+- Compact list grouped by what's due, with search and room filters for big collections
+- Optional icon badge, backup and restore
 - Works offline once installed. All data stays on the device (IndexedDB).
 
 ## Project layout
@@ -27,7 +29,8 @@ js/plant-data.js        the plant care profiles (add new plants here)
 js/plantnet.js          Pl@ntNet species identification
 js/config.js            site settings filled in at deploy time (keep empty in git)
 js/health.js            symptom-based health check
-js/util.js              dates, image resizing, calendar export
+js/conditions.js        spot → light → watering adjustment
+js/util.js              dates, image resizing
 icons/                  app icons
 .github/workflows/      GitHub Pages deploy
 ```

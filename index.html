@@ -21,22 +21,40 @@
 </head>
 <body>
   <div class="splash" id="splash" aria-hidden="true">
-    <svg viewBox="0 0 200 260" width="200" height="260">
-      <path class="soil" pathLength="1" d="M36 150 Q100 143 164 150"/>
+    <svg viewBox="0 0 220 300">
+      <path class="soil" data-draw style="--d:0s;--dur:.6s" d="M30 170 Q110 162 190 170"/>
       <g class="roots">
-        <path pathLength="1" style="--d:.25s" d="M100 150 C100 175 96 198 100 236"/>
-        <path pathLength="1" style="--d:.4s" d="M100 164 C92 171 80 176 66 190 C61 194 56 196 50 197"/>
-        <path pathLength="1" style="--d:.5s" d="M100 168 C110 176 122 181 136 197"/>
-        <path pathLength="1" style="--d:.7s" d="M99 190 C90 198 84 207 78 223"/>
-        <path pathLength="1" style="--d:.8s" d="M100 197 C108 205 114 213 120 227"/>
+        <path data-draw style="--d:.35s;--dur:1.1s" d="M110 170 C110 200 106 228 110 268"/>
+        <path data-draw style="--d:.5s" d="M110 182 C100 190 86 196 72 212 C66 218 60 222 52 224"/>
+        <path data-draw style="--d:.6s" d="M110 186 C122 194 136 200 150 218 C156 224 162 228 168 229"/>
+        <path data-draw style="--d:.8s" d="M109 208 C100 218 94 230 88 248"/>
+        <path data-draw style="--d:.9s" d="M110 216 C118 226 124 236 130 252"/>
+        <path class="fine" data-draw style="--d:1.1s;--dur:.6s" d="M72 212 C70 222 66 230 60 236"/>
+        <path class="fine" data-draw style="--d:1.2s;--dur:.6s" d="M150 218 C152 228 156 236 162 242"/>
+        <path class="fine" data-draw style="--d:1.3s;--dur:.6s" d="M88 248 C84 254 80 258 74 260"/>
+        <path class="fine" data-draw style="--d:1.35s;--dur:.6s" d="M130 252 C134 258 138 262 144 264"/>
       </g>
-      <path class="stem" pathLength="1" d="M100 150 C100 130 98 110 100 72"/>
-      <path class="lf l1" style="--d:1.05s" d="M99 120 C86 106 66 106 54 114 C68 127 86 128 99 120 Z"/>
-      <path class="lf l2" style="--d:1.25s" d="M100 98 C112 82 134 80 148 88 C134 103 114 106 100 98 Z"/>
-      <path class="lf l3" style="--d:1.45s" d="M100 73 C92 59 94 47 102 38 C110 48 108 62 100 73 Z"/>
+      <g class="shoot">
+        <path class="stem" data-draw style="--d:.9s;--dur:1.1s" d="M110 170 C110 146 106 122 110 92 C112 78 110 66 110 56"/>
+        <path class="lf" style="--d:1.6s;transform-origin:109px 140px" d="M109 140 C94 124 70 124 56 134 C72 150 94 150 109 140 Z"/>
+        <path class="lf" style="--d:1.85s;transform-origin:109px 118px" d="M109 118 C124 100 150 98 166 108 C150 124 126 128 109 118 Z"/>
+        <path class="lf" style="--d:2.1s;transform-origin:110px 94px" d="M110 94 C98 80 80 76 68 82 C78 96 96 100 110 94 Z"/>
+        <path class="lf" style="--d:2.35s;transform-origin:110px 74px" d="M110 74 C120 64 136 62 146 68 C136 78 122 80 110 74 Z"/>
+        <path class="lf" style="--d:2.6s;transform-origin:110px 57px" d="M110 57 C103 46 105 36 111 28 C118 37 116 48 110 57 Z"/>
+      </g>
     </svg>
     <p class="splash-name">LeafKin</p>
+    <p class="splash-tag">Your plants, looked after</p>
   </div>
+  <script>
+    // Measure each line on this device so the drawing animation works in every browser, then start it.
+    document.querySelectorAll("#splash [data-draw]").forEach(function (el) {
+      var l = el.getTotalLength();
+      el.style.strokeDasharray = l + " " + (l + 4);
+      el.style.strokeDashoffset = l + 2;
+    });
+    document.getElementById("splash").classList.add("go");
+  </script>
 
   <div class="wrap">
     <header class="top">
@@ -55,6 +73,11 @@
     </div>
 
     <div class="summary" id="summary"></div>
+
+    <div class="tools" id="tools" hidden>
+      <input type="search" id="search" placeholder="Search your plants" aria-label="Search your plants" autocomplete="off">
+      <div class="chipset" id="roomChips"></div>
+    </div>
 
     <div class="list" id="list">
       <div class="empty" id="emptyState" hidden>

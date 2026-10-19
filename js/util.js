@@ -1,4 +1,4 @@
-// Small pure helpers: dates, escaping, ids, image resizing, calendar export.
+// Small pure helpers: dates, escaping, ids, image resizing.
 
 export const DAY = 86400000;
 
@@ -47,31 +47,4 @@ export async function resizeImage(file, max = 1280, quality = 0.82) {
   canvas.getContext("2d").drawImage(bmp, 0, 0, w, h);
   bmp.close?.();
   return new Promise((res, rej) => canvas.toBlob((b) => (b ? res(b) : rej(new Error("encode_failed"))), "image/jpeg", quality));
-}
-
-// ---- calendar (.ics) ----
-const icsDate = (d) => d.getFullYear() + String(d.getMonth() + 1).padStart(2, "0") + String(d.getDate()).padStart(2, "0");
-const icsText = (s) => String(s).replace(/[\\;,]/g, (m) => "\\" + m).replace(/\n/g, "\\n");
-
-export function buildIcs(plants, now = new Date()) {
-  const stamp = now.toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "");
-  const events = [];
-  for (const p of plants) {
-    const jobs = [["water", p.waterEvery, p.lastWatered, "Water", p.care?.water], ["feed", p.feedEvery, p.lastFed, "Feed", p.care?.feed]];
-    for (const [type, every, last, verb, note] of jobs) {
-      if (!every) continue;
-      const n = Math.max(0, dueIn(last, every, now));
-      const start = new Date(startOfDay(now).getTime() + n * DAY);
-      const end = new Date(start.getTime() + DAY);
-      events.push([
-        "BEGIN:VEVENT", `UID:${p.id}-${type}@leafkin`, `DTSTAMP:${stamp}`,
-        `DTSTART;VALUE=DATE:${icsDate(start)}`, `DTEND;VALUE=DATE:${icsDate(end)}`,
-        `RRULE:FREQ=DAILY;INTERVAL=${every}`, `SUMMARY:${icsText(`${verb} ${p.name}`)}`,
-        `DESCRIPTION:${icsText(note || "")}`,
-        "BEGIN:VALARM", "ACTION:DISPLAY", `DESCRIPTION:${icsText(`${verb} ${p.name}`)}`, "TRIGGER:PT9H", "END:VALARM",
-        "END:VEVENT",
-      ].join("\r\n"));
-    }
-  }
-  return ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//LeafKin//EN", "CALSCALE:GREGORIAN", "X-WR-CALNAME:LeafKin", ...events, "END:VCALENDAR"].join("\r\n");
 }

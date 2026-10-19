@@ -1,10 +1,11 @@
 import * as db from "./db.js";
-import { DAY, daysBetween, dueIn, dueLabel, ageLabel, fmtDate, fmtDateTime, esc, uid, resizeImage, buildIcs } from "./util.js";
+import { DAY, daysBetween, dueIn, dueLabel, ageLabel, fmtDate, fmtDateTime, esc, uid, resizeImage } from "./util.js";
 import { PLANTS, SPECIES, CULTIVARS, LIGHT, SUN, SUN_SHORT, WATER, HUMIDITY, PET, searchPlants, matchScientific, matchAny, cultivarsForGenus } from "./care-library.js";
 import * as plantnet from "./plantnet.js";
 import { SYMPTOMS, assess, STATUS_LABEL } from "./health.js";
+import { ROOMS, SPOTS, lightForSpot, adjustForConditions, fitText, spotLabel } from "./conditions.js";
 
-const APP_VERSION = "1.2.1";
+const APP_VERSION = "1.3.0";
 const $ = (s, root = document) => root.querySelector(s);
 const state = { plants: [] };
 const isWinter = () => [10, 11, 0, 1].includes(new Date().getMonth());
@@ -65,41 +66,98 @@ function chipsFor(p, withHealth = true) {
 const leafSvg = `<svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path fill="currentColor" d="M20 4c-8 0-14 4-14 11 0 1.2.2 2.3.6 3.3L4 21l1.4 1.4 2.5-2.5c1 .4 2 .6 3.1.6 7 0 9-7 9-16.5Zm-9 14.5c-.6 0-1.2-.1-1.7-.3l6.4-6.4-1.4-1.4-6.4 6.4c-.2-.5-.3-1.1-.3-1.8 0-5 4-8.3 10.4-8.9C17.4 13 15.6 18.5 11 18.5Z"/></svg>`;
 const camSvg = `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M9 3 7.2 5H4a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3.2L15 3H9Zm3 5a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9Zm0 2a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z"/></svg>`;
 
+// List view: compact rows grouped by when care is due, with search and room filters once the list grows.
+const view = { q: "", room: "", open: { later: false } };
+try { Object.assign(view.open, JSON.parse(localStorage.getItem("leafkin.sections") || "{}")); } catch {}
+const saveView = () => { try { localStorage.setItem("leafkin.sections", JSON.stringify(view.open)); } catch {} };
+
+function nextLabel(p) {
+  const w = dueIn(p.lastWatered, p.waterEvery), f = dueIn(p.lastFed, p.feedEvery);
+  const parts = [];
+  if (w !== null && (w <= 0 || f === null || w <= f)) parts.push(`Water ${dueLabel(w)}`);
+  if (f !== null && (f <= 0 || w === null || f < w)) parts.push(`Feed ${dueLabel(f)}`);
+  return parts.join(" · ") || "No reminders";
+}
+
+function rowHtml(p) {
+  const w = dueIn(p.lastWatered, p.waterEvery), f = dueIn(p.lastFed, p.feedEvery);
+  const thumb = latestPhotoId(p);
+  const u = urgency(p);
+  const lc = lastCheck(p);
+  const where = ROOMS[p.care?.room] || "";
+  return `<article class="row${u < 0 ? " overdue" : u === 0 ? " due" : ""}" data-id="${esc(p.id)}">
+    <button class="row-open" data-open aria-label="Open ${esc(p.name)}">
+      ${thumb ? `<img class="rthumb" data-photo="${esc(thumb)}" alt="">` : `<span class="rthumb blank">${leafSvg}</span>`}
+      <span class="rmeta">
+        <span class="rname">${esc(p.name)}${lc && lc.status === "attention" ? ` <span class="dot" title="Needs attention"></span>` : ""}</span>
+        <span class="rsub"><span class="${u < 0 ? "late" : ""}">${esc(nextLabel(p))}</span>${where ? ` · ${esc(where)}` : ""}</span>
+      </span>
+    </button>
+    <span class="racts">
+      ${w !== null && w <= 0 ? `<button class="qbtn water" data-water aria-label="Watered ${esc(p.name)}">💧</button>` : ""}
+      ${f !== null && f <= 0 ? `<button class="qbtn food" data-feed aria-label="Fed ${esc(p.name)}">Feed</button>` : ""}
+    </span>
+  </article>`;
+}
+
 function render() {
   $("#today").textContent = new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" });
   const list = $("#list");
-  const sorted = [...state.plants].sort((a, b) => urgency(a) - urgency(b) || a.name.localeCompare(b.name));
-  $("#emptyState").hidden = sorted.length > 0;
-  $("#addBtn").hidden = sorted.length === 0;
-  list.querySelectorAll(".plant").forEach((n) => n.remove());
+  const all = [...state.plants].sort((a, b) => urgency(a) - urgency(b) || a.name.localeCompare(b.name));
+  $("#emptyState").hidden = all.length > 0;
+  $("#addBtn").hidden = all.length === 0;
+
+  // tools: search + room chips when the collection gets big
+  const tools = $("#tools");
+  const rooms = [...new Set(all.map((p) => p.care?.room).filter(Boolean))];
+  tools.hidden = all.length < 6;
+  if (!tools.hidden) {
+    $("#roomChips").innerHTML = rooms.length > 1 ? [["", "All"], ...rooms.map((r) => [r, ROOMS[r]])]
+      .map(([k, label]) => `<button type="button" class="chipbtn sm" aria-pressed="${view.room === k}" data-room="${k}">${esc(label)}</button>`).join("") : "";
+    $("#roomChips").querySelectorAll("[data-room]").forEach((b) => (b.onclick = () => { view.room = b.dataset.room; render(); }));
+  }
+  const q = view.q.trim().toLowerCase();
+  const shown = all.filter((p) => (!view.room || p.care?.room === view.room)
+    && (!q || [p.name, p.species, p.sci, p.location].some((x) => String(x || "").toLowerCase().includes(q))));
+
+  const groups = [
+    ["now", "Needs care today", shown.filter((p) => urgency(p) <= 0)],
+    ["soon", "Next 3 days", shown.filter((p) => urgency(p) >= 1 && urgency(p) <= 3)],
+    ["later", "Later", shown.filter((p) => urgency(p) > 3)],
+  ].filter((g) => g[2].length);
+  const collapsible = all.length > 8;
+  list.querySelectorAll(".group, .noresults").forEach((n) => n.remove());
+  for (const [key, title, items] of groups) {
+    const sec = document.createElement("section");
+    sec.className = "group";
+    const open = !collapsible || key !== "later" || view.open.later || q || view.room;
+    sec.innerHTML = `<button class="ghead" ${collapsible && key === "later" ? `data-toggle aria-expanded="${!!open}"` : "disabled"}>
+        <span>${title}</span><span class="gcount">${items.length}${collapsible && key === "later" ? `<span class="chev">${open ? "−" : "+"}</span>` : ""}</span></button>
+      <div class="rows" ${open ? "" : "hidden"}>${items.map(rowHtml).join("")}</div>`;
+    sec.querySelector("[data-toggle]")?.addEventListener("click", () => { view.open.later = !view.open.later; saveView(); render(); });
+    sec.querySelectorAll(".row").forEach((el) => {
+      const id = el.dataset.id;
+      el.querySelector("[data-open]").onclick = () => openDetail(id);
+      el.querySelector("[data-water]")?.addEventListener("click", () => logCare(id, "water"));
+      el.querySelector("[data-feed]")?.addEventListener("click", () => logCare(id, "feed"));
+    });
+    list.append(sec);
+  }
+  if (all.length && !shown.length) {
+    const n = document.createElement("p"); n.className = "noresults muted"; n.textContent = "No plants match.";
+    list.append(n);
+  }
+  hydratePhotos(list);
+
   let waterDue = 0, feedDue = 0;
-  for (const p of sorted) {
+  for (const p of all) {
     const w = dueIn(p.lastWatered, p.waterEvery), f = dueIn(p.lastFed, p.feedEvery);
     if (w !== null && w <= 0) waterDue++;
     if (f !== null && f <= 0) feedDue++;
-    const u = urgency(p);
-    const thumb = latestPhotoId(p);
-    const el = document.createElement("article");
-    el.className = "plant" + (u < 0 ? " overdue" : u === 0 ? " due" : "");
-    el.innerHTML = `
-      ${thumb ? `<button class="thumb" data-open style="overflow:hidden" aria-label="Open ${esc(p.name)}"><img class="thumb" data-photo="${esc(thumb)}" alt=""></button>` : `<button class="thumb blank" data-open aria-label="Open ${esc(p.name)}">${leafSvg}</button>`}
-      <div class="meta"><button class="name" data-open>${esc(p.name)}</button>
-        ${subtitle(p) ? `<div class="sp">${esc(subtitle(p))}</div>` : ""}
-        ${p.location ? `<div class="muted" style="font-size:.85rem">${esc(p.location)}</div>` : ""}</div>
-      <div class="chips">${chipsFor(p)}</div>
-      ${p.waterEvery || p.feedEvery ? `<div class="acts">
-        ${p.waterEvery ? `<button class="btn water grow" data-water>Watered</button>` : ""}
-        ${p.feedEvery ? `<button class="btn food grow" data-feed>Fed</button>` : ""}
-      </div>` : ""}`;
-    el.querySelectorAll("[data-open]").forEach((b) => (b.onclick = () => openDetail(p.id)));
-    el.querySelector("[data-water]")?.addEventListener("click", () => logCare(p.id, "water"));
-    el.querySelector("[data-feed]")?.addEventListener("click", () => logCare(p.id, "feed"));
-    list.append(el);
   }
-  hydratePhotos(list);
   const sum = [];
-  if (sorted.length) {
-    sum.push(`<span class="pill plain">${sorted.length} plant${sorted.length > 1 ? "s" : ""}</span>`);
+  if (all.length) {
+    sum.push(`<span class="pill plain">${all.length} plant${all.length > 1 ? "s" : ""}</span>`);
     sum.push(waterDue ? `<span class="pill water">💧 ${waterDue} to water</span>` : `<span class="pill ok">Watering up to date</span>`);
     if (feedDue) sum.push(`<span class="pill food">${feedDue} to feed</span>`);
   }
@@ -180,7 +238,12 @@ function openEdit(id) {
       </div>
       <button type="button" class="btn" id="autoFill" hidden>Fill care automatically</button>
       <p class="hint" id="fillMsg" hidden></p>
-      <div class="field"><label for="f-loc">Spot</label><input id="f-loc" placeholder="e.g. East window, bedroom" value="${esc(p.location)}"></div>
+      <h3>Spot</h3>
+      <div class="row2">
+        <div class="field"><label for="f-room">Room</label><select id="f-room">${options(ROOMS, c.room)}</select></div>
+        <div class="field"><label for="f-spot">Where in the room</label><select id="f-spot">${options(SPOTS, c.spot)}</select></div>
+      </div>
+      <p class="hint" id="fitMsg" hidden></p>
 
       <h3>Care</h3>
       <div class="row2">
@@ -195,6 +258,7 @@ function openEdit(id) {
         <div class="field"><label for="f-water">Water every (days)</label><input id="f-water" type="number" min="0" inputmode="numeric" value="${p.waterEvery ?? ""}"></div>
         <div class="field"><label for="f-feed">Feed every (days)</label><input id="f-feed" type="number" min="0" inputmode="numeric" value="${p.feedEvery ?? ""}"></div>
       </div>
+      <p class="hint" id="schedMsg" hidden></p>
       <div class="field"><label for="f-pet">Pets</label><select id="f-pet">${options(PET, c.pet)}</select></div>
       <div class="field"><label for="f-notes">Own note (optional)</label><input id="f-notes" maxlength="140" placeholder="e.g. repotted March 2026" value="${esc(c.notes)}"></div>
       <p class="hint">Set water or feed to 0 to switch that reminder off.</p>
@@ -206,17 +270,60 @@ function openEdit(id) {
   const autoBtn = s.querySelector("#autoFill"), fillMsg = s.querySelector("#fillMsg");
   let tip = c.tip || "";
 
-  function applyProfile(prof, { setSpecies = true } = {}) {
+  // ---- linked fields: spot → light + sun → watering and feeding ----
+  // A field keeps updating as long as it still holds the value LeafKin put there.
+  // Type your own value and it stays yours.
+  const $f = (id) => s.querySelector(id);
+  let prof = matchAny(p.species) || null;
+  const auto = { light: $f("#f-light").value, sun: $f("#f-sun").value, water: $f("#f-water").value, feed: $f("#f-feed").value };
+  const setAuto = (key, sel, v) => {
+    const el = $f(sel);
+    if (v === undefined || v === null) return;
+    if (el.value === "" || el.value === String(auto[key])) { el.value = v; auto[key] = String(v); }
+  };
+  function recalc() {
+    const fitMsg = $f("#fitMsg"), schedMsg = $f("#schedMsg");
+    if (!prof) { fitMsg.hidden = schedMsg.hidden = true; return; }
+    const room = $f("#f-room").value, spot = $f("#f-spot").value;
+    const r = adjustForConditions(prof, { light: $f("#f-light").value, sun: $f("#f-sun").value, room });
+    setAuto("water", "#f-water", r.water);
+    setAuto("feed", "#f-feed", r.feed);
+    const t = fitText(r.fit, prof);
+    fitMsg.hidden = !t; fitMsg.textContent = t;
+    const changed = r.water !== prof.waterDays || r.feed !== prof.feedDays;
+    schedMsg.hidden = false;
+    const own = $f("#f-water").value !== "" && $f("#f-water").value !== String(r.water);
+    schedMsg.textContent = own
+      ? `You set your own interval. For this spot LeafKin would suggest every ${r.water} d.`
+      : changed && (spot || room)
+      ? `Adjusted for this spot. A ${prof.en} in its ideal light needs water every ${prof.waterDays} d${prof.feedDays ? ` and food every ${prof.feedDays} d` : ""}.`
+      : `Typical for a ${prof.en}${spot ? " in this spot" : ""}. Change it if your plant needs otherwise.`;
+  }
+  $f("#f-spot").addEventListener("change", () => {
+    const ls = lightForSpot($f("#f-spot").value);
+    if (ls) { setAuto("light", "#f-light", ls[0]); setAuto("sun", "#f-sun", ls[1]); }
+    recalc();
+  });
+  ["#f-room", "#f-light", "#f-sun"].forEach((id) => $f(id).addEventListener("change", recalc));
+  ["#f-light", "#f-sun"].forEach((id) => $f(id).addEventListener("change", (e) => { auto[id === "#f-light" ? "light" : "sun"] = null; }));
+
+  function applyProfile(newProf, { setSpecies = true } = {}) {
+    prof = newProf;
     if (setSpecies) species.value = prof.en;
-    const set = (sel, v) => { if (v !== undefined && v !== null) s.querySelector(sel).value = v; };
-    set("#f-light", prof.light); set("#f-sun", prof.sun); set("#f-wstyle", prof.water);
-    set("#f-hum", prof.humidity); set("#f-pet", prof.pet);
-    set("#f-water", prof.waterDays); set("#f-feed", prof.feedDays);
-    if (!s.querySelector("#f-name").value.trim()) s.querySelector("#f-name").value = prof.en;
+    const set = (sel, v) => { if (v !== undefined && v !== null) $f(sel).value = v; };
+    // Light comes from the spot when one is chosen; otherwise use what this plant likes.
+    const ls = lightForSpot($f("#f-spot").value);
+    setAuto("light", "#f-light", ls ? ls[0] : prof.light);
+    setAuto("sun", "#f-sun", ls ? ls[1] : prof.sun);
+    set("#f-wstyle", prof.water); set("#f-hum", prof.humidity); set("#f-pet", prof.pet);
+    // A new plant type resets the intervals to that type's numbers.
+    auto.water = $f("#f-water").value; auto.feed = $f("#f-feed").value;
+    if (!$f("#f-name").value.trim()) $f("#f-name").value = prof.en;
     tip = prof.tip; p.sci = prof.sci;
     fillMsg.hidden = false;
     fillMsg.textContent = `Care filled in for ${prof.en} (${prof.sci}). Adjust anything that's different in your home.`;
     autoBtn.hidden = true;
+    recalc();
   }
   function refreshAutoBtn() {
     const m = matchAny(species.value);
@@ -329,7 +436,8 @@ function openEdit(id) {
     const v = (k) => s.querySelector(k).value.trim();
     const err = s.querySelector("#f-err");
     if (!v("#f-name")) { err.textContent = "Give the plant a name."; err.hidden = false; s.querySelector("#f-name").focus(); return; }
-    p.name = v("#f-name"); p.species = v("#f-species"); p.location = v("#f-loc");
+    p.name = v("#f-name"); p.species = v("#f-species");
+    p.location = spotLabel(v("#f-room"), v("#f-spot")) || (v("#f-room") || v("#f-spot") ? "" : p.location || "");
     p.waterEvery = Math.max(0, parseInt(v("#f-water"), 10) || 0);
     p.feedEvery = Math.max(0, parseInt(v("#f-feed"), 10) || 0);
     const m = matchAny(p.species);
@@ -339,7 +447,7 @@ function openEdit(id) {
     const typedExact = m && [m.en, m.nl, m.sci].some((x) => x.toLowerCase() === p.species.toLowerCase());
     const looksLatin = /^[A-Z][a-z]+ [a-z×-]+/.test(p.species);
     p.sci = m?.cultivar ? m.sci : bracket ? bracket : typedExact ? m.sci : looksLatin ? p.species : (m?.sci || "");
-    p.care = { light: v("#f-light"), sun: v("#f-sun"), water: v("#f-wstyle"), humidity: v("#f-hum"), pet: v("#f-pet"), notes: v("#f-notes"), tip };
+    p.care = { room: v("#f-room"), spot: v("#f-spot"), light: v("#f-light"), sun: v("#f-sun"), water: v("#f-wstyle"), humidity: v("#f-hum"), pet: v("#f-pet"), notes: v("#f-notes"), tip };
     if (scanFile) {
       try { const photoId = await storePhoto(scanFile); p.growth = [...(p.growth || []), { id: uid(), at: new Date().toISOString(), photoId, note: "Added to LeafKin" }]; }
       catch { /* photo is optional */ }
@@ -354,6 +462,7 @@ function openEdit(id) {
 function careRows(p) {
   const c = p.care || {};
   const rows = [];
+  if (p.location) rows.push(["Spot", p.location]);
   if (c.light || c.sun) rows.push(["Light", [LIGHT[c.light], SUN_SHORT[c.sun] || ""].filter(Boolean).join(" · ")]);
   if (c.water || p.waterEvery) rows.push(["Water", [WATER[c.water], p.waterEvery ? `every ${p.waterEvery} d` : ""].filter(Boolean).join(" · ")]);
   if (p.feedEvery) rows.push(["Feed", `every ${p.feedEvery} d, spring–summer`]);
@@ -638,13 +747,11 @@ async function openSettings() {
       <p class="hint" id="pnMsg">${siteKey ? "A key saved here is only used on this device." : "The key is stored on this device only."}</p>
       ${siteKey && !key ? `</details>` : ""}
     </div>
-    <div class="card">
-      <h3>Reminders</h3>
-      <p>Save a calendar file with a repeating 09:00 reminder for each plant's watering and feeding. Open it on your iPhone to add it to Calendar.</p>
-      <button class="btn" id="icsBtn" ${state.plants.some((p) => p.waterEvery || p.feedEvery) ? "" : "disabled"}>Save calendar file</button>
-      ${canBadge ? `<p style="margin-top:6px">Show how many plants need care on the app icon.</p>
-        <button class="btn" id="badgeBtn" ${perm === "granted" ? "disabled" : ""}>${perm === "granted" ? "Icon badge is on" : perm === "denied" ? "Blocked in iOS Settings" : "Turn on icon badge"}</button>` : ""}
-    </div>
+    ${canBadge ? `<div class="card">
+      <h3>App icon</h3>
+      <p>Show how many plants need care on the LeafKin icon.</p>
+      <button class="btn" id="badgeBtn" ${perm === "granted" ? "disabled" : ""}>${perm === "granted" ? "Icon badge is on" : perm === "denied" ? "Blocked in iOS Settings" : "Turn on icon badge"}</button>
+    </div>` : ""}
     <div class="card">
       <h3>Backup</h3>
       <p>Plants and photos are stored on this device only. Save a backup now and then, or to move to another device.</p>
@@ -659,9 +766,6 @@ async function openSettings() {
     s.querySelector("#pnMsg").textContent = v ? "Saved. Try Scan plant when adding a plant." : "Key removed.";
   };
   s.querySelector("#pnClear")?.addEventListener("click", () => { plantnet.setKey(""); s.querySelector("#pnKey").value = ""; s.querySelector("#pnMsg").textContent = "Key removed."; });
-  s.querySelector("#icsBtn").onclick = async () => {
-    await saveFile("leafkin-reminders.ics", new Blob([buildIcs(state.plants)], { type: "text/calendar" }));
-  };
   s.querySelector("#badgeBtn")?.addEventListener("click", async (e) => {
     const r = await Notification.requestPermission().catch(() => "denied");
     e.target.textContent = r === "granted" ? "Icon badge is on" : "Not allowed";
@@ -695,7 +799,7 @@ function runSplash() {
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const done = () => { el.classList.add("out"); setTimeout(() => el.remove(), 450); };
   el.addEventListener("click", done, { once: true });
-  setTimeout(done, reduce ? 500 : 2300);
+  setTimeout(done, reduce ? 900 : 4200);
 }
 
 function setupInstallHint() {
@@ -729,6 +833,7 @@ function setupServiceWorker() {
 $("#addBtn").onclick = () => openEdit(null);
 $("#emptyAdd").onclick = () => openEdit(null);
 $("#settingsBtn").onclick = openSettings;
+$("#search").addEventListener("input", (e) => { view.q = e.target.value; render(); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) render(); });
 setInterval(render, 60 * 60 * 1000);
 
