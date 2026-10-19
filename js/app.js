@@ -4,7 +4,7 @@ import { PLANTS, LIGHT, SUN, SUN_SHORT, WATER, HUMIDITY, PET, searchPlants, matc
 import * as plantnet from "./plantnet.js";
 import { SYMPTOMS, assess, STATUS_LABEL } from "./health.js";
 
-const APP_VERSION = "1.0.0";
+const APP_VERSION = "1.1.0";
 const $ = (s, root = document) => root.querySelector(s);
 const state = { plants: [] };
 const isWinter = () => [10, 11, 0, 1].includes(new Date().getMonth());

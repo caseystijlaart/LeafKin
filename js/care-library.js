@@ -1,10 +1,5 @@
-// Built-in care profiles for common houseplants. Powers species autocomplete and automatic care fill.
-// Intervals are for the growing season (spring–summer); the app reminds you to water less in winter.
-//
-// light: full = full sun · bright = bright, indirect · half = half shade · shade = shade
-// sun:   direct sun hours per day ("0", "0-2", "2-4", "4-6", "6+")
-// water: moist = keep slightly moist · topdry = let the top 2–3 cm dry · dry = let the soil dry out fully
-// humidity: low · normal · high      pet: safe · toxic (to cats and dogs)
+// Care library: labels, species autocomplete and matching scan results to a care profile.
+// The plant rows themselves live in plant-data.js.
 
 export const LIGHT = { full: "Full sun", bright: "Bright, indirect", half: "Half shade", shade: "Shade" };
 export const SUN_SHORT = { "0": "no direct sun", "0-2": "up to 2 h direct sun", "2-4": "2–4 h direct sun", "4-6": "4–6 h direct sun", "6+": "6+ h direct sun" };
@@ -13,73 +8,15 @@ export const WATER = { moist: "Keep slightly moist", topdry: "Let top 2–3 cm d
 export const HUMIDITY = { low: "Low (dry air is fine)", normal: "Normal room air", high: "High (mist or tray)" };
 export const PET = { safe: "Safe for pets", toxic: "Toxic to pets", unknown: "Unknown" };
 
-const P = (sci, en, nl, light, sun, water, waterDays, feedDays, humidity, pet, tip) =>
-  ({ sci, en, nl, light, sun, water, waterDays, feedDays, humidity, pet, tip });
+import { PLANT_ROWS } from "./plant-data.js";
 
-export const PLANTS = [
-  P("Monstera deliciosa", "Swiss cheese plant", "Gatenplant", "bright", "0-2", "topdry", 7, 21, "normal", "toxic", "Give it a moss pole to climb."),
-  P("Monstera adansonii", "Monkey mask monstera", "Monstera adansonii", "bright", "0-2", "topdry", 7, 21, "high", "toxic", "Likes humid air; brown edges mean too dry."),
-  P("Epipremnum aureum", "Pothos", "Epipremnum", "half", "0-2", "topdry", 7, 28, "normal", "toxic", "Trim long vines to keep it bushy."),
-  P("Scindapsus pictus", "Satin pothos", "Scindapsus", "half", "0-2", "topdry", 8, 28, "normal", "toxic", "Curling leaves mean it's thirsty."),
-  P("Philodendron hederaceum", "Heartleaf philodendron", "Philodendron", "half", "0-2", "topdry", 7, 28, "normal", "toxic", "Very forgiving; trails or climbs."),
-  P("Thaumatophyllum bipinnatifidum", "Philodendron selloum", "Philodendron selloum", "bright", "0-2", "topdry", 7, 21, "normal", "toxic", "Needs space; rotate for even growth."),
-  P("Syngonium podophyllum", "Arrowhead plant", "Syngonium", "half", "0-2", "topdry", 7, 21, "normal", "toxic", "Pinch tips to keep it compact."),
-  P("Dracaena trifasciata", "Snake plant", "Vrouwentong", "half", "0-2", "dry", 18, 42, "low", "toxic", "Overwatering is the main killer."),
-  P("Zamioculcas zamiifolia", "ZZ plant", "Zamioculcas", "half", "0", "dry", 18, 42, "low", "toxic", "Copes with low light and neglect."),
-  P("Spathiphyllum wallisii", "Peace lily", "Lepelplant", "half", "0", "moist", 5, 21, "high", "toxic", "Droops when thirsty, recovers fast after water."),
-  P("Ficus lyrata", "Fiddle-leaf fig", "Vioolbladplant", "bright", "2-4", "topdry", 7, 21, "normal", "toxic", "Hates being moved and cold drafts."),
-  P("Ficus elastica", "Rubber plant", "Rubberboom", "bright", "0-2", "topdry", 10, 28, "normal", "toxic", "Wipe the leaves to keep them shiny."),
-  P("Ficus benjamina", "Weeping fig", "Treurvijg", "bright", "0-2", "topdry", 7, 21, "normal", "toxic", "Drops leaves after a move; it settles."),
-  P("Chlorophytum comosum", "Spider plant", "Graslelie", "bright", "0-2", "topdry", 7, 21, "normal", "safe", "Pot up the babies to make new plants."),
-  P("Goeppertia", "Calathea", "Calathea", "half", "0", "moist", 5, 21, "high", "safe", "Use rain or filtered water; tap water browns the tips."),
-  P("Maranta leuconeura", "Prayer plant", "Gebedsplant", "half", "0", "moist", 5, 21, "high", "safe", "Leaves fold up at night; that's normal."),
-  P("Aglaonema", "Chinese evergreen", "Aglaonema", "half", "0", "topdry", 8, 28, "normal", "toxic", "Handles low light well."),
-  P("Dieffenbachia", "Dumb cane", "Dieffenbachia", "half", "0-2", "topdry", 7, 21, "normal", "toxic", "Sap irritates skin; wash hands after pruning."),
-  P("Dracaena marginata", "Dragon tree", "Drakenboom", "bright", "0-2", "topdry", 10, 28, "low", "toxic", "Brown tips often come from tap water."),
-  P("Dracaena fragrans", "Corn plant", "Massangeana", "half", "0", "topdry", 10, 28, "normal", "toxic", "Slow grower; water sparingly in winter."),
-  P("Dracaena sanderiana", "Lucky bamboo", "Geluksbamboe", "half", "0", "moist", 7, 56, "normal", "toxic", "In water: refresh it every 1–2 weeks."),
-  P("Schefflera arboricola", "Umbrella plant", "Vingersboom", "bright", "0-2", "topdry", 7, 28, "normal", "toxic", "Prune to shape; it branches well."),
-  P("Yucca elephantipes", "Yucca", "Yucca", "full", "4-6", "dry", 14, 28, "low", "toxic", "Wants the sunniest window you have."),
-  P("Beaucarnea recurvata", "Ponytail palm", "Olifantspoot", "full", "4-6", "dry", 14, 42, "low", "safe", "Stores water in its trunk; water rarely."),
-  P("Strelitzia reginae", "Bird of paradise", "Paradijsvogelbloem", "full", "4-6", "topdry", 7, 14, "normal", "toxic", "Needs lots of light to flower."),
-  P("Strelitzia nicolai", "White bird of paradise", "Strelitzia nicolai", "bright", "2-4", "topdry", 7, 14, "normal", "toxic", "Split leaves are natural."),
-  P("Anthurium andraeanum", "Flamingo flower", "Anthurium", "bright", "0-2", "topdry", 7, 21, "high", "toxic", "Remove spent flowers at the base."),
-  P("Phalaenopsis", "Moth orchid", "Vlinderorchidee", "bright", "0-2", "dry", 8, 14, "normal", "safe", "Soak 10 min when roots turn silvery, then drain."),
-  P("Pilea peperomioides", "Chinese money plant", "Pannenkoekplant", "bright", "0-2", "topdry", 7, 28, "normal", "safe", "Turn weekly so it grows straight."),
-  P("Peperomia obtusifolia", "Baby rubber plant", "Peperomia", "half", "0-2", "dry", 10, 28, "normal", "safe", "Thick leaves store water; don't overwater."),
-  P("Hoya carnosa", "Wax plant", "Wasbloem", "bright", "0-2", "dry", 10, 28, "normal", "safe", "Don't cut the flower spurs; they bloom again."),
-  P("Tradescantia zebrina", "Inch plant", "Vaderplant", "bright", "0-2", "topdry", 7, 28, "normal", "toxic", "Goes leggy in low light; pinch and replant cuttings."),
-  P("Hedera helix", "English ivy", "Klimop", "half", "0-2", "topdry", 7, 28, "normal", "toxic", "Prone to spider mites in dry air."),
-  P("Nephrolepis exaltata", "Boston fern", "Zwaardvaren", "half", "0", "moist", 4, 28, "high", "safe", "Never let it dry out completely."),
-  P("Asplenium nidus", "Bird's nest fern", "Nestvaren", "half", "0", "moist", 5, 28, "high", "safe", "Water the soil, not the centre rosette."),
-  P("Adiantum raddianum", "Maidenhair fern", "Venushaar", "half", "0", "moist", 3, 28, "high", "safe", "Fussy: steady moisture and humid air."),
-  P("Chamaedorea elegans", "Parlour palm", "Dwergpalm", "half", "0", "topdry", 7, 28, "normal", "safe", "Does fine away from the window."),
-  P("Dypsis lutescens", "Areca palm", "Goudpalm", "bright", "0-2", "topdry", 7, 28, "normal", "safe", "Brown tips: raise humidity, use soft water."),
-  P("Howea forsteriana", "Kentia palm", "Kentiapalm", "half", "0", "topdry", 10, 28, "normal", "safe", "Slow and tough; good for darker rooms."),
-  P("Alocasia", "Elephant ear", "Olifantsoor", "bright", "0-2", "topdry", 5, 14, "high", "toxic", "May go dormant in winter; keep it slightly dry."),
-  P("Begonia maculata", "Polka dot begonia", "Begonia maculata", "bright", "0-2", "topdry", 7, 21, "high", "toxic", "Don't mist the leaves; use a humidity tray."),
-  P("Fittonia albivenis", "Nerve plant", "Mozaïekplant", "half", "0", "moist", 4, 28, "high", "safe", "Faints dramatically when dry; water and it revives."),
-  P("Ceropegia woodii", "String of hearts", "Chinees lampionplantje", "bright", "0-2", "dry", 10, 28, "low", "safe", "Thin, soft leaves mean it needs water."),
-  P("Curio rowleyanus", "String of pearls", "Erwtenplant", "bright", "2-4", "dry", 14, 42, "low", "toxic", "Wrinkled pearls mean it's thirsty."),
-  P("Aloe vera", "Aloe vera", "Aloë vera", "full", "6+", "dry", 18, 56, "low", "toxic", "Use a cactus soil mix with good drainage."),
-  P("Crassula ovata", "Jade plant", "Jadeplant", "full", "4-6", "dry", 14, 42, "low", "toxic", "Wrinkled leaves mean water; mushy means too much."),
-  P("Echeveria", "Echeveria", "Echeveria", "full", "6+", "dry", 14, 42, "low", "safe", "Stretching means it needs more sun."),
-  P("Haworthiopsis attenuata", "Zebra haworthia", "Haworthia", "bright", "2-4", "dry", 14, 42, "low", "safe", "Takes less sun than most succulents."),
-  P("Cactaceae", "Cactus", "Cactus", "full", "6+", "dry", 21, 56, "low", "safe", "Barely any water in winter."),
-  P("Kalanchoe blossfeldiana", "Kalanchoe", "Kalanchoë", "full", "4-6", "dry", 14, 28, "low", "toxic", "Short days trigger new flowers."),
-  P("Saintpaulia ionantha", "African violet", "Kaaps viooltje", "bright", "0-2", "topdry", 5, 14, "normal", "safe", "Water from below; drops on leaves leave spots."),
-  P("Cyclamen persicum", "Cyclamen", "Cyclaam", "half", "0", "moist", 5, 14, "normal", "toxic", "Likes it cool, about 15 °C."),
-  P("Ocimum basilicum", "Basil", "Basilicum", "full", "6+", "moist", 2, 14, "normal", "safe", "Pick from the top to keep it bushy."),
-  P("Lavandula angustifolia", "Lavender", "Lavendel", "full", "6+", "dry", 7, 28, "low", "toxic", "Prune after flowering; never into old wood."),
-  P("Citrus limon", "Lemon tree", "Citroenboom", "full", "6+", "topdry", 5, 14, "normal", "toxic", "Bring indoors before frost."),
-  P("Olea europaea", "Olive tree", "Olijfboom", "full", "6+", "dry", 10, 28, "low", "safe", "Hardy to about −5 °C in a sheltered spot."),
-  P("Musa", "Banana plant", "Bananenplant", "full", "4-6", "moist", 4, 14, "high", "safe", "Thirsty and hungry in summer."),
-];
+export const PLANTS = PLANT_ROWS.map(([sci, en, nl, light, sun, water, waterDays, feedDays, humidity, pet, tip]) =>
+  ({ sci, en, nl, light, sun, water, waterDays, feedDays, humidity, pet, tip }));
 
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
 // Autocomplete: best matches for what the user typed, in English, Dutch or Latin.
-export function searchPlants(q, limit = 6) {
+export function searchPlants(q, limit = 8) {
   const n = norm(q);
   if (n.length < 2) return [];
   const scored = [];
@@ -98,10 +35,30 @@ export function searchPlants(q, limit = 6) {
 
 // Older or alternative names, and the profile to use when only the genus is known.
 const ALIAS = {
-  "calathea": "Goeppertia", "sansevieria": "Dracaena trifasciata", "sansevieria trifasciata": "Dracaena trifasciata",
-  "senecio rowleyanus": "Curio rowleyanus", "haworthia": "Haworthiopsis attenuata", "philodendron bipinnatifidum": "Thaumatophyllum bipinnatifidum",
+  // older or alternative scientific names
+  "calathea": "Goeppertia", "calathea orbifolia": "Goeppertia orbifolia", "calathea lancifolia": "Goeppertia lancifolia",
+  "calathea makoyana": "Goeppertia makoyana", "calathea zebrina": "Goeppertia zebrina",
+  "sansevieria": "Dracaena trifasciata", "sansevieria trifasciata": "Dracaena trifasciata", "sansevieria cylindrica": "Dracaena angolensis",
+  "senecio rowleyanus": "Curio rowleyanus", "senecio radicans": "Curio radicans",
+  "haworthia": "Haworthiopsis attenuata", "haworthia attenuata": "Haworthiopsis attenuata", "haworthia fasciata": "Haworthiopsis fasciata",
+  "philodendron bipinnatifidum": "Thaumatophyllum bipinnatifidum", "philodendron selloum": "Thaumatophyllum bipinnatifidum",
+  "philodendron scandens": "Philodendron hederaceum", "scindapsus aureus": "Epipremnum aureum",
+  "rosmarinus officinalis": "Salvia rosmarinus", "solenostemon scutellarioides": "Coleus scutellarioides", "plectranthus scutellarioides": "Coleus scutellarioides",
+  "dracaena massangeana": "Dracaena fragrans", "dracaena deremensis": "Dracaena fragrans", "dypsis lutescens": "Dypsis lutescens",
+  "chrysalidocarpus lutescens": "Dypsis lutescens", "aloe barbadensis": "Aloe vera", "crassula argentea": "Crassula ovata",
+  "kalanchoe tubiflora": "Kalanchoe daigremontiana", "bryophyllum daigremontianum": "Kalanchoe daigremontiana",
+  "schlumbergera truncata": "Schlumbergera", "rhipsalidopsis gaertneri": "Hatiora gaertneri", "tradescantia pallida": "Tradescantia zebrina",
+  "epiphyllum anguliger": "Epiphyllum", "fragaria ananassa": "Fragaria × ananassa", "citrus microcarpa": "Citrus × microcarpa",
+  "mandevilla sanderi": "Mandevilla", "dipladenia": "Mandevilla", "cissus alata": "Cissus rhombifolia",
+  // genus-only fallbacks
   "dracaena": "Dracaena fragrans", "ficus": "Ficus elastica", "monstera": "Monstera deliciosa", "strelitzia": "Strelitzia reginae",
-  "philodendron": "Philodendron hederaceum", "begonia": "Begonia maculata", "citrus": "Citrus limon", "peperomia": "Peperomia obtusifolia",
+  "philodendron": "Philodendron hederaceum", "peperomia": "Peperomia obtusifolia", "epipremnum": "Epipremnum aureum",
+  "scindapsus": "Scindapsus pictus", "anthurium": "Anthurium andraeanum", "pilea": "Pilea peperomioides", "chamaedorea": "Chamaedorea elegans",
+  "tradescantia": "Tradescantia zebrina", "goeppertia": "Goeppertia", "maranta": "Maranta leuconeura", "ceropegia": "Ceropegia woodii",
+  "curio": "Curio rowleyanus", "haworthiopsis": "Haworthiopsis attenuata", "asparagus": "Asparagus setaceus", "cordyline": "Cordyline fruticosa",
+  "phoenix": "Phoenix roebelenii", "zantedeschia": "Zantedeschia aethiopica", "hydrangea": "Hydrangea macrophylla", "lavandula": "Lavandula angustifolia",
+  "salvia": "Salvia officinalis", "allium": "Allium schoenoprasum", "capsicum": "Capsicum annuum", "solanum": "Solanum lycopersicum",
+  "jasminum": "Jasminum polyanthum", "saintpaulia": "Saintpaulia ionantha", "spathiphyllum": "Spathiphyllum wallisii", "yucca": "Yucca elephantipes",
 };
 const bySci = (s) => PLANTS.find((p) => norm(p.sci) === norm(s)) || null;
 
@@ -112,6 +69,7 @@ export function matchScientific(sciName, genus, family) {
   const g = norm(genus || n.split(" ")[0]);
   return bySci(n)
     || (ALIAS[n] && bySci(ALIAS[n]))
+    || bySci(g)
     || (ALIAS[g] && bySci(ALIAS[g]))
     || PLANTS.find((p) => norm(p.sci).split(" ")[0] === g)
     || (norm(family) === "cactaceae" ? bySci("Cactaceae") : null);

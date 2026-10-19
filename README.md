@@ -5,7 +5,7 @@ A plant care app that installs on your iPhone home screen as a Progressive Web A
 ## What it does
 
 - Add plants by **scanning** them (Pl@ntNet suggests up to 5 species) or by typing, with **autocomplete** in English, Dutch or Latin
-- **Fills care in automatically** from a built-in library of 57 common houseplants: light, direct sun hours, watering style, humidity, pet safety, watering and feeding intervals
+- **Fills care in automatically** from a built-in library of 245 plants (houseplants, succulents, orchids, herbs, balcony plants): light, direct sun hours, watering style, humidity, pet safety, watering and feeding intervals
 - Watering and feeding reminders in the app, sorted by what needs attention first, with one-tap logging and undo
 - **Health check**: take a photo, tick what you see, and get the likely causes and a few short fixes
 - **Growth timeline**: dated photos and heights, a height chart, and a then-and-now comparison
@@ -21,7 +21,8 @@ sw.js                   service worker (offline cache) — bump VERSION on every
 css/app.css             styles, light and dark
 js/app.js               UI
 js/db.js                on-device storage (the only file to swap for Supabase later)
-js/care-library.js      care profiles + autocomplete
+js/care-library.js      care labels, autocomplete, scan matching
+js/plant-data.js        the plant care profiles (add new plants here)
 js/plantnet.js          Pl@ntNet species identification
 js/health.js            symptom-based health check
 js/util.js              dates, image resizing, calendar export
