@@ -5,7 +5,7 @@ import * as plantnet from "./plantnet.js";
 import { SYMPTOMS, assess, STATUS_LABEL } from "./health.js";
 import { ROOMS, SPOTS, lightForSpot, adjustForConditions, fitText, spotLabel } from "./conditions.js";
 
-const APP_VERSION = "1.3.0";
+const APP_VERSION = "1.3.1";
 const $ = (s, root = document) => root.querySelector(s);
 const state = { plants: [] };
 const isWinter = () => [10, 11, 0, 1].includes(new Date().getMonth());
@@ -729,6 +729,8 @@ async function saveFile(filename, blob) {
   return true;
 }
 
+const splashPref = () => { try { return localStorage.getItem("leafkin.splash") || "on"; } catch { return "on"; } };
+
 async function openSettings() {
   const est = await db.usage();
   const mb = est?.usage ? (est.usage / 1048576).toFixed(1) : null;
@@ -753,6 +755,11 @@ async function openSettings() {
       <button class="btn" id="badgeBtn" ${perm === "granted" ? "disabled" : ""}>${perm === "granted" ? "Icon badge is on" : perm === "denied" ? "Blocked in iOS Settings" : "Turn on icon badge"}</button>
     </div>` : ""}
     <div class="card">
+      <h3>Startup animation</h3>
+      <label class="check"><input type="checkbox" id="splashOn" ${splashPref() !== "off" ? "checked" : ""}> Play the growing plant when LeafKin opens</label>
+      <p class="hint">Tap the animation to skip it.</p>
+    </div>
+    <div class="card">
       <h3>Backup</h3>
       <p>Plants and photos are stored on this device only. Save a backup now and then, or to move to another device.</p>
       <div class="btnrow"><button class="btn grow" id="expBtn">Save backup</button><button class="btn grow" id="impBtn">Restore backup</button></div>
@@ -766,6 +773,7 @@ async function openSettings() {
     s.querySelector("#pnMsg").textContent = v ? "Saved. Try Scan plant when adding a plant." : "Key removed.";
   };
   s.querySelector("#pnClear")?.addEventListener("click", () => { plantnet.setKey(""); s.querySelector("#pnKey").value = ""; s.querySelector("#pnMsg").textContent = "Key removed."; });
+  s.querySelector("#splashOn").onchange = (e) => { try { localStorage.setItem("leafkin.splash", e.target.checked ? "on" : "off"); } catch {} };
   s.querySelector("#badgeBtn")?.addEventListener("click", async (e) => {
     const r = await Notification.requestPermission().catch(() => "denied");
     e.target.textContent = r === "granted" ? "Icon badge is on" : "Not allowed";
@@ -796,10 +804,9 @@ async function openSettings() {
 /* ---------- splash, install hint & updates ---------- */
 function runSplash() {
   const el = $("#splash"); if (!el) return;
-  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const done = () => { el.classList.add("out"); setTimeout(() => el.remove(), 450); };
+  const done = () => { el.classList.add("out"); setTimeout(() => el.remove(), 550); };
   el.addEventListener("click", done, { once: true });
-  setTimeout(done, reduce ? 900 : 4200);
+  setTimeout(done, 7000);
 }
 
 function setupInstallHint() {
