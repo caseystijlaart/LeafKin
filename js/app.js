@@ -1,10 +1,10 @@
 import * as db from "./db.js";
 import { DAY, daysBetween, dueIn, dueLabel, ageLabel, fmtDate, fmtDateTime, esc, uid, resizeImage, buildIcs } from "./util.js";
-import { PLANTS, LIGHT, SUN, SUN_SHORT, WATER, HUMIDITY, PET, searchPlants, matchScientific, matchAny } from "./care-library.js";
+import { PLANTS, SPECIES, CULTIVARS, LIGHT, SUN, SUN_SHORT, WATER, HUMIDITY, PET, searchPlants, matchScientific, matchAny, cultivarsForGenus } from "./care-library.js";
 import * as plantnet from "./plantnet.js";
 import { SYMPTOMS, assess, STATUS_LABEL } from "./health.js";
 
-const APP_VERSION = "1.1.1";
+const APP_VERSION = "1.2.0";
 const $ = (s, root = document) => root.querySelector(s);
 const state = { plants: [] };
 const isWinter = () => [10, 11, 0, 1].includes(new Date().getMonth());
@@ -279,12 +279,43 @@ function openEdit(id) {
         out.querySelectorAll(".cand").forEach((b) => (b.onclick = () => {
           const r = results[+b.dataset.i];
           out.querySelectorAll(".cand").forEach((x) => x.classList.toggle("on", x === b));
-          const prof = matchScientific(r.sci, r.genus, r.family);
-          if (prof) { applyProfile(prof, { setSpecies: false }); }
-          else { fillMsg.hidden = false; fillMsg.textContent = `No care profile for ${r.sci} yet. Fill in the care below.`; }
-          species.value = r.common[0] ? `${r.common[0]} (${r.sci})` : r.sci;
-          p.sci = r.sci;
-          if (!s.querySelector("#f-name").value.trim()) s.querySelector("#f-name").value = r.common[0] || r.sci;
+          const genus = r.genus || r.sci.split(" ")[0];
+          // Keep a variety the user already typed if it belongs to this genus.
+          const typed = matchAny(species.value);
+          const typedCv = typed?.cultivar && typed.base.split(" ")[0].toLowerCase() === genus.toLowerCase() ? typed : null;
+          if (typedCv) {
+            applyProfile(typedCv);
+          } else {
+            const prof = matchScientific(r.sci, r.genus, r.family);
+            if (prof) applyProfile(prof, { setSpecies: false });
+            else { fillMsg.hidden = false; fillMsg.textContent = `No care profile for ${r.sci} yet. Fill in the care below.`; }
+            species.value = r.common[0] ? `${r.common[0]} (${r.sci})` : r.sci;
+            p.sci = r.sci;
+            if (!s.querySelector("#f-name").value.trim()) s.querySelector("#f-name").value = r.common[0] || r.sci;
+          }
+          // Offer the known varieties of this plant.
+          const cvs = cultivarsForGenus(genus);
+          out.querySelector(".cv-pick")?.remove();
+          if (cvs.length) {
+            const box = document.createElement("div");
+            box.className = "cv-pick";
+            box.innerHTML = `<p class="hint">Is it a specific variety? Pick it so it's saved as its own type.</p>
+              <div class="chipset">${cvs.map((c, i) => `<button type="button" class="chipbtn" aria-pressed="${typedCv && typedCv.sci === c.sci}" data-cv="${i}">${esc(c.cultivar)}</button>`).join("")}</div>`;
+            out.append(box);
+            box.querySelectorAll("[data-cv]").forEach((chip) => (chip.onclick = () => {
+              const on = chip.getAttribute("aria-pressed") !== "true";
+              box.querySelectorAll("[data-cv]").forEach((x) => x.setAttribute("aria-pressed", "false"));
+              if (on) {
+                chip.setAttribute("aria-pressed", "true");
+                const c = cvs[+chip.dataset.cv];
+                const nameEl = s.querySelector("#f-name");
+                if (!nameEl.value.trim() || nameEl.value === (r.common[0] || r.sci)) nameEl.value = c.en;
+                applyProfile(c);
+              } else {
+                b.click();
+              }
+            }));
+          }
         }));
       } catch (e) {
         out.innerHTML = `<p class="err">${esc(plantnet.errorText(e.code))}</p>${e.code === "no_key" ? `<button type="button" class="btn" id="goKey">Open Settings</button>` : ""}`;
@@ -303,7 +334,11 @@ function openEdit(id) {
     p.feedEvery = Math.max(0, parseInt(v("#f-feed"), 10) || 0);
     const m = matchAny(p.species);
     if (m && !tip) tip = m.tip;
-    if (m) p.sci = m.sci; else if (!p.sci || !p.species.includes(p.sci)) p.sci = "";
+    // Keep the exact type: a variety, the Latin name from a scan "(…)", or a typed Latin name.
+    const bracket = /\(([^)]+)\)/.exec(p.species)?.[1]?.trim();
+    const typedExact = m && [m.en, m.nl, m.sci].some((x) => x.toLowerCase() === p.species.toLowerCase());
+    const looksLatin = /^[A-Z][a-z]+ [a-z×-]+/.test(p.species);
+    p.sci = m?.cultivar ? m.sci : bracket ? bracket : typedExact ? m.sci : looksLatin ? p.species : (m?.sci || "");
     p.care = { light: v("#f-light"), sun: v("#f-sun"), water: v("#f-wstyle"), humidity: v("#f-hum"), pet: v("#f-pet"), notes: v("#f-notes"), tip };
     if (scanFile) {
       try { const photoId = await storePhoto(scanFile); p.growth = [...(p.growth || []), { id: uid(), at: new Date().toISOString(), photoId, note: "Added to LeafKin" }]; }
@@ -617,7 +652,7 @@ async function openSettings() {
       <input type="file" id="impIn" accept="application/json,.json" hidden>
       <p class="hint" id="bMsg">${mb ? `Using about ${mb} MB.` : ""}</p>
     </div>
-    <p class="hint">LeafKin ${APP_VERSION} · ${PLANTS.length} plants in the care library</p>`);
+    <p class="hint">LeafKin ${APP_VERSION} · ${SPECIES.length} plants and ${CULTIVARS.length} varieties in the care library</p>`);
   s.querySelector("#pnSave").onclick = () => {
     const v = s.querySelector("#pnKey").value.trim();
     plantnet.setKey(v);

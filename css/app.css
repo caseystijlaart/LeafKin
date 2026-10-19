@@ -151,6 +151,8 @@ header.top { display: flex; align-items: flex-end; justify-content: space-betwee
 .thinking { animation: pulse 1.2s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: .4; } }
 
+.cv-pick { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+
 /* cards */
 .card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
 .tip { background: var(--wash-ok); border-radius: 10px; padding: 8px 12px; font-size: .92rem; }

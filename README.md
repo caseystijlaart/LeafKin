@@ -5,7 +5,8 @@ A plant care app that installs on your iPhone home screen as a Progressive Web A
 ## What it does
 
 - Add plants by **scanning** them (Pl@ntNet suggests up to 5 species) or by typing, with **autocomplete** in English, Dutch or Latin
-- **Fills care in automatically** from a built-in library of 245 plants (houseplants, succulents, orchids, herbs, balcony plants): light, direct sun hours, watering style, humidity, pet safety, watering and feeding intervals
+- **Varieties** (cultivars such as Peace lily 'Diamond Sensation'): pick one after a scan or type it; each plant is saved as its exact type. Pl@ntNet itself only identifies species.
+- **Fills care in automatically** from a built-in library of 245 plants and 89 varieties (houseplants, succulents, orchids, herbs, balcony plants): light, direct sun hours, watering style, humidity, pet safety, watering and feeding intervals
 - Watering and feeding reminders in the app, sorted by what needs attention first, with one-tap logging and undo
 - **Health check**: take a photo, tick what you see, and get the likely causes and a few short fixes
 - **Growth timeline**: dated photos and heights, a height chart, and a then-and-now comparison

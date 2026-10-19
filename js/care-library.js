@@ -8,12 +8,29 @@ export const WATER = { moist: "Keep slightly moist", topdry: "Let top 2–3 cm d
 export const HUMIDITY = { low: "Low (dry air is fine)", normal: "Normal room air", high: "High (mist or tray)" };
 export const PET = { safe: "Safe for pets", toxic: "Toxic to pets", unknown: "Unknown" };
 
-import { PLANT_ROWS } from "./plant-data.js";
+import { PLANT_ROWS, CULTIVAR_ROWS } from "./plant-data.js";
 
-export const PLANTS = PLANT_ROWS.map(([sci, en, nl, light, sun, water, waterDays, feedDays, humidity, pet, tip]) =>
+export const SPECIES = PLANT_ROWS.map(([sci, en, nl, light, sun, water, waterDays, feedDays, humidity, pet, tip]) =>
   ({ sci, en, nl, light, sun, water, waterDays, feedDays, humidity, pet, tip }));
 
-const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+// Cultivars share their species' care. Variegated ones get brighter light.
+const brighter = { shade: "half", half: "bright", bright: "bright", full: "full" };
+export const CULTIVARS = CULTIVAR_ROWS.map(([baseSci, cv, variegated, tip]) => {
+  const base = SPECIES.find((p) => p.sci === baseSci);
+  if (!base) return null;
+  return {
+    ...base, base: base.sci, cultivar: cv,
+    sci: `${base.sci} '${cv}'`, en: `${base.en} '${cv}'`, nl: `${base.nl} '${cv}'`,
+    light: variegated ? brighter[base.light] : base.light,
+    tip: tip || (variegated ? "Variegated: bright, indirect light keeps the colour; no harsh sun." : base.tip),
+  };
+}).filter(Boolean);
+
+export const PLANTS = [...SPECIES, ...CULTIVARS];
+
+// Lowercase, no accents, no quotes, single spaces.
+const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+  .replace(/[\u2018\u2019'"`]/g, "").replace(/\s+/g, " ").trim();
 
 // Autocomplete: best matches for what the user typed, in English, Dutch or Latin.
 export function searchPlants(q, limit = 8) {
@@ -21,7 +38,7 @@ export function searchPlants(q, limit = 8) {
   if (n.length < 2) return [];
   const scored = [];
   for (const p of PLANTS) {
-    const names = [p.en, p.nl, p.sci].map(norm);
+    const names = [p.en, p.nl, p.sci, p.cultivar].filter(Boolean).map(norm);
     let best = -1;
     for (const name of names) {
       if (name.startsWith(n)) best = Math.max(best, 3);
@@ -60,7 +77,7 @@ const ALIAS = {
   "salvia": "Salvia officinalis", "allium": "Allium schoenoprasum", "capsicum": "Capsicum annuum", "solanum": "Solanum lycopersicum",
   "jasminum": "Jasminum polyanthum", "saintpaulia": "Saintpaulia ionantha", "spathiphyllum": "Spathiphyllum wallisii", "yucca": "Yucca elephantipes",
 };
-const bySci = (s) => PLANTS.find((p) => norm(p.sci) === norm(s)) || null;
+const bySci = (s) => SPECIES.find((p) => norm(p.sci) === norm(s)) || null;
 
 // Find a profile for a scientific name from Pl@ntNet: exact species, then known aliases, then the genus or family.
 export function matchScientific(sciName, genus, family) {
@@ -71,15 +88,40 @@ export function matchScientific(sciName, genus, family) {
     || (ALIAS[n] && bySci(ALIAS[n]))
     || bySci(g)
     || (ALIAS[g] && bySci(ALIAS[g]))
-    || PLANTS.find((p) => norm(p.sci).split(" ")[0] === g)
+    || SPECIES.find((p) => norm(p.sci).split(" ")[0] === g)
     || (norm(family) === "cactaceae" ? bySci("Cactaceae") : null);
 }
 
-// Find a profile from whatever is in the species field.
+// Find a profile from whatever is in the species field: an exact name, a cultivar name inside
+// the text (e.g. "Spathiphyllum diamond sensation"), a name in brackets, or the genus.
 export function matchAny(text) {
   const n = norm(text);
   if (!n) return null;
-  return PLANTS.find((p) => [p.en, p.nl, p.sci].some((x) => norm(x) === n)) || matchScientific(text) || null;
+  const exact = PLANTS.find((p) => [p.en, p.nl, p.sci].some((x) => norm(x) === n));
+  if (exact) return exact;
+
+  const inBrackets = /\(([^)]+)\)/.exec(String(text));
+  const species = (inBrackets && matchScientific(inBrackets[1]))
+    || SPECIES.find((p) => [p.en, p.nl].some((x) => n.startsWith(norm(x) + " ")))
+    || matchScientific(text);
+
+  // Cultivar named in the text: it must belong to the species found, or be the only cultivar with that name.
+  const hits = CULTIVARS.filter((c) => (` ${n} `).includes(` ${norm(c.cultivar)} `));
+  if (hits.length) {
+    const longest = Math.max(...hits.map((c) => c.cultivar.length));
+    const best = hits.filter((c) => c.cultivar.length === longest);
+    const ofSpecies = species && best.find((c) => c.base === species.sci);
+    if (ofSpecies) return ofSpecies;
+    if (!species && best.length === 1) return best[0];
+  }
+  return species || null;
 }
 
 export const displayName = (p) => `${p.en} (${p.sci})`;
+
+// Known cultivars in a genus, for "which variety is it?" after a scan.
+export function cultivarsForGenus(genus) {
+  const g = norm(genus);
+  if (!g) return [];
+  return CULTIVARS.filter((c) => norm(c.base).split(" ")[0] === g || norm(ALIAS[g] || "").split(" ")[0] === norm(c.base).split(" ")[0]);
+}
