@@ -1,6 +1,6 @@
 // LeafKin service worker: caches the app shell so it opens offline.
 // Bump VERSION whenever app files change, so phones pick up the new version.
-const VERSION = "leafkin-v1.2.0";
+const VERSION = "leafkin-v1.2.1";
 const SHELL = [
   "./",
   "./index.html",
@@ -20,8 +20,9 @@ const SHELL = [
   "./icons/favicon-32.png",
 ];
 
+// New versions take over straight away; the page reloads itself once (see app.js).
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL)));
+  event.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: "reload" })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener("activate", (event) => {

@@ -4,7 +4,7 @@ import { PLANTS, SPECIES, CULTIVARS, LIGHT, SUN, SUN_SHORT, WATER, HUMIDITY, PET
 import * as plantnet from "./plantnet.js";
 import { SYMPTOMS, assess, STATUS_LABEL } from "./health.js";
 
-const APP_VERSION = "1.2.0";
+const APP_VERSION = "1.2.1";
 const $ = (s, root = document) => root.querySelector(s);
 const state = { plants: [] };
 const isWinter = () => [10, 11, 0, 1].includes(new Date().getMonth());
@@ -709,16 +709,20 @@ function setupInstallHint() {
 
 function setupServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
+  let hadController = !!navigator.serviceWorker.controller;
   navigator.serviceWorker.register("./sw.js").then((reg) => {
-    const offer = (w) => toast("A new version is ready", "Update", () => w.postMessage("skip-waiting"));
-    if (reg.waiting && navigator.serviceWorker.controller) offer(reg.waiting);
-    reg.addEventListener("updatefound", () => {
-      const w = reg.installing;
-      w?.addEventListener("statechange", () => { if (w.state === "installed" && navigator.serviceWorker.controller) offer(w); });
-    });
+    // Home-screen apps can stay open for days: look for a new version whenever the app comes back.
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) reg.update().catch(() => {}); });
   }).catch(() => {});
+  // A new version took over: reload once to run it, unless a form is open.
   let reloaded = false;
-  navigator.serviceWorker.addEventListener("controllerchange", () => { if (!reloaded) { reloaded = true; location.reload(); } });
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!hadController) { hadController = true; return; } // first install, nothing to reload
+    if (reloaded) return;
+    reloaded = true;
+    if (currentSheet) toast("LeafKin was updated", "Reload", () => location.reload());
+    else location.reload();
+  });
 }
 
 /* ---------- boot ---------- */

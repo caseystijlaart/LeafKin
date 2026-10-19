@@ -32,20 +32,25 @@ export const PLANTS = [...SPECIES, ...CULTIVARS];
 const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
   .replace(/[\u2018\u2019'"`]/g, "").replace(/\s+/g, " ").trim();
 
-// Autocomplete: best matches for what the user typed, in English, Dutch or Latin.
-export function searchPlants(q, limit = 8) {
+// Autocomplete: best matches for what the user typed, in English, Dutch or Latin, in any word order.
+// Every typed word must be the start of some word in the plant's names, so
+// "spathiphyllum diamond", "peace lily dia" and "diamond" all find 'Diamond Sensation'.
+export function searchPlants(q, limit = 10) {
   const n = norm(q);
   if (n.length < 2) return [];
+  const tokens = n.split(" ");
   const scored = [];
   for (const p of PLANTS) {
     const names = [p.en, p.nl, p.sci, p.cultivar].filter(Boolean).map(norm);
-    let best = -1;
-    for (const name of names) {
-      if (name.startsWith(n)) best = Math.max(best, 3);
-      else if (name.split(/\s+/).some((w) => w.startsWith(n))) best = Math.max(best, 2);
-      else if (name.includes(n)) best = Math.max(best, 1);
-    }
-    if (best >= 0) scored.push([best, p]);
+    const words = new Set(names.join(" ").split(" "));
+    let score = -1;
+    if (names.some((name) => name.startsWith(n))) score = 3;
+    else if (tokens.every((t) => [...words].some((w) => w.startsWith(t)))) score = 2;
+    else if (names.some((name) => name.includes(n))) score = 1;
+    if (score < 0) continue;
+    // Prefer a cultivar when the query names it, and the plain species otherwise.
+    const cvHit = p.cultivar && tokens.some((t) => norm(p.cultivar).split(" ").some((w) => w.startsWith(t)));
+    scored.push([score + (cvHit ? 0.5 : p.cultivar ? 0 : 0.25), p]);
   }
   return scored.sort((a, b) => b[0] - a[0] || a[1].en.localeCompare(b[1].en)).slice(0, limit).map((x) => x[1]);
 }
