@@ -1,22 +1,10 @@
-// Where a plant stands decides how much light it gets, and light decides how fast the soil dries.
-// Spot → light + direct sun → watering and feeding interval.
+// The light at a plant's spot decides how fast its soil dries.
+// Light + direct sun (+ a humid or outdoor room) → watering and feeding interval.
 
 export const ROOMS = {
   living: "Living room", bedroom: "Bedroom", kitchen: "Kitchen", bathroom: "Bathroom",
   office: "Office or study", hall: "Hallway or stairs", outdoor: "Balcony or garden", other: "Other",
 };
-
-// Window directions are for the Netherlands (northern hemisphere).
-export const SPOTS = {
-  south: "South-facing window", west: "West-facing window", east: "East-facing window", north: "North-facing window",
-  near: "1–2 m from a window", far: "Far from windows",
-  out_sun: "Outside, sunny", out_shade: "Outside, shaded",
-};
-const SPOT_LIGHT = {
-  south: ["full", "4-6"], west: ["bright", "2-4"], east: ["bright", "0-2"], north: ["half", "0"],
-  near: ["bright", "0"], far: ["shade", "0"], out_sun: ["full", "6+"], out_shade: ["half", "0"],
-};
-export const lightForSpot = (spot) => SPOT_LIGHT[spot] || null;
 
 const L = { shade: 0, half: 1, bright: 2, full: 3 };
 const S = { "0": 0, "0-2": 0.5, "2-4": 1, "4-6": 1.5, "6+": 2 };
@@ -44,8 +32,4 @@ export function fitText(fit, prof) {
   if (fit === "dark") return `Darker than a ${name} likes: it grows slower and needs less water.`;
   if (fit === "bright") return `Sunnier than a ${name} likes: watch for pale or scorched leaves.`;
   return "";
-}
-
-export function spotLabel(room, spot) {
-  return [ROOMS[room], SPOTS[spot]].filter(Boolean).join(" · ");
 }

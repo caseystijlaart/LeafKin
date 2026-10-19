@@ -10,7 +10,7 @@ A plant care app that installs on your iPhone home screen as a Progressive Web A
 - Watering and feeding reminders in the app, sorted by what needs attention first, with one-tap logging and undo
 - **Health check**: take a photo, tick what you see, and get the likely causes and a few short fixes
 - **Growth timeline**: dated photos and heights, a height chart, and a then-and-now comparison
-- Spot-aware care: room and window position set the light, and the light adjusts the watering and feeding interval
+- Light-aware care: the light and direct sun at the plant's spot (and a bathroom or outdoor room) adjust the watering and feeding interval
 - Compact list grouped by what's due, with search and room filters for big collections
 - Winter care (Nov–Feb): watering stretched by half, feeding paused (can be switched off)
 - Swipe a plant right when watered, left when the soil is still damp (checks again in 2 days); after two damp rounds in a row the interval grows by a day
@@ -32,7 +32,7 @@ js/plant-data.js        the plant care profiles (add new plants here)
 js/plantnet.js          Pl@ntNet species identification
 js/config.js            site settings filled in at deploy time (keep empty in git)
 js/health.js            symptom-based health check
-js/conditions.js        spot → light → watering adjustment
+js/conditions.js        light → watering adjustment
 js/schedule.js          due dates: winter care, snooze, repotting, photo nudge
 js/util.js              dates, image resizing
 icons/                  app icons

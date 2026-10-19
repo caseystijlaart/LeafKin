@@ -3,10 +3,10 @@ import { DAY, daysBetween, dueIn, dueLabel, ageLabel, fmtDate, fmtDateTime, esc,
 import { PLANTS, SPECIES, CULTIVARS, LIGHT, SUN, SUN_SHORT, WATER, HUMIDITY, PET, searchPlants, matchScientific, matchAny, cultivarsForGenus } from "./care-library.js";
 import * as plantnet from "./plantnet.js";
 import { SYMPTOMS, assess, STATUS_LABEL } from "./health.js";
-import { ROOMS, SPOTS, lightForSpot, adjustForConditions, fitText, spotLabel } from "./conditions.js";
+import { ROOMS, adjustForConditions, fitText } from "./conditions.js";
 import { waterDue, feedDue, urgency, waterInterval, feedInterval, winterActive, winterModeOn, setWinterMode, snoozeDate, repotDue, photoDue, lastPhotoAt, isWinter as inWinter } from "./schedule.js";
 
-const APP_VERSION = "1.4.0";
+const APP_VERSION = "1.4.1";
 const $ = (s, root = document) => root.querySelector(s);
 const state = { plants: [] };
 const isWinter = () => inWinter();
@@ -319,18 +319,15 @@ function openEdit(id) {
       </div>
       <button type="button" class="btn" id="autoFill" hidden>Fill care automatically</button>
       <p class="hint" id="fillMsg" hidden></p>
-      <h3>Spot</h3>
+      <h3>Where it stands</h3>
+      <div class="field"><label for="f-room">Room</label><select id="f-room">${options(ROOMS, c.room)}</select></div>
       <div class="row2">
-        <div class="field"><label for="f-room">Room</label><select id="f-room">${options(ROOMS, c.room)}</select></div>
-        <div class="field"><label for="f-spot">Where in the room</label><select id="f-spot">${options(SPOTS, c.spot)}</select></div>
+        <div class="field"><label for="f-light">Light at its spot</label><select id="f-light">${options(LIGHT, c.light)}</select></div>
+        <div class="field"><label for="f-sun">Direct sun per day</label><select id="f-sun">${options(SUN, c.sun)}</select></div>
       </div>
       <p class="hint" id="fitMsg" hidden></p>
 
       <h3>Care</h3>
-      <div class="row2">
-        <div class="field"><label for="f-light">Light</label><select id="f-light">${options(LIGHT, c.light)}</select></div>
-        <div class="field"><label for="f-sun">Direct sun</label><select id="f-sun">${options(SUN, c.sun)}</select></div>
-      </div>
       <div class="row2">
         <div class="field"><label for="f-wstyle">Watering</label><select id="f-wstyle">${options(WATER, c.water)}</select></div>
         <div class="field"><label for="f-hum">Humidity</label><select id="f-hum">${options(HUMIDITY, c.humidity)}</select></div>
@@ -352,7 +349,7 @@ function openEdit(id) {
   const autoBtn = s.querySelector("#autoFill"), fillMsg = s.querySelector("#fillMsg");
   let tip = c.tip || "";
 
-  // ---- linked fields: spot → light + sun → watering and feeding ----
+  // ---- linked fields: light + direct sun + room → watering and feeding ----
   // A field keeps updating as long as it still holds the value LeafKin put there.
   // Type your own value and it stays yours.
   const $f = (id) => s.querySelector(id);
@@ -366,7 +363,7 @@ function openEdit(id) {
   function recalc() {
     const fitMsg = $f("#fitMsg"), schedMsg = $f("#schedMsg");
     if (!prof) { fitMsg.hidden = schedMsg.hidden = true; return; }
-    const room = $f("#f-room").value, spot = $f("#f-spot").value;
+    const room = $f("#f-room").value;
     const r = adjustForConditions(prof, { light: $f("#f-light").value, sun: $f("#f-sun").value, room });
     setAuto("water", "#f-water", r.water);
     setAuto("feed", "#f-feed", r.feed);
@@ -376,16 +373,11 @@ function openEdit(id) {
     schedMsg.hidden = false;
     const own = $f("#f-water").value !== "" && $f("#f-water").value !== String(r.water);
     schedMsg.textContent = own
-      ? `You set your own interval. For this spot LeafKin would suggest every ${r.water} d.`
-      : changed && (spot || room)
-      ? `Adjusted for this spot. A ${prof.en} in its ideal light needs water every ${prof.waterDays} d${prof.feedDays ? ` and food every ${prof.feedDays} d` : ""}.`
-      : `Typical for a ${prof.en}${spot ? " in this spot" : ""}. Change it if your plant needs otherwise.`;
+      ? `You set your own interval. For this light LeafKin would suggest every ${r.water} d.`
+      : changed
+      ? `Adjusted for this light${room === "bathroom" || room === "outdoor" ? " and room" : ""}. A ${prof.en} in its ideal light needs water every ${prof.waterDays} d${prof.feedDays ? ` and food every ${prof.feedDays} d` : ""}.`
+      : `Typical for a ${prof.en}. Change it if your plant needs otherwise.`;
   }
-  $f("#f-spot").addEventListener("change", () => {
-    const ls = lightForSpot($f("#f-spot").value);
-    if (ls) { setAuto("light", "#f-light", ls[0]); setAuto("sun", "#f-sun", ls[1]); }
-    recalc();
-  });
   ["#f-room", "#f-light", "#f-sun"].forEach((id) => $f(id).addEventListener("change", recalc));
   ["#f-light", "#f-sun"].forEach((id) => $f(id).addEventListener("change", (e) => { auto[id === "#f-light" ? "light" : "sun"] = null; }));
 
@@ -393,10 +385,9 @@ function openEdit(id) {
     prof = newProf;
     if (setSpecies) species.value = prof.en;
     const set = (sel, v) => { if (v !== undefined && v !== null) $f(sel).value = v; };
-    // Light comes from the spot when one is chosen; otherwise use what this plant likes.
-    const ls = lightForSpot($f("#f-spot").value);
-    setAuto("light", "#f-light", ls ? ls[0] : prof.light);
-    setAuto("sun", "#f-sun", ls ? ls[1] : prof.sun);
+    // Start from the light this plant likes, unless you already picked the light at its spot.
+    setAuto("light", "#f-light", prof.light);
+    setAuto("sun", "#f-sun", prof.sun);
     set("#f-wstyle", prof.water); set("#f-hum", prof.humidity); set("#f-pet", prof.pet);
     // A new plant type resets the intervals to that type's numbers.
     auto.water = $f("#f-water").value; auto.feed = $f("#f-feed").value;
@@ -519,7 +510,7 @@ function openEdit(id) {
     const err = s.querySelector("#f-err");
     if (!v("#f-name")) { err.textContent = "Give the plant a name."; err.hidden = false; s.querySelector("#f-name").focus(); return; }
     p.name = v("#f-name"); p.species = v("#f-species");
-    p.location = spotLabel(v("#f-room"), v("#f-spot")) || (v("#f-room") || v("#f-spot") ? "" : p.location || "");
+    p.location = ROOMS[v("#f-room")] || "";
     const oldWater = p.waterEvery;
     p.waterEvery = Math.max(0, parseInt(v("#f-water"), 10) || 0);
     if (p.waterEvery !== oldWater) p.snoozeStreak = 0;
@@ -534,7 +525,7 @@ function openEdit(id) {
     const typedExact = m && [m.en, m.nl, m.sci].some((x) => x.toLowerCase() === p.species.toLowerCase());
     const looksLatin = /^[A-Z][a-z]+ [a-z×-]+/.test(p.species);
     p.sci = m?.cultivar ? m.sci : bracket ? bracket : typedExact ? m.sci : looksLatin ? p.species : (m?.sci || "");
-    p.care = { room: v("#f-room"), spot: v("#f-spot"), light: v("#f-light"), sun: v("#f-sun"), water: v("#f-wstyle"), humidity: v("#f-hum"), pet: v("#f-pet"), notes: v("#f-notes"), tip };
+    p.care = { room: v("#f-room"), light: v("#f-light"), sun: v("#f-sun"), water: v("#f-wstyle"), humidity: v("#f-hum"), pet: v("#f-pet"), notes: v("#f-notes"), tip };
     if (scanFile) {
       try { const photoId = await storePhoto(scanFile); p.growth = [...(p.growth || []), { id: uid(), at: new Date().toISOString(), photoId, note: "Added to LeafKin" }]; }
       catch { /* photo is optional */ }
@@ -549,7 +540,7 @@ function openEdit(id) {
 function careRows(p) {
   const c = p.care || {};
   const rows = [];
-  if (p.location) rows.push(["Spot", p.location]);
+  if (ROOMS[c.room] || p.location) rows.push(["Room", ROOMS[c.room] || p.location]);
   if (c.light || c.sun) rows.push(["Light", [LIGHT[c.light], SUN_SHORT[c.sun] || ""].filter(Boolean).join(" · ")]);
   const W = waterInterval(p);
   if (c.water || W) rows.push(["Water", [WATER[c.water], W ? `every ${W} d${W !== p.waterEvery ? ` in winter (normally ${p.waterEvery})` : ""}` : ""].filter(Boolean).join(" · ")]);
