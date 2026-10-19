@@ -5,7 +5,7 @@ import * as plantnet from "./plantnet.js";
 import { SYMPTOMS, assess, STATUS_LABEL } from "./health.js";
 import { ROOMS, SPOTS, lightForSpot, adjustForConditions, fitText, spotLabel } from "./conditions.js";
 
-const APP_VERSION = "1.3.1";
+const APP_VERSION = "1.3.2";
 const $ = (s, root = document) => root.querySelector(s);
 const state = { plants: [] };
 const isWinter = () => [10, 11, 0, 1].includes(new Date().getMonth());
@@ -806,7 +806,7 @@ function runSplash() {
   const el = $("#splash"); if (!el) return;
   const done = () => { el.classList.add("out"); setTimeout(() => el.remove(), 550); };
   el.addEventListener("click", done, { once: true });
-  setTimeout(done, 7000);
+  setTimeout(done, 6000);
 }
 
 function setupInstallHint() {
