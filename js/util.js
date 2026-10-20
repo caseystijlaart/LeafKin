@@ -4,6 +4,8 @@ export const DAY = 86400000;
 
 export const startOfDay = (d) => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
 export const daysBetween = (a, b) => Math.round((startOfDay(b) - startOfDay(a)) / DAY);
+// Midnight `n` calendar days after `d` (safe across daylight-saving changes).
+export const addDays = (d, n) => { const x = startOfDay(d); x.setDate(x.getDate() + n); return x; };
 
 // Days until the next action is due. null = no schedule, 0 = today, negative = overdue.
 export function dueIn(last, every, now = new Date()) {

@@ -1,6 +1,6 @@
 // When each plant needs something: watering, feeding, repotting and a new photo.
 // Winter mode (November–February) stretches watering and pauses feeding.
-import { DAY, daysBetween, dueIn, startOfDay } from "./util.js";
+import { daysBetween, dueIn, addDays } from "./util.js";
 
 const WINTER_MONTHS = [10, 11, 0, 1];
 const SPRING_MONTHS = [2, 3, 4];
@@ -37,7 +37,7 @@ export function feedDue(p, now = new Date()) {
 // Snooze watering: check again `days` after it would have been due (or after today).
 export function snoozeDate(p, days = 2, now = new Date()) {
   const due = Math.max(waterDue(p, now) ?? 0, 0);
-  return new Date(startOfDay(now).getTime() + (due + days) * DAY).toISOString();
+  return addDays(now, due + days).toISOString();
 }
 
 // Repotting: about every two years, reminded in spring.
@@ -61,4 +61,25 @@ export function photoDue(p, now = new Date()) {
 // Lower = sooner. Used for sorting and the "Needs care today" group.
 export function urgency(p) {
   return Math.min(waterDue(p) ?? 99, feedDue(p) ?? 99, repotDue(p) ? 0 : 99);
+}
+
+// Timeline photo limit: one photo per plant per week (or month), so the timeline stays even.
+export const PHOTO_PERIODS = { week: { days: 7, label: "week" }, month: { days: 30, label: "month" } };
+export function photoPeriod() { try { return localStorage.getItem("leafkin.photoPeriod") === "month" ? "month" : "week"; } catch { return "week"; } }
+export function setPhotoPeriod(v) { try { localStorage.setItem("leafkin.photoPeriod", v === "month" ? "month" : "week"); } catch {} }
+export const photoPeriodDays = () => PHOTO_PERIODS[photoPeriod()].days;
+
+// The existing timeline photo that's too close to `atIso`, if any.
+export function blockingPhoto(p, atIso) {
+  const days = photoPeriodDays();
+  return (p.growth || []).filter((g) => g.photoId)
+    .sort((a, b) => Math.abs(daysBetween(a.at, atIso)) - Math.abs(daysBetween(b.at, atIso)))
+    .find((g) => Math.abs(daysBetween(g.at, atIso)) < days) || null;
+}
+// First day a new photo is allowed again (null when it already is).
+export function nextPhotoDate(p, now = new Date()) {
+  const last = lastPhotoAt(p);
+  if (!last) return null;
+  const next = addDays(last, photoPeriodDays());
+  return next > now ? next : null;
 }

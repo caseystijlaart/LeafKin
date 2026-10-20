@@ -4,9 +4,9 @@ import { PLANTS, SPECIES, CULTIVARS, LIGHT, SUN, SUN_SHORT, WATER, HUMIDITY, PET
 import * as plantnet from "./plantnet.js";
 import { SYMPTOMS, assess, STATUS_LABEL } from "./health.js";
 import { ROOMS, adjustForConditions, fitText } from "./conditions.js";
-import { waterDue, feedDue, urgency, waterInterval, feedInterval, winterActive, winterModeOn, setWinterMode, snoozeDate, repotDue, photoDue, lastPhotoAt, isWinter as inWinter } from "./schedule.js";
+import { waterDue, feedDue, urgency, waterInterval, feedInterval, winterActive, winterModeOn, setWinterMode, snoozeDate, repotDue, photoDue, lastPhotoAt, isWinter as inWinter, PHOTO_PERIODS, photoPeriod, setPhotoPeriod, blockingPhoto, nextPhotoDate } from "./schedule.js";
 
-const APP_VERSION = "1.4.1";
+const APP_VERSION = "1.4.2";
 const $ = (s, root = document) => root.querySelector(s);
 const state = { plants: [] };
 const isWinter = () => inWinter();
@@ -609,12 +609,13 @@ function openHealth(id) {
   const p = state.plants.find((x) => x.id === id); if (!p) return;
   let file = null;
   const picked = new Set();
+  const blk = blockingPhoto(p, new Date().toISOString());
   const s = sheet("health", `
     <div class="sheet-head"><h2>Check ${esc(p.name)}</h2><button class="x" id="hBack" aria-label="Back">×</button></div>
     <input type="file" id="hIn" accept="image/*" hidden>
     <button class="btn" id="hCam">${camSvg} Take a photo</button>
     <img class="preview" id="hPrev" alt="Photo of ${esc(p.name)}" hidden>
-    <label class="check" id="hKeepRow" hidden><input type="checkbox" id="hKeep" checked> Add photo to the growth timeline</label>
+    <label class="check" id="hKeepRow" hidden><input type="checkbox" id="hKeep" ${blk ? "" : "checked"}> ${blk ? `Replace the timeline photo from ${fmtDate(blk.at)} (one per ${periodWord()})` : "Add photo to the growth timeline"}</label>
     <h3>What do you see?</h3>
     <div class="chipset" role="group" aria-label="Symptoms">${SYMPTOMS.map(([k, label]) => `<button type="button" class="chipbtn" aria-pressed="false" data-k="${k}">${esc(label)}</button>`).join("")}</div>
     <button class="btn primary" id="hGo">Check</button>
@@ -638,14 +639,13 @@ function openHealth(id) {
     e.target.disabled = true;
     const result = assess(p, [...picked]);
     let photoId = null;
-    if (file) {
-      try { photoId = await storePhoto(file); } catch { /* optional */ }
-      if (photoId && s.querySelector("#hKeep").checked) {
-        p.growth = [...(p.growth || []), { id: uid(), at: new Date().toISOString(), photoId, note: STATUS_LABEL[result.status] }];
-      }
-    }
+    if (file) { try { photoId = await storePhoto(file); } catch { /* optional */ } }
     p.checks = [{ at: new Date().toISOString(), status: result.status, symptoms: [...picked], causes: result.causes.map((x) => ({ title: x.title })), photoId }, ...(p.checks || [])].slice(0, 20);
-    await savePlant(p);
+    if (photoId && s.querySelector("#hKeep").checked) {
+      await addSnapshot(p, { id: uid(), at: new Date().toISOString(), photoId, note: STATUS_LABEL[result.status] }, blk);
+    } else {
+      await savePlant(p);
+    }
     const out = s.querySelector("#hOut");
     out.innerHTML = `<div class="card result">
       <div class="card-head"><h3>Result</h3>${statusPill(result.status)}</div>
@@ -716,6 +716,25 @@ function wireGrowth(s, p) {
   s.querySelectorAll("[data-snap]").forEach((b) => (b.onclick = () => openSnapView(p.id, b.dataset.snap)));
 }
 
+// Add a timeline snapshot; when `replace` is given, its photo is swapped out first
+// (the old snapshot is kept if it still has a height or note).
+async function addSnapshot(p, snap, replace) {
+  let growth = [...(p.growth || [])];
+  if (replace) {
+    const oldPhoto = replace.photoId;
+    growth = growth.flatMap((g) => {
+      if (g.id !== replace.id) return [g];
+      const keep = typeof g.heightCm === "number" || (g.note && g.note.trim());
+      return keep ? [{ ...g, photoId: null }] : [];
+    });
+    const stillUsed = (p.checks || []).some((c) => c.photoId === oldPhoto);
+    if (oldPhoto && !stillUsed) { db.deletePhoto(oldPhoto).catch(() => {}); urlCache.delete(oldPhoto); }
+  }
+  p.growth = [...growth, snap];
+  await savePlant(p);
+}
+const periodWord = () => PHOTO_PERIODS[photoPeriod()].label;
+
 function openSnapshot(id) {
   const p = state.plants.find((x) => x.id === id); if (!p) return;
   let file = null;
@@ -724,6 +743,7 @@ function openSnapshot(id) {
   const s = sheet("snapshot", `
     <div class="sheet-head"><h2>Snapshot of ${esc(p.name)}</h2><button class="x" id="sBack" aria-label="Back">×</button></div>
     <input type="file" id="sIn" accept="image/*" hidden>
+    ${(() => { const nx = nextPhotoDate(p); return nx ? `<p class="tip">One photo per ${periodWord()}: the last one is from ${fmtDate(lastPhotoAt(p))}. A new photo is possible from ${fmtDate(nx.toISOString())}. You can still log the height, or replace that photo.</p>` : ""; })()}
     <button class="btn" id="sCam">${camSvg} Take or choose photo</button>
     <img class="preview" id="sPrev" alt="New photo of ${esc(p.name)}" hidden>
     <p class="hint">Shoot from the same spot and angle each time so the photos line up.</p>
@@ -733,6 +753,7 @@ function openSnapshot(id) {
     </div>
     <div class="field"><label for="sN">Note (optional)</label><input id="sN" autocomplete="off" maxlength="80" placeholder="e.g. new leaf, repotted"></div>
     <p class="err" id="sErr" hidden></p>
+    <div class="confirm" id="sReplace" hidden><span id="sReplaceTxt"></span><button class="btn primary" id="sReplaceYes">Replace</button><button class="btn" id="sReplaceNo">Cancel</button></div>
     <button class="btn primary" id="sSave">Add to timeline</button>`);
   s.querySelector("#sBack").onclick = () => openDetail(id);
   const input = s.querySelector("#sIn"), prev = s.querySelector("#sPrev");
@@ -742,8 +763,12 @@ function openSnapshot(id) {
     if (prev.src) URL.revokeObjectURL(prev.src);
     prev.src = URL.createObjectURL(file); prev.hidden = false;
   };
+  let replaceOk = false;
+  s.querySelector("#sReplaceNo").onclick = () => { s.querySelector("#sReplace").hidden = true; };
+  s.querySelector("#sReplaceYes").onclick = () => { replaceOk = true; s.querySelector("#sReplace").hidden = true; s.querySelector("#sSave").click(); };
   s.querySelector("#sSave").onclick = async () => {
     const err = s.querySelector("#sErr"), btn = s.querySelector("#sSave");
+    err.hidden = true;
     const hRaw = s.querySelector("#sH").value;
     const heightCm = hRaw === "" ? null : Math.round(parseFloat(hRaw) * 10) / 10;
     if (!file && heightCm === null) { err.textContent = "Add a photo or a height."; err.hidden = false; return; }
@@ -751,6 +776,13 @@ function openSnapshot(id) {
     btn.disabled = true; btn.textContent = "Saving…";
     const d = s.querySelector("#sD").value || today;
     const at = d === today ? new Date().toISOString() : new Date(d + "T12:00:00").toISOString();
+    const block = file ? blockingPhoto(p, at) : null;
+    if (block && !replaceOk) {
+      s.querySelector("#sReplaceTxt").textContent = `There's already a photo from ${fmtDate(block.at)} (one per ${periodWord()}). Replace it with this one?`;
+      s.querySelector("#sReplace").hidden = false;
+      btn.disabled = false; btn.textContent = "Add to timeline";
+      return;
+    }
     let photoId = null;
     if (file) {
       try { photoId = await storePhoto(file); }
@@ -758,9 +790,8 @@ function openSnapshot(id) {
     }
     const snap = { id: uid(), at, photoId, note: s.querySelector("#sN").value.trim() };
     if (heightCm !== null) snap.heightCm = heightCm;
-    p.growth = [...(p.growth || []), snap];
-    await savePlant(p);
-    toast("Snapshot added"); openDetail(id);
+    await addSnapshot(p, snap, block);
+    toast(block ? "Photo replaced" : "Snapshot added"); openDetail(id);
   };
 }
 
@@ -842,6 +873,12 @@ async function openSettings() {
       <button class="btn" id="badgeBtn" ${perm === "granted" ? "disabled" : ""}>${perm === "granted" ? "Icon badge is on" : perm === "denied" ? "Blocked in iOS Settings" : "Turn on icon badge"}</button>
     </div>` : ""}
     <div class="card">
+      <h3>Growth photos</h3>
+      <div class="field"><label for="photoPeriod">Timeline photos per plant</label>
+        <select id="photoPeriod"><option value="week" ${photoPeriod() === "week" ? "selected" : ""}>One per week</option><option value="month" ${photoPeriod() === "month" ? "selected" : ""}>One per month</option></select></div>
+      <p class="hint">Keeps the timeline even. You can always replace the latest photo or log a height.</p>
+    </div>
+    <div class="card">
       <h3>Winter care</h3>
       <label class="check"><input type="checkbox" id="winterOn" ${winterModeOn() ? "checked" : ""}> From November to February, water less often and pause feeding</label>
       <p class="hint">Watering intervals are stretched by half. Most houseplants rest in winter, and overwatering is the most common way they die.</p>
@@ -865,6 +902,7 @@ async function openSettings() {
     s.querySelector("#pnMsg").textContent = v ? "Saved. Try Scan plant when adding a plant." : "Key removed.";
   };
   s.querySelector("#pnClear")?.addEventListener("click", () => { plantnet.setKey(""); s.querySelector("#pnKey").value = ""; s.querySelector("#pnMsg").textContent = "Key removed."; });
+  s.querySelector("#photoPeriod").onchange = (e) => setPhotoPeriod(e.target.value);
   s.querySelector("#winterOn").onchange = (e) => { setWinterMode(e.target.checked); render(); };
   s.querySelector("#splashOn").onchange = (e) => { try { localStorage.setItem("leafkin.splash", e.target.checked ? "on" : "off"); } catch {} };
   s.querySelector("#badgeBtn")?.addEventListener("click", async (e) => {

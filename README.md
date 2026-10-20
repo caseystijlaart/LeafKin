@@ -9,7 +9,7 @@ A plant care app that installs on your iPhone home screen as a Progressive Web A
 - **Fills care in automatically** from a built-in library of 245 plants and 89 varieties (houseplants, succulents, orchids, herbs, balcony plants): light, direct sun hours, watering style, humidity, pet safety, watering and feeding intervals
 - Watering and feeding reminders in the app, sorted by what needs attention first, with one-tap logging and undo
 - **Health check**: take a photo, tick what you see, and get the likely causes and a few short fixes
-- **Growth timeline**: dated photos and heights, a height chart, and a then-and-now comparison
+- **Growth timeline**: dated photos and heights, a height chart, and a then-and-now comparison; one photo per plant per week or month (replace the latest any time)
 - Light-aware care: the light and direct sun at the plant's spot (and a bathroom or outdoor room) adjust the watering and feeding interval
 - Compact list grouped by what's due, with search and room filters for big collections
 - Winter care (Nov–Feb): watering stretched by half, feeding paused (can be switched off)
