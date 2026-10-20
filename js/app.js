@@ -1,4 +1,4 @@
-import * as db from "./db.js";
+import * as db from "./sync.js";
 import { DAY, daysBetween, dueIn, dueLabel, ageLabel, fmtDate, fmtDateTime, esc, uid, resizeImage } from "./util.js";
 import { PLANTS, SPECIES, CULTIVARS, LIGHT, SUN, SUN_SHORT, WATER, HUMIDITY, PET, searchPlants, matchScientific, matchAny, cultivarsForGenus } from "./care-library.js";
 import * as plantnet from "./plantnet.js";
@@ -6,7 +6,7 @@ import { SYMPTOMS, assess, STATUS_LABEL } from "./health.js";
 import { ROOMS, adjustForConditions, fitText } from "./conditions.js";
 import { waterDue, feedDue, urgency, waterInterval, feedInterval, winterActive, winterModeOn, setWinterMode, snoozeDate, repotDue, photoDue, lastPhotoAt, isWinter as inWinter, PHOTO_PERIODS, photoPeriod, setPhotoPeriod, blockingPhoto, nextPhotoDate } from "./schedule.js";
 
-const APP_VERSION = "1.4.2";
+const APP_VERSION = "2.0.0";
 const $ = (s, root = document) => root.querySelector(s);
 const state = { plants: [] };
 const isWinter = () => inWinter();
@@ -39,6 +39,7 @@ async function storePhoto(file) {
 
 /* ---------- data ---------- */
 async function load() { state.plants = await db.getPlants(); }
+let detailId = null; // plant whose details are open, refreshed when housemates change something
 async function savePlant(p) {
   p.updatedAt = new Date().toISOString();
   const i = state.plants.findIndex((x) => x.id === p.id);
@@ -249,7 +250,7 @@ async function logCare(id, type) {
     p.lastWatered = now; p.snoozeUntil = null; p.snoozedThisCycle = false;
   } else if (type === "feed") p.lastFed = now;
   else if (type === "repot") p.lastRepotted = now;
-  p.history = [{ type, at: now }, ...(p.history || [])].slice(0, 100);
+  p.history = [{ id: uid(), type, at: now }, ...(p.history || [])];
   await savePlant(p);
   toast(msg, "Undo", undoTo(p, prev));
   if (isOpen("detail")) openDetail(id);
@@ -260,7 +261,7 @@ async function snoozeWater(id, days = 2) {
   const prev = snapshotCare(p);
   p.snoozeUntil = snoozeDate(p, days);
   p.snoozedThisCycle = true;
-  p.history = [{ type: "snooze", at: new Date().toISOString() }, ...(p.history || [])].slice(0, 100);
+  p.history = [{ id: uid(), type: "snooze", at: new Date().toISOString() }, ...(p.history || [])];
   await savePlant(p);
   toast(`${p.name}: checking again in ${Math.max(1, waterDue(p))} days`, "Undo", undoTo(p, prev));
   if (isOpen("detail")) openDetail(id);
@@ -553,6 +554,7 @@ function careRows(p) {
 
 function openDetail(id) {
   const p = state.plants.find((x) => x.id === id); if (!p) return closeSheet();
+  detailId = id;
   const c = p.care || {};
   const rows = careRows(p);
   const hist = (p.history || []).slice(0, 8);
@@ -581,7 +583,7 @@ function openDetail(id) {
     <div class="card" id="growthCard">${growthHtml(p)}</div>
 
     <details class="card"><summary><h3 style="display:inline">History</h3></summary>
-      ${hist.length ? `<ul class="log" style="margin-top:8px">${hist.map((h) => `<li><span>${{ water: "💧 Watered", feed: "Fed", snooze: "Soil still damp", repot: "Repotted" }[h.type] || h.type}</span><span class="mono muted">${fmtDateTime(h.at)}</span></li>`).join("")}</ul>` : `<p class="muted" style="margin-top:8px">Nothing logged yet.</p>`}
+      ${hist.length ? `<ul class="log" style="margin-top:8px">${hist.map((h) => `<li><span>${{ water: "💧 Watered", feed: "Fed", snooze: "Soil still damp", repot: "Repotted" }[h.type] || h.type}${db.members().length > 1 && db.memberName(h.by) ? ` <span class="muted">· ${esc(db.memberName(h.by))}</span>` : ""}</span><span class="mono muted">${fmtDateTime(h.at)}</span></li>`).join("")}</ul>` : `<p class="muted" style="margin-top:8px">Nothing logged yet.</p>`}
     </details>
 
     <div class="btnrow"><button class="btn grow" id="dEdit">Edit</button><button class="btn danger grow" id="dDel">Delete</button></div>
@@ -640,7 +642,7 @@ function openHealth(id) {
     const result = assess(p, [...picked]);
     let photoId = null;
     if (file) { try { photoId = await storePhoto(file); } catch { /* optional */ } }
-    p.checks = [{ at: new Date().toISOString(), status: result.status, symptoms: [...picked], causes: result.causes.map((x) => ({ title: x.title })), photoId }, ...(p.checks || [])].slice(0, 20);
+    p.checks = [{ id: uid(), at: new Date().toISOString(), status: result.status, symptoms: [...picked], causes: result.causes.map((x) => ({ title: x.title })), photoId }, ...(p.checks || [])];
     if (photoId && s.querySelector("#hKeep").checked) {
       await addSnapshot(p, { id: uid(), at: new Date().toISOString(), photoId, note: STATUS_LABEL[result.status] }, blk);
     } else {
@@ -856,8 +858,30 @@ async function openSettings() {
   const perm = "Notification" in window ? Notification.permission : "unsupported";
   const key = plantnet.deviceKey();
   const siteKey = plantnet.hasSiteKey();
+  const hh = db.household(), me = db.user(), mem = db.members();
+  const owner = hh?.role === "owner";
+  const myName = mem.find((m) => m.id === me?.id)?.name || "";
+  const legacy = await db.legacyPlants();
   const s = sheet("settings", `
     <div class="sheet-head"><h2>Settings</h2><button class="x" data-close aria-label="Close">×</button></div>
+    ${hh ? `<div class="card">
+      <h3>Household</h3>
+      <div class="field"><label for="hhName">Name</label><input id="hhName" maxlength="60" value="${esc(hh.name)}" ${owner ? "" : "disabled"}></div>
+      <ul class="members">${mem.map((m) => `<li><span>${esc(m.name || "No name yet")}${m.id === me?.id ? ` <span class="muted">(you)</span>` : ""}</span>
+        <span class="mrole">${m.role === "owner" ? `<span class="pill plain">Owner</span>` : ""}${owner && m.id !== me?.id ? `<button class="btn sm danger" data-rm="${esc(m.id)}">Remove</button>` : ""}</span></li>`).join("")}</ul>
+      <button class="btn" id="invBtn">Invite someone</button>
+      <div class="invite" id="invOut" hidden></div>
+      ${legacy.length ? `<button class="btn" id="legacyBtn">Move ${legacy.length} plant${legacy.length === 1 ? "" : "s"} from before accounts into this household</button>` : ""}
+      <button class="btn danger" id="leaveBtn">Leave household</button>
+      <div class="confirm" id="leaveConfirm" hidden><span>${mem.length > 1 ? "You'll lose access to these plants. Leave?" : "You're the only member, so the household and all its plants and photos will be deleted. Leave?"}</span><button class="btn danger" id="leaveYes">Leave</button><button class="btn" id="leaveNo">Stay</button></div>
+    </div>
+    <div class="card">
+      <h3>Your account</h3>
+      <div class="field"><label for="myName">Your name</label><input id="myName" maxlength="40" value="${esc(myName)}" placeholder="Shown to your housemates"></div>
+      <p class="hint">Signed in as ${esc(me?.email || "")}</p>
+      <button class="btn" id="signOutBtn">Sign out</button>
+      <div class="confirm" id="soConfirm" hidden><span id="soTxt"></span><button class="btn danger" id="soYes">Sign out</button><button class="btn" id="soNo">Cancel</button></div>
+    </div>` : ""}
     <div class="card">
       <h3>Plant scanning</h3>
       ${siteKey && !key ? `<p>Scanning is ready on every device. It uses Pl@ntNet, free for up to 500 scans a day.</p>
@@ -890,8 +914,8 @@ async function openSettings() {
     </div>
     <div class="card">
       <h3>Backup</h3>
-      <p>Plants and photos are stored on this device only. Save a backup now and then, or to move to another device.</p>
-      <div class="btnrow"><button class="btn grow" id="expBtn">Save backup</button><button class="btn grow" id="impBtn">Restore backup</button></div>
+      <p>Save a copy of all plants and photos as a file. Adding from a backup puts its plants into this household.</p>
+      <div class="btnrow"><button class="btn grow" id="expBtn">Save backup</button><button class="btn grow" id="impBtn">Add from backup</button></div>
       <input type="file" id="impIn" accept="application/json,.json" hidden>
       <p class="hint" id="bMsg">${mb ? `Using about ${mb} MB.` : ""}</p>
     </div>
@@ -903,6 +927,7 @@ async function openSettings() {
   };
   s.querySelector("#pnClear")?.addEventListener("click", () => { plantnet.setKey(""); s.querySelector("#pnKey").value = ""; s.querySelector("#pnMsg").textContent = "Key removed."; });
   s.querySelector("#photoPeriod").onchange = (e) => setPhotoPeriod(e.target.value);
+  if (hh) wireAccountSettings(s, owner);
   s.querySelector("#winterOn").onchange = (e) => { setWinterMode(e.target.checked); render(); };
   s.querySelector("#splashOn").onchange = (e) => { try { localStorage.setItem("leafkin.splash", e.target.checked ? "on" : "off"); } catch {} };
   s.querySelector("#badgeBtn")?.addEventListener("click", async (e) => {
@@ -925,11 +950,210 @@ async function openSettings() {
     try {
       const n = await db.importBackup(f);
       await load(); render();
-      msg.textContent = `Restored ${n} plant${n === 1 ? "" : "s"}.`;
+      msg.textContent = `Added ${n} plant${n === 1 ? "" : "s"}.`;
     } catch (e) {
       msg.textContent = e?.message === "not_leafkin" ? "That file isn't a LeafKin backup." : "Couldn't read that backup file.";
     }
   };
+}
+
+function wireAccountSettings(s, owner) {
+  const $s = (q) => s.querySelector(q);
+  const fail = (e) => toast(e?.message && /fetch|network|offline/i.test(e.message) ? "You're offline. Try again when connected." : "That didn't work. Try again.");
+  if (owner) $s("#hhName").onchange = async (e) => {
+    const v = e.target.value.trim();
+    if (!v) { e.target.value = db.household().name; return; }
+    try { await db.renameHousehold(v); toast("Household renamed"); } catch (er) { fail(er); }
+  };
+  $s("#myName").onchange = async (e) => { try { await db.setMyName(e.target.value.trim()); toast("Name saved"); } catch (er) { fail(er); } };
+  s.querySelectorAll("[data-rm]").forEach((b) => (b.onclick = async () => {
+    if (b.dataset.armed !== "1") { b.dataset.armed = "1"; b.textContent = "Tap to confirm"; return; }
+    try { await db.removeMember(b.dataset.rm); b.closest("li").remove(); toast("Removed from the household"); } catch (er) { fail(er); }
+  }));
+  $s("#invBtn").onclick = async (e) => {
+    e.target.disabled = true;
+    try {
+      const code = await db.createInvite();
+      const link = `${location.origin}${location.pathname}?join=${code}`;
+      const out = $s("#invOut");
+      out.hidden = false;
+      out.innerHTML = `<p>Give this code to the person you want to invite. They open LeafKin, sign in and enter it.</p>
+        <p class="invite-code mono">${esc(code)}</p><p class="hint">Valid for 7 days, for as many people as you like.</p>
+        <div class="btnrow"><button class="btn grow" id="invShare">Share</button><button class="btn grow" id="invCopy">Copy code</button></div>`;
+      const text = `Join our plants on LeafKin: open ${link} , sign in and enter code ${code}.`;
+      out.querySelector("#invShare").onclick = async () => {
+        if (navigator.share) { try { await navigator.share({ title: "LeafKin", text }); return; } catch (x) { if (x?.name === "AbortError") return; } }
+        try { await navigator.clipboard.writeText(text); toast("Invite copied"); } catch { toast("Copy the code shown above"); }
+      };
+      out.querySelector("#invCopy").onclick = async () => { try { await navigator.clipboard.writeText(code); toast("Code copied"); } catch { toast("Copy the code shown above"); } };
+    } catch (er) { fail(er); }
+    e.target.disabled = false;
+  };
+  $s("#legacyBtn")?.addEventListener("click", async (e) => {
+    e.target.disabled = true;
+    const n = await db.importPlants(await db.legacyPlants());
+    await db.clearLegacy(); await load(); render();
+    e.target.remove(); toast(`Moved ${n} plant${n === 1 ? "" : "s"} into the household`);
+  });
+  $s("#leaveBtn").onclick = () => { $s("#leaveConfirm").hidden = false; };
+  $s("#leaveNo").onclick = () => { $s("#leaveConfirm").hidden = true; };
+  $s("#leaveYes").onclick = async () => {
+    try { const r = await db.leaveHousehold(); closeSheet(); state.plants = []; render(); afterGate(r); } catch (er) { fail(er); }
+  };
+  $s("#signOutBtn").onclick = async () => {
+    const n = await db.pendingCount();
+    $s("#soTxt").textContent = n ? `${n} change${n === 1 ? " hasn't" : "s haven't"} been sent yet and will be lost. Sign out anyway?` : "Sign out of LeafKin on this device?";
+    $s("#soConfirm").hidden = false;
+  };
+  $s("#soNo").onclick = () => { $s("#soConfirm").hidden = true; };
+  $s("#soYes").onclick = async () => { await db.signOut(); closeSheet(); state.plants = []; render(); gateSignIn(); };
+}
+
+/* ---------- account gate: sign in, then join or create a household ---------- */
+function showGate(html) {
+  const g = $("#gate");
+  g.innerHTML = `<div class="gate-inner"><div class="gate-brand">${leafSvg}<span>LeafKin</span></div>${html}</div>`;
+  g.hidden = false;
+  document.body.classList.add("gated");
+  return g;
+}
+function hideGate() { const g = $("#gate"); g.hidden = true; g.innerHTML = ""; document.body.classList.remove("gated"); }
+
+function authError(e) {
+  const m = String(e?.message || e || "");
+  if (/not authori[sz]ed/i.test(m)) return "Codes can't be sent to this address yet: LeafKin's email service still needs to be set up for other people.";
+  if (/rate|too many|security purposes|seconds/i.test(m)) return "Please wait a minute before asking for another code.";
+  if (/expired|invalid|token/i.test(m)) return "That code is wrong or has expired. Ask for a new one.";
+  if (/fetch|network|load failed/i.test(m)) return "You're offline. Connect to the internet to sign in.";
+  if (/invalid_code/.test(m)) return "That code doesn't work. Invite codes last 7 days; ask for a new one.";
+  if (/already_in_household/.test(m)) return "You're already in a household.";
+  return "Something went wrong. Try again.";
+}
+
+function gateUnconfigured() {
+  showGate(`<h2>Almost ready</h2><p class="muted">This copy of LeafKin isn't connected to its database yet. Add the Supabase settings to the repository and deploy again; the README explains how.</p>`);
+}
+
+function gateSignIn() {
+  const g = showGate(`
+    <h2>Sign in</h2>
+    <p class="muted">We'll email you a 6-digit code. No password needed.</p>
+    <form id="gEmailForm" class="gate-form" novalidate>
+      <div class="field"><label for="gEmail">Email</label><input id="gEmail" type="email" autocomplete="email" inputmode="email" autocapitalize="off" placeholder="you@example.com"></div>
+      <button class="btn primary" type="submit">Send code</button>
+    </form>
+    <form id="gCodeForm" class="gate-form" hidden novalidate>
+      <p id="gSent"></p>
+      <div class="field"><label for="gCode">Code</label><input id="gCode" class="code-input mono" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="••••••"></div>
+      <button class="btn primary" type="submit" id="gVerify">Sign in</button>
+      <div class="btnrow"><button type="button" class="btn grow" id="gResend">Send a new code</button><button type="button" class="btn grow" id="gOther">Other email</button></div>
+    </form>
+    <p class="err" id="gErr" hidden></p>`);
+  const $g = (q) => g.querySelector(q);
+  let email = "", wait = null;
+  const err = (m) => { $g("#gErr").textContent = m || ""; $g("#gErr").hidden = !m; };
+  const cooldown = () => {
+    let left = 60; const b = $g("#gResend"); b.disabled = true; clearInterval(wait);
+    wait = setInterval(() => { left--; b.textContent = left > 0 ? `New code in ${left} s` : "Send a new code"; if (left <= 0) { clearInterval(wait); b.disabled = false; } }, 1000);
+  };
+  const send = async (btn) => {
+    err(""); btn.disabled = true;
+    try {
+      await db.sendCode(email);
+      $g("#gEmailForm").hidden = true; $g("#gCodeForm").hidden = false;
+      $g("#gSent").textContent = `We sent a code to ${email}. It can take a minute; check your spam folder too.`;
+      $g("#gCode").value = ""; $g("#gCode").focus(); cooldown();
+    } catch (e) { err(authError(e)); }
+    btn.disabled = false;
+  };
+  $g("#gEmailForm").onsubmit = (e) => {
+    e.preventDefault();
+    email = $g("#gEmail").value.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return err("Enter a valid email address.");
+    send($g("#gEmailForm button"));
+  };
+  const verify = async () => {
+    const code = $g("#gCode").value.replace(/\D/g, "");
+    if (code.length < 6) return err("Enter the 6-digit code from the email.");
+    err(""); $g("#gVerify").disabled = true;
+    try { const u = await db.verifyCode(email, code); await afterGate(await db.signedIn(u)); }
+    catch (e) { err(authError(e)); $g("#gVerify").disabled = false; }
+  };
+  $g("#gCodeForm").onsubmit = (e) => { e.preventDefault(); verify(); };
+  $g("#gCode").addEventListener("input", (e) => { if (e.target.value.replace(/\D/g, "").length === 6) verify(); });
+  $g("#gResend").onclick = () => send($g("#gResend"));
+  $g("#gOther").onclick = () => { clearInterval(wait); $g("#gCodeForm").hidden = true; $g("#gEmailForm").hidden = false; err(""); $g("#gEmail").focus(); };
+}
+
+function gateHousehold() {
+  const joinCode = (new URLSearchParams(location.search).get("join") || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+  const g = showGate(`
+    <h2>Your household</h2>
+    <p class="muted">Everyone in a household sees the same plants and can log watering. Got an invite code? Join. Otherwise start your own and invite people later.</p>
+    <form id="gJoin" class="gate-form card" novalidate>
+      <h3>Join with a code</h3>
+      <div class="field"><label for="gJoinCode">Invite code</label><input id="gJoinCode" class="code-input mono" autocapitalize="characters" autocomplete="off" maxlength="6" value="${esc(joinCode)}" placeholder="ABC234"></div>
+      <button class="btn ${joinCode ? "primary" : ""}" type="submit">Join household</button>
+    </form>
+    <form id="gCreate" class="gate-form card" novalidate>
+      <h3>Or start a new one</h3>
+      <div class="field"><label for="gName">Name</label><input id="gName" maxlength="60" value="Our plants"></div>
+      <button class="btn ${joinCode ? "" : "primary"}" type="submit">Create household</button>
+    </form>
+    <p class="err" id="gErr" hidden></p>
+    <button class="btn" id="gSignOut">Sign out</button>`);
+  const $g = (q) => g.querySelector(q);
+  const err = (m) => { $g("#gErr").textContent = m || ""; $g("#gErr").hidden = !m; };
+  const run = async (btn, fn) => { err(""); btn.disabled = true; try { await afterGate(await fn()); } catch (e) { err(authError(e)); btn.disabled = false; } };
+  $g("#gJoin").onsubmit = (e) => {
+    e.preventDefault();
+    const code = $g("#gJoinCode").value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (code.length !== 6) return err("Invite codes have 6 characters.");
+    run($g("#gJoin button"), () => db.joinHousehold(code));
+  };
+  $g("#gCreate").onsubmit = (e) => { e.preventDefault(); run($g("#gCreate button"), () => db.createHousehold($g("#gName").value.trim() || "Our plants")); };
+  $g("#gSignOut").onclick = async () => { await db.signOut(); gateSignIn(); };
+}
+
+async function afterGate(result) {
+  if (result === "unconfigured") return gateUnconfigured();
+  if (result === "signed-out") return gateSignIn();
+  if (result === "no-household") return gateHousehold();
+  hideGate();
+  if (location.search.includes("join=")) history.replaceState(null, "", location.pathname);
+  await load(); render(); db.persist();
+  updateSyncNote();
+  const legacy = await db.legacyPlants();
+  if (legacy.length && !tipDismissed("legacy")) offerLegacyImport(legacy);
+}
+
+function offerLegacyImport(legacy) {
+  const n = legacy.length;
+  const s = sheet("import", `
+    <div class="sheet-head"><h2>Plants on this phone</h2><button class="x" data-close aria-label="Close">×</button></div>
+    <p>This phone has ${n} plant${n === 1 ? "" : "s"} from before accounts. Move ${n === 1 ? "it" : "them"} into ${esc(db.household()?.name || "your household")}, with photos and history, so everyone in it can see ${n === 1 ? "it" : "them"}?</p>
+    <button class="btn primary" id="liYes">Move ${n} plant${n === 1 ? "" : "s"}</button>
+    <button class="btn" id="liLater">Not now</button>
+    <p class="hint">"Not now" keeps them on this phone. You can still move them from Settings.</p>`);
+  s.querySelector("#liLater").onclick = () => { dismissTip("legacy"); closeSheet(); };
+  s.querySelector("#liYes").onclick = async (e) => {
+    e.target.disabled = true; e.target.textContent = "Moving…";
+    const moved = await db.importPlants(legacy);
+    await db.clearLegacy(); await load(); render(); closeSheet();
+    toast(`Moved ${moved} plant${moved === 1 ? "" : "s"}. Photos upload in the background.`);
+  };
+}
+
+// "Offline · 3 changes waiting" under the date, only when something is pending or wrong.
+async function updateSyncNote() {
+  const el = $("#syncNote"); if (!el) return;
+  const n = await db.pendingCount().catch(() => 0);
+  const { online } = db.status();
+  const err = db.lastError();
+  el.textContent = !online ? (n ? `Offline · ${n} change${n === 1 ? "" : "s"} waiting` : "Offline")
+    : n ? "Saving…" : err ? "A change couldn't be saved. Reopen LeafKin to refresh." : "";
+  el.hidden = !el.textContent;
+  el.classList.toggle("warn", !!err && online && !n);
 }
 
 /* ---------- splash, install hint & updates ---------- */
@@ -979,7 +1203,19 @@ setInterval(render, 60 * 60 * 1000);
 runSplash();
 setupInstallHint();
 setupServiceWorker();
-load().then(() => { render(); db.persist(); }).catch(() => {
+db.onChange(async (what) => {
+  if (what === "plants") {
+    await load(); render();
+    if (isOpen("detail") && detailId) openDetail(detailId);
+  } else if (what === "household") {
+    closeSheet(); state.plants = []; render(); afterGate("no-household");
+  } else if (what === "members" && isOpen("detail") && detailId) {
+    openDetail(detailId);
+  }
+  updateSyncNote();
+});
+db.start().then(afterGate).catch((e) => {
+  console.error(e);
   $("#emptyState").hidden = false;
   toast("Couldn't open storage. Private browsing can block it.");
 });

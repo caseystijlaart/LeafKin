@@ -1,8 +1,12 @@
 # LeafKin
 
 A plant care app that installs on your iPhone home screen as a Progressive Web App (PWA). No App Store, no developer certificates.
+From 2.0, plants live in a shared **household** on Supabase: everyone in it sees the same plants, on every device.
 
 ## What it does
+
+- **Households**: sign in with a 6-digit email code, create a household or join one with an invite code; everyone sees the same plants, photos and care log, with who did what ("Watered · Bob")
+- **Sync**: live updates between phones; works offline and sends changes when back online; plants from LeafKin 1.x on a phone can be moved into the household
 
 - Add plants by **scanning** them (Pl@ntNet suggests up to 5 species) or by typing, with **autocomplete** in English, Dutch or Latin
 - **Varieties** (cultivars such as Peace lily 'Diamond Sensation'): pick one after a scan or type it; each plant is saved as its exact type. Pl@ntNet itself only identifies species.
@@ -16,7 +20,7 @@ A plant care app that installs on your iPhone home screen as a Progressive Web A
 - Swipe a plant right when watered, left when the soil is still damp (checks again in 2 days); after two damp rounds in a row the interval grows by a day
 - Repotting reminder in spring when it's been about 2 years; a small camera mark when a plant's last photo is a month old
 - Optional icon badge, backup and restore
-- Works offline once installed. All data stays on the device (IndexedDB).
+- Works offline once installed: a local copy (IndexedDB) opens instantly and queues changes.
 
 ## Project layout
 
@@ -26,7 +30,10 @@ manifest.webmanifest    PWA manifest (name, icons, standalone display)
 sw.js                   service worker (offline cache) — bump VERSION on every release
 css/app.css             styles, light and dark
 js/app.js               UI
-js/db.js                on-device storage (the only file to swap for Supabase later)
+js/db.js                local copy: plants, photos, queued changes (IndexedDB)
+js/sync.js              turns each saved plant into queued changes, sends and receives them
+js/cloud.js             Supabase: sign-in, households, data, photos, live updates
+js/vendor/supabase.js   supabase-js, bundled into one file (no build step for the app)
 js/care-library.js      care labels, autocomplete, scan matching
 js/plant-data.js        the plant care profiles (add new plants here)
 js/plantnet.js          Pl@ntNet species identification
@@ -36,6 +43,8 @@ js/conditions.js        light → watering adjustment
 js/schedule.js          due dates: winter care, snooze, repotting, photo nudge
 js/util.js              dates, image resizing
 icons/                  app icons
+supabase/migrations/    database schema and security rules
+tests/                  schema and sync tests (see Tests)
 .github/workflows/      GitHub Pages deploy
 ```
 
@@ -78,12 +87,39 @@ Open the site in Safari → Share → **Add to Home Screen**. Data saved in the 
 
 - Patch (1.4.0 → 1.4.1): fixes and small tweaks
 - Minor (1.4.x → 1.5.0): a new feature
-- Major (→ 2.0.0): a big change, such as moving to Supabase with sync and push notifications
+- Major (→ 3.0.0): a big change, like 2.0.0's move to shared households on Supabase
 
 Keep `APP_VERSION` in `js/app.js` and `VERSION` in `sw.js` in step.
 
+## Setting up 2.0 (Supabase)
+
+Do this once before deploying the `v2` branch.
+
+1. **Project**: create a new project at [supabase.com](https://supabase.com) (free plan, region Frankfurt).
+2. **Database**: in **SQL Editor**, paste and run `supabase/migrations/20261020120000_init.sql`.
+3. **Sign-in by code**: **Authentication → Email Templates**. In both **Magic Link** and **Confirm signup**, replace the body with:
+   ```html
+   <h2>Your LeafKin code</h2>
+   <p>Enter this code in LeafKin: <strong>{{ .Token }}</strong></p>
+   <p>It works for one hour. If you didn't ask for it, ignore this email.</p>
+   ```
+   (New accounts get the Confirm signup email, returning ones the Magic Link email.)
+4. **Site address**: **Authentication → URL Configuration → Site URL**: `https://caseystijlaart.github.io/LeafKin/`.
+5. **Email service**: Supabase's built-in email only reaches members of your Supabase team, 2 emails an hour. For anyone else, connect a free SMTP service under **Authentication → Emails → SMTP Settings**, e.g. Brevo (300 emails/day, works with a verified sender address) or Resend (needs your own domain).
+6. **Keys for the site**: **Project Settings → API**, copy the Project URL and the `anon` public key into repository secrets `SUPABASE_URL` and `SUPABASE_ANON_KEY` (**Settings → Secrets and variables → Actions**). The anon key is meant to be public; the security rules protect the data.
+7. **Deploy**: merge `v2` into `main`. On first open, LeafKin asks you to sign in; plants saved by 1.x on that phone are offered for import into your household.
+
+Free plan limits: 500 MB database, 1 GB photos, 5 GB transfer a month. A project with no activity for a week is paused; restore it from the dashboard.
+
+## Tests
+
+```sh
+npm i --no-save @electric-sql/pglite fake-indexeddb
+node tests/sql/test-migration.mjs   # schema + security rules, several users
+node tests/sync/test-sync.mjs       # two phones sharing a household, offline queue, import
+```
+
 ## Not in this version
 
-- Push notifications (planned with Supabase: Web Push + a daily scheduled function)
-- Sync between devices (use Backup → Restore for now)
+- Push notifications (2.1.0: Web Push + a daily scheduled function; `push_subscriptions` table is ready)
 - AI photo diagnosis: the health check works from the symptoms you tick

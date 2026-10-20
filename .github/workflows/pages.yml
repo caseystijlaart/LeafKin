@@ -28,16 +28,23 @@ jobs:
         run: |
           mkdir -p _site
           cp -r index.html manifest.webmanifest sw.js css js icons _site/
-      - name: Add the Pl@ntNet key from repository secrets
+      - name: Add keys from repository secrets
         env:
           PLANTNET_API_KEY: ${{ secrets.PLANTNET_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          if [ -n "$PLANTNET_API_KEY" ]; then
-            node -e 'process.stdout.write("export const PLANTNET_KEY = " + JSON.stringify(process.env.PLANTNET_API_KEY.trim()) + ";\n")' > _site/js/config.js
-            echo "Pl@ntNet key added."
-          else
-            echo "::warning::PLANTNET_API_KEY secret is not set; scanning will ask for a key in Settings."
-          fi
+          node -e '
+            const k = (n) => JSON.stringify((process.env[n] || "").trim());
+            process.stdout.write(
+              "export const PLANTNET_KEY = " + k("PLANTNET_API_KEY") + ";\n" +
+              "export const SUPABASE_URL = " + k("SUPABASE_URL") + ";\n" +
+              "export const SUPABASE_ANON_KEY = " + k("SUPABASE_ANON_KEY") + ";\n")' > _site/js/config.js
+          for n in PLANTNET_API_KEY SUPABASE_URL SUPABASE_ANON_KEY; do
+            [ -n "${!n}" ] && echo "$n added." || echo "::warning::$n secret is not set."
+          done
+      - name: Stamp the service worker so phones fetch fresh files after every deploy
+        run: echo "// build ${GITHUB_SHA}" >> _site/sw.js
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

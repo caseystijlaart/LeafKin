@@ -119,6 +119,25 @@ header.top { display: flex; align-items: flex-end; justify-content: space-betwee
 .qbtn.food { background: var(--wash-food); color: var(--food); border-color: transparent; }
 .noresults { text-align: center; padding: 20px 0; }
 
+/* sync status, account gate, household */
+.syncnote { font-size: .82rem; color: var(--muted); }
+.syncnote.warn { color: var(--alert); }
+.gate { position: fixed; inset: 0; z-index: 30; background: var(--bg); overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: calc(24px + env(safe-area-inset-top, 0px)) 16px calc(24px + env(safe-area-inset-bottom, 0px)); }
+body.gated { overflow: hidden; }
+body.gated .fab { display: none; }
+.gate-inner { max-width: 420px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+.gate-brand { display: flex; align-items: center; gap: 10px; color: var(--leaf); font-family: var(--display); font-weight: 700; font-size: 1.6rem; margin-bottom: 8px; }
+.gate-form { display: flex; flex-direction: column; gap: 12px; }
+.code-input { font-size: 1.6rem !important; letter-spacing: .3em; text-align: center; text-transform: uppercase; }
+.members { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.members li { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding-block: 8px; border-bottom: 1px solid var(--line); min-height: 48px; }
+.members li:last-child { border-bottom: 0; }
+.mrole { display: flex; gap: 8px; align-items: center; }
+.btn.sm { min-height: 34px; padding: 6px 12px; font-size: .85rem; }
+.invite { display: flex; flex-direction: column; gap: 8px; }
+.invite-code { font-size: 2rem; font-weight: 500; letter-spacing: .25em; text-align: center; background: var(--bg); border-radius: 12px; padding: 12px; }
+
 /* sheets */
 .scrim { position: fixed; inset: 0; background: var(--scrim); z-index: 10; display: flex; align-items: flex-end; justify-content: center; }
 .sheet { background: var(--bg); width: 100%; max-width: 600px; max-height: 92%; overflow: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; border-radius: 20px 20px 0 0; padding: 18px 16px calc(24px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 16px; animation: up .22s ease-out; }
