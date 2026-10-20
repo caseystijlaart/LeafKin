@@ -34,6 +34,12 @@ export function ageLabel(fromIso, toIso) {
 export const fmtDate = (iso) => new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: new Date(iso).getFullYear() === new Date().getFullYear() ? undefined : "numeric" });
 export const fmtDateTime = (iso) => new Date(iso).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
+// "a" or "an" before a word, by how it sounds: an Arrowhead plant, a Uniflora, an hour.
+export function aOrAn(word) {
+  const w = String(word || "").trim().toLowerCase();
+  const an = /^[aeiou]/.test(w) ? !/^(uni|use|usu|eu|one|once|ur[aeiou])/.test(w) : /^(hour|honou?r|heir|honest)/.test(w);
+  return `${an ? "an" : "a"} ${String(word || "").trim()}`;
+}
 export const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 // Random UUID v4 (the database uses UUIDs for every id).
 export const uid = () => {

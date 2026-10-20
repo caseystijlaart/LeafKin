@@ -1,3 +1,5 @@
+import { aOrAn } from "./util.js";
+
 // The light at a plant's spot decides how fast its soil dries.
 // Light + direct sun (+ a humid or outdoor room) → watering and feeding interval.
 
@@ -29,7 +31,7 @@ export function adjustForConditions(prof, { light, sun, room } = {}) {
 
 export function fitText(fit, prof) {
   const name = prof?.en || "this plant";
-  if (fit === "dark") return `Darker than a ${name} likes: it grows slower and needs less water.`;
-  if (fit === "bright") return `Sunnier than a ${name} likes: watch for pale or scorched leaves.`;
+  if (fit === "dark") return `Darker than ${aOrAn(name)} likes: it grows slower and needs less water.`;
+  if (fit === "bright") return `Sunnier than ${aOrAn(name)} likes: watch for pale or scorched leaves.`;
   return "";
 }

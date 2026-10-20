@@ -1,5 +1,5 @@
 import * as db from "./sync.js";
-import { DAY, daysBetween, dueIn, dueLabel, ageLabel, fmtDate, fmtDateTime, esc, uid, resizeImage } from "./util.js";
+import { DAY, daysBetween, dueIn, dueLabel, ageLabel, fmtDate, fmtDateTime, esc, uid, resizeImage, aOrAn } from "./util.js";
 import { PLANTS, SPECIES, CULTIVARS, LIGHT, SUN, SUN_SHORT, WATER, HUMIDITY, PET, searchPlants, matchScientific, matchAny, cultivarsForGenus } from "./care-library.js";
 import * as plantnet from "./plantnet.js";
 import { SYMPTOMS, assess, STATUS_LABEL } from "./health.js";
@@ -376,8 +376,8 @@ function openEdit(id) {
     schedMsg.textContent = own
       ? `You set your own interval. For this light LeafKin would suggest every ${r.water} d.`
       : changed
-      ? `Adjusted for this light${room === "bathroom" || room === "outdoor" ? " and room" : ""}. A ${prof.en} in its ideal light needs water every ${prof.waterDays} d${prof.feedDays ? ` and food every ${prof.feedDays} d` : ""}.`
-      : `Typical for a ${prof.en}. Change it if your plant needs otherwise.`;
+      ? `Adjusted for this light${room === "bathroom" || room === "outdoor" ? " and room" : ""}. ${(s => s[0].toUpperCase() + s.slice(1))(aOrAn(prof.en))} in its ideal light needs water every ${prof.waterDays} d${prof.feedDays ? ` and food every ${prof.feedDays} d` : ""}.`
+      : `Typical for ${aOrAn(prof.en)}. Change it if your plant needs otherwise.`;
   }
   ["#f-room", "#f-light", "#f-sun"].forEach((id) => $f(id).addEventListener("change", recalc));
   ["#f-light", "#f-sun"].forEach((id) => $f(id).addEventListener("change", (e) => { auto[id === "#f-light" ? "light" : "sun"] = null; }));

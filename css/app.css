@@ -140,16 +140,21 @@ body.gated .fab { display: none; }
 
 /* sheets */
 .scrim { position: fixed; inset: 0; background: var(--scrim); z-index: 10; display: flex; align-items: flex-end; justify-content: center; }
-.sheet { background: var(--bg); width: 100%; max-width: 600px; max-height: 92%; overflow: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; border-radius: 20px 20px 0 0; padding: 18px 16px calc(24px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 16px; animation: up .22s ease-out; }
+.sheet { background: var(--bg); width: 100%; max-width: 600px; max-height: 92%; overflow: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; border-radius: 20px 20px 0 0; padding: 18px 16px calc(24px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 16px; animation: up .22s ease-out; }
 @keyframes up { from { transform: translateY(24px); opacity: .6; } }
 .sheet-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .sheet-head > div { min-width: 0; }
 .x { border: 0; background: none; font-size: 1.6rem; line-height: 1; padding: 4px 8px; color: var(--muted); min-width: 40px; min-height: 40px; }
 .field { display: flex; flex-direction: column; gap: 4px; }
 .field label { font-size: .85rem; font-weight: 700; color: var(--muted); }
-.field input, .field textarea, .field select { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; width: 100%; font-size: 16px; }
+.field { min-width: 0; }
+.field input, .field textarea, .field select { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; width: 100%; max-width: 100%; min-width: 0; font-size: 16px; }
+.field select { text-overflow: ellipsis; }
+/* iOS draws date and month pickers wider than their box; make them behave like the other fields */
+.field input[type="date"], .field input[type="month"] { -webkit-appearance: none; appearance: none; display: block; min-height: 46px; text-align: left; }
+.field input::-webkit-date-and-time-value { text-align: left; }
 .field textarea { min-height: 68px; resize: vertical; }
-.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.row2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
 .hint { font-size: .85rem; color: var(--muted); }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
 .care dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; }
