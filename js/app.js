@@ -452,11 +452,19 @@ function openEdit(id) {
         if (!results.length) { out.innerHTML = `<p class="hint">No match found. Try a closer photo of a leaf, or type the species below.</p>`; return; }
         out.innerHTML = `<p class="hint">Which one is it? Tap to choose.</p><ul class="cands">${results.map((r, i) => {
           const prof = matchScientific(r.sci, r.genus, r.family);
-          return `<li><button type="button" class="cand" data-i="${i}">
-            <span class="cand-main"><b>${esc(r.common[0] || r.sci)}</b><i class="muted">${esc(r.sci)}</i></span>
-            <span class="cand-side"><span class="mono">${Math.round(r.score * 100)}%</span>${prof ? `<span class="pill ok">Care known</span>` : ""}</span>
-          </button></li>`;
+          const img = r.images[0];
+          return `<li class="cand-row">
+            ${img ? `<button type="button" class="cand-thumb" data-zoom="${i}" aria-label="Enlarge photos of ${esc(r.common[0] || r.sci)}"><img src="${esc(img.thumb)}" alt="" loading="lazy" referrerpolicy="no-referrer"></button>`
+              : `<span class="cand-thumb none" aria-hidden="true">${leafSvg}</span>`}
+            <button type="button" class="cand" data-i="${i}">
+              <span class="cand-main"><b>${esc(r.common[0] || r.sci)}</b><i class="muted">${esc(r.sci)}</i></span>
+              <span class="cand-side"><span class="mono">${Math.round(r.score * 100)}%</span>${prof ? `<span class="pill ok">Care known</span>` : ""}</span>
+            </button></li>`;
         }).join("")}</ul>`;
+        out.querySelectorAll("[data-zoom]").forEach((b) => (b.onclick = () => {
+          const r = results[+b.dataset.zoom];
+          openLightbox(r.images, r.common[0] || r.sci, r.sci);
+        }));
         out.querySelectorAll(".cand").forEach((b) => (b.onclick = () => {
           const r = results[+b.dataset.i];
           out.querySelectorAll(".cand").forEach((x) => x.classList.toggle("on", x === b));
@@ -832,6 +840,56 @@ function openCompare(id) {
     <p class="muted">${daysBetween(a.at, b.at)} days apart.</p>`);
   s.querySelector("#cBack").onclick = () => openDetail(id);
   hydratePhotos(s);
+}
+
+/* ---------- photo viewer: reference photos from a scan, on top of the open sheet ---------- */
+function openLightbox(images, title, subtitle) {
+  if (!images?.length) return;
+  let i = 0;
+  const box = document.createElement("div");
+  box.className = "lightbox";
+  box.setAttribute("role", "dialog");
+  box.setAttribute("aria-modal", "true");
+  box.setAttribute("aria-label", `Photos of ${title}`);
+  box.innerHTML = `
+    <div class="lb-head"><div><b>${esc(title)}</b>${subtitle && subtitle !== title ? `<i>${esc(subtitle)}</i>` : ""}</div><button class="x lb-x" aria-label="Close">×</button></div>
+    <div class="lb-stage"><img class="lb-img" alt=""><p class="lb-wait">Loading…</p></div>
+    <div class="lb-foot"><p class="lb-credit"></p>
+      ${images.length > 1 ? `<div class="lb-nav"><button class="btn sm" data-step="-1" aria-label="Previous photo">‹</button><span class="lb-count mono"></span><button class="btn sm" data-step="1" aria-label="Next photo">›</button></div>` : ""}</div>`;
+  const img = box.querySelector(".lb-img"), wait = box.querySelector(".lb-wait");
+  const show = () => {
+    const it = images[i];
+    wait.hidden = false; wait.textContent = "Loading…";
+    img.style.opacity = "0";
+    img.onload = () => { wait.hidden = true; img.style.opacity = "1"; };
+    img.onerror = () => { wait.textContent = "This photo couldn't be loaded."; };
+    img.referrerPolicy = "no-referrer";
+    img.src = it.full;
+    img.alt = `${title}${it.organ ? `, ${it.organ.toLowerCase()}` : ""}`;
+    box.querySelector(".lb-credit").textContent = `${it.organ ? it.organ + " · " : ""}Photo: ${it.credit}`;
+    const c = box.querySelector(".lb-count"); if (c) c.textContent = `${i + 1} / ${images.length}`;
+  };
+  const step = (d) => { i = (i + d + images.length) % images.length; show(); };
+  const close = () => { box.remove(); document.removeEventListener("keydown", onKey, true); };
+  const onKey = (e) => {
+    if (e.key === "Escape") { e.stopPropagation(); close(); }
+    else if (e.key === "ArrowRight") step(1);
+    else if (e.key === "ArrowLeft") step(-1);
+  };
+  box.querySelector(".lb-x").onclick = close;
+  box.querySelectorAll("[data-step]").forEach((b) => (b.onclick = () => step(+b.dataset.step)));
+  box.addEventListener("click", (e) => { if (e.target === box || e.target.classList.contains("lb-stage")) close(); });
+  // swipe between photos
+  let x0 = null;
+  box.querySelector(".lb-stage").addEventListener("pointerdown", (e) => { x0 = e.clientX; });
+  box.querySelector(".lb-stage").addEventListener("pointerup", (e) => {
+    if (x0 !== null && Math.abs(e.clientX - x0) > 50 && images.length > 1) step(e.clientX < x0 ? 1 : -1);
+    x0 = null;
+  });
+  document.addEventListener("keydown", onKey, true);
+  document.body.append(box);
+  show();
+  box.querySelector(".lb-x").focus();
 }
 
 /* ---------- settings ---------- */

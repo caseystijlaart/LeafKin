@@ -8,7 +8,7 @@ From 2.0, plants live in a shared **household** on Supabase: everyone in it sees
 - **Households**: sign in with a 6-digit email code, create a household or join one with an invite code; everyone sees the same plants, photos and care log, with who did what ("Watered · Bob")
 - **Sync**: live updates between phones; works offline and sends changes when back online; plants from LeafKin 1.x on a phone can be moved into the household
 
-- Add plants by **scanning** them (Pl@ntNet suggests up to 5 species) or by typing, with **autocomplete** in English, Dutch or Latin
+- Add plants by **scanning** them (Pl@ntNet suggests up to 5 species, each with reference photos you can enlarge) or by typing, with **autocomplete** in English, Dutch or Latin
 - **Varieties** (cultivars such as Peace lily 'Diamond Sensation'): pick one after a scan or type it; each plant is saved as its exact type. Pl@ntNet itself only identifies species.
 - **Fills care in automatically** from a built-in library of 245 plants and 89 varieties (houseplants, succulents, orchids, herbs, balcony plants): light, direct sun hours, watering style, humidity, pet safety, watering and feeding intervals
 - Watering and feeding reminders in the app, sorted by what needs attention first, with one-tap logging and undo

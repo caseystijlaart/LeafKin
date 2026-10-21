@@ -23,7 +23,7 @@ export async function identify(blob) {
   const form = new FormData();
   form.append("images", blob, "plant.jpg");
   form.append("organs", "auto");
-  const url = `${ENDPOINT}?api-key=${encodeURIComponent(key)}&lang=en&nb-results=5&include-related-images=false`;
+  const url = `${ENDPOINT}?api-key=${encodeURIComponent(key)}&lang=en&nb-results=5&include-related-images=true`;
   let res;
   try { res = await fetch(url, { method: "POST", body: form }); }
   catch { throw new IdentifyError(navigator.onLine === false ? "offline" : "blocked"); }
@@ -38,7 +38,22 @@ export async function identify(blob) {
     family: r.species?.family?.scientificNameWithoutAuthor || "",
     common: r.species?.commonNames || [],
     score: r.score || 0,
+    images: (r.images || []).map(refImage).filter(Boolean).slice(0, 4),
   }));
+}
+
+const ORGANS = { leaf: "Leaf", flower: "Flower", fruit: "Fruit", bark: "Bark", habit: "Whole plant", other: "" };
+// Pl@ntNet reference photo: small and large URL plus the credit their terms ask for.
+function refImage(img) {
+  const u = img?.url;
+  const thumb = typeof u === "string" ? u : u?.s || u?.m || u?.o;
+  const full = typeof u === "string" ? u : u?.m || u?.o || u?.s; // medium: sharp enough, far smaller than the original
+  if (!thumb || !/^https:\/\//.test(thumb)) return null;
+  return {
+    thumb, full,
+    organ: ORGANS[img.organ] || "",
+    credit: `${img.author || "Unknown"} / Pl@ntNet, ${String(img.license || "cc-by-sa").toUpperCase().replace(/^CC-/, "CC ")}`,
+  };
 }
 
 export const errorText = (code) => ({
