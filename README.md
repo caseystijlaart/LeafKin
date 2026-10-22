@@ -97,13 +97,10 @@ Do this once before deploying the `v2` branch.
 
 1. **Project**: create a new project at [supabase.com](https://supabase.com) (free plan, region Frankfurt).
 2. **Database**: in **SQL Editor**, paste and run `supabase/migrations/20261020120000_init.sql`.
-3. **Sign-in by code**: **Authentication → Email Templates**. In both **Magic Link** and **Confirm signup**, replace the body with:
-   ```html
-   <h2>Your LeafKin code</h2>
-   <p>Enter this code in LeafKin: <strong>{{ .Token }}</strong></p>
-   <p>It works for one hour. If you didn't ask for it, ignore this email.</p>
-   ```
-   (New accounts get the Confirm signup email, returning ones the Magic Link email.)
+3. **Sign-in by code** (needs step 5's email service first; Supabase locks templates until custom SMTP is on): **Authentication → Emails → Templates**.
+   - **Confirm sign up**: subject `{{ .Token }} is your LeafKin code`, body = `supabase/templates/confirm-signup.html`
+   - **Magic link**: same subject, body = `supabase/templates/magic-link.html`
+   (New accounts get the Confirm sign up email, returning ones the Magic link email.)
 4. **Site address**: **Authentication → URL Configuration → Site URL**: `https://caseystijlaart.github.io/LeafKin/`.
 5. **Email service**: Supabase's built-in email only reaches members of your Supabase team, 2 emails an hour. For anyone else, connect a free SMTP service under **Authentication → Emails → SMTP Settings**, e.g. Brevo (300 emails/day, works with a verified sender address) or Resend (needs your own domain).
 6. **Keys for the site**: **Project Settings → API**, copy the Project URL and the `anon` public key into repository secrets `SUPABASE_URL` and `SUPABASE_ANON_KEY` (**Settings → Secrets and variables → Actions**). The anon key is meant to be public; the security rules protect the data.

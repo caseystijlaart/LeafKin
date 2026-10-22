@@ -1,0 +1,36 @@
+<!-- LeafKin sign-in email. Paste into Supabase: Authentication → Emails → Templates → Magic link.
+     Subject: {{ .Token }} is your LeafKin code -->
+<div style="margin:0;padding:0;background:#edf1ec;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#edf1ec;">
+  <tr><td align="center" style="padding:32px 16px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:440px;">
+
+      <tr><td align="left" style="padding:0 4px 18px;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+          <td style="padding-right:10px;"><img src="https://caseystijlaart.github.io/LeafKin/icons/icon-192.png" width="40" height="40" alt="" style="display:block;border:0;border-radius:10px;"></td>
+          <td style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:22px;font-weight:700;color:#2f5d3a;letter-spacing:-0.2px;">LeafKin</td>
+        </tr></table>
+      </td></tr>
+
+      <tr><td style="background:#f8faf7;border:1px solid #d3dccf;border-radius:18px;padding:28px 24px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#18261d;">
+        <h1 style="margin:0 0 8px;font-size:22px;line-height:1.25;font-weight:700;color:#18261d;">Your sign-in code</h1>
+        <p style="margin:0 0 22px;font-size:16px;line-height:1.5;color:#5b6b5f;">Here's your code to sign in to LeafKin.</p>
+
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+          <tr><td align="center" style="background:#dcebdd;border-radius:14px;padding:18px 8px;">
+            <div style="font-family:'SF Mono',Menlo,Consolas,'Courier New',monospace;font-size:34px;font-weight:700;letter-spacing:10px;color:#2f5d3a;padding-left:10px;">{{ .Token }}</div>
+          </td></tr>
+        </table>
+
+        <p style="margin:20px 0 0;font-size:14px;line-height:1.5;color:#5b6b5f;">Type it into LeafKin to continue. The code works for one hour.</p>
+      </td></tr>
+
+      <tr><td style="padding:18px 8px 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;line-height:1.5;color:#7b897f;text-align:center;">
+        Didn't ask for this? Then you can ignore this email; nobody can sign in without the code.<br>
+        🌱 LeafKin · plant care for your household
+      </td></tr>
+
+    </table>
+  </td></tr>
+</table>
+</div>
