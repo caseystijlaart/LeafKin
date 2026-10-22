@@ -274,3 +274,16 @@ details.card[open] > summary::after { content: "−"; }
 .gate-warn { background: var(--wash-alert); border: 1px solid var(--alert); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
 .gate-warn p { margin: 0; }
 .gate-junk { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--wash-food); font-size: .92rem; }
+.linkbtn { background: none; border: 0; padding: 0; font: inherit; color: var(--leaf); font-weight: 700; cursor: pointer; text-align: left; }
+.activity { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px; font-size: .92rem; }
+.activity ul, .act-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.activity li, .act-list li { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding-block: 4px; }
+.activity li > span:last-child, .act-list li > span:last-child { flex-shrink: 0; font-size: .85rem; }
+.activity > .linkbtn { align-self: flex-start; font-size: .88rem; }
+.act-day { margin: 14px 0 4px; font-size: .95rem; color: var(--muted); }
+.act-list li { border-bottom: 1px solid var(--line); padding-block: 9px; }
+.act-list li:last-child { border-bottom: 0; }
+.plain-list { margin: 8px 0 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: .92rem; }
+.tipcol { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+.tipcol p { margin: 0; }
+.beta-pill { font-size: .8rem; vertical-align: middle; }

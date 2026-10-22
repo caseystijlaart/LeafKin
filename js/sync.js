@@ -313,8 +313,16 @@ export async function signOut() {
 
 export async function createHousehold(name) { await cloud.createHousehold(name); return refreshHousehold(); }
 export async function joinHousehold(code) { await cloud.joinHousehold(code); return refreshHousehold(); }
+// The last member out takes the household's photos with them (the database can't remove Storage files).
+async function removePhotosIfLast() {
+  if (!st.household) return;
+  try { st.members = await cloud.members(st.household.id); } catch {}
+  if (st.members.length <= 1) await cloud.deleteHouseholdPhotos(st.household.id);
+}
+
 export async function leaveHousehold() {
   await flush();
+  await removePhotosIfLast();
   await cloud.leaveHousehold();
   await local.replacePlants([]);
   await local.delMeta("household");
@@ -322,6 +330,20 @@ export async function leaveHousehold() {
   return refreshHousehold();
 }
 export const createInvite = () => cloud.createInvite();
+
+// Delete the account for good. Plants kept aside on this phone (guest or 1.x) stay on the phone.
+export async function deleteAccount() {
+  if (!(await flush())) throw new TypeError("offline");
+  await removePhotosIfLast();
+  await cloud.deleteAccount();
+  await signOut();
+}
+
+// Push reminder devices (rows in push_subscriptions; the reminder itself comes from the Edge Function).
+export const savePushDevice = (row) => cloud.savePushDevice(row);
+export const updatePushDevice = (endpoint, fields) => cloud.updatePushDevice(endpoint, fields);
+export const deletePushDevice = (endpoint) => cloud.deletePushDevice(endpoint);
+export const sendTestPush = () => cloud.sendTestPush();
 export async function removeMember(id) { await cloud.removeMember(id); st.members = await cloud.members(st.household.id); emit("members"); }
 export async function renameHousehold(name) {
   await cloud.renameHousehold(st.household.id, name);

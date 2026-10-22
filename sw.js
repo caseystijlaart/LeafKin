@@ -1,6 +1,9 @@
 // LeafKin service worker: caches the app shell so it opens offline.
 // Bump VERSION whenever app files change, so phones pick up the new version.
-const VERSION = "leafkin-v2.0.0";
+// The test copy at /beta/ has its own worker and caches; the live worker leaves /beta/ alone.
+const BETA = self.location.pathname.includes("/beta/");
+const VERSION = (BETA ? "leafkin-beta-" : "leafkin-") + "v2.0.0";
+const mine = (k) => k.startsWith("leafkin-beta-") === BETA; // only clean up our own old caches
 const SHELL = [
   "./",
   "./index.html",
@@ -18,6 +21,7 @@ const SHELL = [
   "./js/schedule.js",
   "./js/sync.js",
   "./js/cloud.js",
+  "./js/push.js",
   "./js/vendor/supabase.js",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
@@ -33,7 +37,7 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== VERSION).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => mine(k) && !k.startsWith(VERSION)).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -47,6 +51,7 @@ self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;
   const url = new URL(req.url);
+  if (!BETA && url.pathname.includes("/beta/")) return; // the beta has its own worker
 
   // Page loads: try the network first so updates show quickly, fall back to the cached shell offline.
   if (req.mode === "navigate") {
@@ -70,4 +75,31 @@ self.addEventListener("fetch", (event) => {
       })
     );
   }
+});
+
+// Daily reminder from the send-reminders Edge Function.
+self.addEventListener("push", (event) => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch { data = { body: event.data?.text() }; }
+  const title = data.title || "LeafKin";
+  event.waitUntil(Promise.all([
+    self.registration.showNotification(title, {
+      body: data.body || "Some plants need care today.",
+      icon: "icons/icon-192.png",
+      badge: "icons/icon-192.png",
+      tag: "leafkin-daily",
+      data: { url: data.url || "./" },
+    }),
+    data.count && self.navigator?.setAppBadge ? self.navigator.setAppBadge(data.count).catch(() => {}) : null,
+  ]));
+});
+
+// Tapping the notification opens LeafKin (or brings it to the front).
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = new URL(event.notification.data?.url || "./", self.registration.scope).href;
+  event.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((wins) => {
+    const open = wins.find((w) => w.url.startsWith(self.registration.scope));
+    return open ? open.focus() : self.clients.openWindow(target);
+  }));
 });

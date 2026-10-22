@@ -32,6 +32,11 @@ export const createInvite = async () => (await as("select create_invite() as c")
 export const joinHousehold = async (code) => (await as("select join_household($1) as h", [code]))[0].h;
 export const leaveHousehold = async () => { await as("select leave_household()"); };
 export const removeMember = async (u) => { await as("select remove_member($1)", [u]); };
+export const deleteAccount = async () => { await as("select delete_account()"); me = null; };
+export async function deleteHouseholdPhotos(h) {
+  const rows = await as("delete from storage.objects where name like $1 returning name", [`${h}/%`]);
+  rows.forEach((r) => lk.files.delete(r.name));
+}
 export const renameHousehold = async (id, name) => { await as("update households set name = $2 where id = $1", [id, name]); };
 export const setDisplayName = async (id, name) => { await as("update profiles set display_name = $2 where id = $1", [id, name]); };
 

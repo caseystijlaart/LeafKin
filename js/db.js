@@ -2,7 +2,9 @@
 // works offline, photo blobs, a queue of changes waiting to be sent, and a few settings.
 // Only sync.js talks to this module.
 
-const DB_NAME = "leafkin";
+import { BETA } from "./util.js";
+
+const DB_NAME = BETA ? "leafkin-beta" : "leafkin";
 const DB_VERSION = 2; // 1 = LeafKin 1.x (plants + photos), 2 adds outbox + meta
 let dbPromise = null;
 

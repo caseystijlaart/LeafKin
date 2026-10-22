@@ -16,7 +16,7 @@ for (const f of readdirSync(path.join(root, "supabase/migrations")).sort()) {
 let pass = 0, fail = 0;
 const ok = (cond, msg) => { cond ? pass++ : fail++; console.log(`${cond ? "✓" : "✗"} ${msg}`); };
 const ids = {};
-for (const n of ["ann", "bob", "cat", "dan"]) {
+for (const n of ["ann", "bob", "cat", "dan", "eve"]) {
   ids[n] = crypto.randomUUID();
   await db.query("insert into auth.users (id, email) values ($1, $2)", [ids[n], `${n}@example.com`]);
 }
@@ -95,6 +95,20 @@ ok((await one("bob", "select role from household_members where user_id = $1", [i
 ok((await as("ann", "select * from plants")).rows.length === 0, "ann no longer sees the plants");
 await as("bob", "select leave_household()");
 ok((await db.query("select count(*)::int n from plants where household_id = $1", [h1])).rows[0].n === 0, "last one out deletes the household and its plants");
+
+// Deleting an account
+const hFlat = (await one("cat", "select create_household('Flat') as h")).h;
+const codeFlat = (await one("cat", "select create_invite() as c")).c;
+await as("eve", "select join_household($1)", [codeFlat]);
+await as("eve", "insert into plants (household_id, name) values ($1, 'Fern')", [hFlat]);
+await as("cat", "insert into push_subscriptions (endpoint, p256dh, auth, hour, tz) values ('https://push.example/cat', 'k', 'a', 7, 'Europe/Amsterdam')");
+await as("cat", "select delete_account()");
+ok((await db.query("select count(*)::int n from auth.users where id = $1", [ids.cat])).rows[0].n === 0, "cat deletes her account");
+ok((await db.query("select count(*)::int n from push_subscriptions where endpoint = 'https://push.example/cat'")).rows[0].n === 0, "her devices go with it");
+ok((await one("eve", "select role from household_members where user_id = $1", [ids.eve])).role === "owner", "eve takes over as owner");
+ok((await as("eve", "select * from plants")).rows.length === 1, "eve keeps the plants");
+await as("eve", "select delete_account()");
+ok((await db.query("select count(*)::int n from households where id = $1", [hFlat])).rows[0].n === 0, "the last account deleted takes the household with it");
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

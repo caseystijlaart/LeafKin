@@ -1,7 +1,8 @@
 import * as db from "./sync.js";
-import { DAY, daysBetween, dueIn, dueLabel, ageLabel, fmtDate, fmtDateTime, esc, uid, resizeImage, aOrAn } from "./util.js";
+import { BETA, DAY, daysBetween, dueIn, dueLabel, ageLabel, fmtDate, fmtDateTime, esc, uid, resizeImage, aOrAn } from "./util.js";
 import { PLANTS, SPECIES, CULTIVARS, LIGHT, SUN, SUN_SHORT, WATER, HUMIDITY, PET, searchPlants, matchScientific, matchAny, cultivarsForGenus } from "./care-library.js";
 import * as plantnet from "./plantnet.js";
+import * as push from "./push.js";
 import { SYMPTOMS, assess, STATUS_LABEL } from "./health.js";
 import { ROOMS, adjustForConditions, fitText } from "./conditions.js";
 import { waterDue, feedDue, urgency, waterInterval, feedInterval, winterActive, winterModeOn, setWinterMode, snoozeDate, repotDue, photoDue, lastPhotoAt, isWinter as inWinter, PHOTO_PERIODS, photoPeriod, setPhotoPeriod, blockingPhoto, nextPhotoDate } from "./schedule.js";
@@ -217,6 +218,8 @@ function render() {
     if (winterActive()) sum.push(`<span class="pill plain">❄ Winter care</span>`);
   }
   $("#summary").innerHTML = sum.join("");
+  renderActivityStrip();
+  renderBackupTip(all.length);
   updateBadge();
 }
 
@@ -907,6 +910,125 @@ async function saveFile(filename, blob) {
   return true;
 }
 
+/* ---------- backup ---------- */
+async function saveBackup() {
+  await saveFile(`leafkin-backup-${new Date().toISOString().slice(0, 10)}.json`, await db.exportBackup());
+  try { localStorage.setItem("leafkin.lastBackup", new Date().toISOString()); } catch {}
+  renderBackupTip(state.plants.length);
+}
+// Guests: a reminder to save a backup a week after starting, then once a month (their only safety net).
+function renderBackupTip(n) {
+  const el = $("#backupTip"); if (!el) return;
+  let show = false;
+  if (db.isGuest() && n) {
+    const get = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
+    const last = get("leafkin.lastBackup"), since = get("leafkin.guestSince"), nag = get("leafkin.backupNag");
+    const base = [last, since, nag].filter(Boolean).sort().pop();
+    show = !base || daysBetween(base, new Date()) >= (last ? 30 : 7);
+  }
+  el.hidden = !show;
+}
+
+/* ---------- household activity ---------- */
+const ACT_VERB = { water: "watered", feed: "fed", repot: "repotted", snooze: "found the soil still damp for", photo: "added a photo of", check: "checked the health of" };
+function activityItems() {
+  const items = [];
+  for (const p of state.plants) {
+    for (const e of p.history || []) items.push({ type: e.type, at: e.at, by: e.by, plant: p });
+    for (const g of p.growth || []) if (g.photoId) items.push({ type: "photo", at: g.at, by: g.by, plant: p });
+    for (const c of p.checks || []) items.push({ type: "check", at: c.at, by: c.by, plant: p });
+  }
+  return items.filter((x) => x.at && ACT_VERB[x.type]).sort((a, b) => b.at.localeCompare(a.at));
+}
+function whoName(id) {
+  const n = db.memberName(id);
+  return n === "you" ? "You" : n || "Someone";
+}
+function agoLabel(iso) {
+  const min = Math.round((Date.now() - Date.parse(iso)) / 60000);
+  if (min < 1) return "just now";
+  if (min < 60) return `${min} min ago`;
+  const days = daysBetween(iso, new Date());
+  if (days === 0) return `${Math.round(min / 60)} h ago`;
+  if (days === 1) return "yesterday";
+  return fmtDate(iso);
+}
+const activityLine = (x) => `<b>${esc(whoName(x.by))}</b> ${ACT_VERB[x.type]} <button class="linkbtn" data-plant="${esc(x.plant.id)}">${esc(x.plant.name)}</button>`;
+
+// On the main screen: what housemates did in the last two days (shared households only).
+function renderActivityStrip() {
+  const el = $("#activity"); if (!el) return;
+  const me = db.user()?.id;
+  const recent = db.members().length > 1
+    ? activityItems().filter((x) => x.by && x.by !== me && Date.now() - Date.parse(x.at) < 2 * DAY).slice(0, 3) : [];
+  el.hidden = !recent.length;
+  if (!recent.length) { el.innerHTML = ""; return; }
+  el.innerHTML = `<ul>${recent.map((x) => `<li><span>${activityLine(x)}</span><span class="muted">${agoLabel(x.at)}</span></li>`).join("")}</ul>
+    <button class="linkbtn" id="actAll">All activity</button>`;
+  el.querySelectorAll("[data-plant]").forEach((b) => (b.onclick = () => openDetail(b.dataset.plant)));
+  el.querySelector("#actAll").onclick = openActivity;
+}
+
+function openActivity() {
+  const items = activityItems().slice(0, 80);
+  const days = [];
+  for (const x of items) {
+    const d = daysBetween(x.at, new Date());
+    const label = d === 0 ? "Today" : d === 1 ? "Yesterday" : fmtDate(x.at);
+    if (days[days.length - 1]?.label !== label) days.push({ label, items: [] });
+    days[days.length - 1].items.push(x);
+  }
+  const s = sheet("activity", `
+    <div class="sheet-head"><h2>Household activity</h2><button class="x" data-close aria-label="Close">×</button></div>
+    ${days.length ? days.map((d) => `<h3 class="act-day">${esc(d.label)}</h3>
+      <ul class="act-list">${d.items.map((x) => `<li><span>${activityLine(x)}</span><span class="mono muted">${new Date(x.at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}</span></li>`).join("")}</ul>`).join("")
+      : `<p class="muted">Nothing logged yet.</p>`}`);
+  s.querySelectorAll("[data-plant]").forEach((b) => (b.onclick = () => openDetail(b.dataset.plant)));
+}
+
+/* ---------- reminders card in Settings ---------- */
+async function renderPushCard(card) {
+  if (!card) return;
+  const hourSelect = (h) => `<select id="pushHour">${Array.from({ length: 17 }, (_, i) => i + 6).map((x) => `<option value="${x}" ${x === h ? "selected" : ""}>${String(x).padStart(2, "0")}:00</option>`).join("")}</select>`;
+  const head = `<h3>Reminders</h3>`;
+  if (!push.supported() || (push.isIos() && !push.standalone())) {
+    card.innerHTML = head + `<p>${push.isIos() ? "iPhone only allows notifications for apps on the Home Screen. Add LeafKin to your Home Screen (Share → Add to Home Screen), open it from there and come back here." : "This browser doesn't support notifications."}</p>`;
+    return;
+  }
+  if (push.permission() === "denied") {
+    card.innerHTML = head + `<p>Notifications are blocked for LeafKin. Allow them in your phone's Settings → Notifications → LeafKin, then come back here.</p>`;
+    return;
+  }
+  const sub = await push.subscription();
+  if (sub && push.permission() === "granted") {
+    card.innerHTML = head + `<p>A notification each day something needs water or food. The app icon also shows how many plants need care.</p>
+      <div class="field"><label for="pushHour">Time</label>${hourSelect(push.hour())}</div>
+      <div class="btnrow"><button class="btn grow" id="pushTest">Send a test</button><button class="btn grow" id="pushOff">Turn off</button></div>
+      <p class="hint" id="pushMsg">Reminders go to this device. Turn them on on each phone you want them on.</p>`;
+    const msg = card.querySelector("#pushMsg");
+    card.querySelector("#pushHour").onchange = async (e) => { try { await push.setHour(Number(e.target.value)); msg.textContent = "Time saved."; } catch { msg.textContent = "Couldn't save. Are you online?"; } };
+    card.querySelector("#pushTest").onclick = async (e) => {
+      e.target.disabled = true; msg.textContent = "Sending…";
+      try { const r = await push.sendTest(); msg.textContent = r?.sent ? "Sent. It should appear in a few seconds." : "Nothing was sent. Try turning reminders off and on."; }
+      catch { msg.textContent = "The reminder service isn't reachable. Check that the send-reminders function is set up in Supabase."; }
+      e.target.disabled = false;
+    };
+    card.querySelector("#pushOff").onclick = async () => { await push.turnOff(); renderPushCard(card); toast("Reminders are off on this device"); };
+    return;
+  }
+  card.innerHTML = head + `<p>Get a notification on days when a plant needs water or food, so you don't have to open LeafKin to check.</p>
+    <div class="field"><label for="pushHour">Time</label>${hourSelect(push.hour())}</div>
+    <button class="btn primary" id="pushOn">Turn on reminders</button><p class="hint" id="pushMsg"></p>`;
+  card.querySelector("#pushOn").onclick = async (e) => {
+    e.target.disabled = true;
+    try { await push.turnOn(Number(card.querySelector("#pushHour").value)); renderPushCard(card); toast("Reminders are on"); updateBadge(); }
+    catch (er) {
+      card.querySelector("#pushMsg").textContent = er?.message === "denied" ? "Notifications weren't allowed." : "Couldn't turn on reminders. Are you online?";
+      e.target.disabled = false;
+    }
+  };
+}
+
 const splashPref = () => { try { return localStorage.getItem("leafkin.splash") || "on"; } catch { return "on"; } };
 
 async function openSettings() {
@@ -927,6 +1049,7 @@ async function openSettings() {
       <div class="field"><label for="hhName">Name</label><input id="hhName" maxlength="60" value="${esc(hh.name)}" ${owner ? "" : "disabled"}></div>
       <ul class="members">${mem.map((m) => `<li><span>${esc(m.name || "No name yet")}${m.id === me?.id ? ` <span class="muted">(you)</span>` : ""}</span>
         <span class="mrole">${m.role === "owner" ? `<span class="pill plain">Owner</span>` : ""}${owner && m.id !== me?.id ? `<button class="btn sm danger" data-rm="${esc(m.id)}">Remove</button>` : ""}</span></li>`).join("")}</ul>
+      ${mem.length > 1 ? `<button class="btn" id="actBtn">Household activity</button>` : ""}
       <button class="btn" id="invBtn">Invite someone</button>
       <div class="invite" id="invOut" hidden></div>
       ${legacy.length ? `<button class="btn" id="legacyBtn">Move ${legacy.length} plant${legacy.length === 1 ? "" : "s"} saved on this phone into this household</button>` : ""}
@@ -939,7 +1062,13 @@ async function openSettings() {
       <p class="hint">Signed in as ${esc(me?.email || "")}</p>
       <button class="btn" id="signOutBtn">Sign out</button>
       <div class="confirm" id="soConfirm" hidden><span id="soTxt"></span><button class="btn danger" id="soYes">Sign out</button><button class="btn" id="soNo">Cancel</button></div>
-    </div>` : ""}
+      <button class="btn danger" id="delBtn">Delete account</button>
+      <div class="confirm" id="delConfirm" hidden><span>${mem.length > 1
+        ? "This deletes your account for good. The plants stay in the household for the others."
+        : "This deletes your account, the household and all its plants and photos for good. Save a backup first if you want to keep them."}</span>
+        <button class="btn danger" id="delYes">Delete for good</button><button class="btn" id="delNo">Cancel</button></div>
+    </div>
+    ${push.configured() ? `<div class="card" id="pushCard"><h3>Reminders</h3><p class="muted">Checking…</p></div>` : ""}` : ""}
     ${db.isGuest() ? `<div class="card">
       <h3>Guest mode</h3>
       <p>Your plants are only saved on this phone and can be lost. Create an account to keep them safe and share them; your plants come along.</p>
@@ -954,7 +1083,7 @@ async function openSettings() {
       <p class="hint" id="pnMsg">${siteKey ? "A key saved here is only used on this device." : "The key is stored on this device only."}</p>
       ${siteKey && !key ? `</details>` : ""}
     </div>
-    ${canBadge ? `<div class="card">
+    ${canBadge && !(hh && push.configured()) ? `<div class="card">
       <h3>App icon</h3>
       <p>Show how many plants need care on the LeafKin icon.</p>
       <button class="btn" id="badgeBtn" ${perm === "granted" ? "disabled" : ""}>${perm === "granted" ? "Icon badge is on" : perm === "denied" ? "Blocked in iOS Settings" : "Turn on icon badge"}</button>
@@ -982,6 +1111,20 @@ async function openSettings() {
       <input type="file" id="impIn" accept="application/json,.json" hidden>
       <p class="hint" id="bMsg">${mb ? `Using about ${mb} MB.` : ""}</p>
     </div>
+    <div class="card">
+      <h3>Privacy</h3>
+      <details><summary class="hint" style="cursor:pointer">What LeafKin stores, and where</summary>
+        <ul class="plain-list">
+          ${db.isGuest() ? `<li>As a guest, everything stays on this phone. Nothing is sent to LeafKin's servers.</li>` : `<li><b>Your account:</b> your email address and the name you choose. Signing in uses a code sent by email; there's no password.</li>
+          <li><b>Your household:</b> plants, care log, growth timeline, health checks and photos, stored with Supabase in the EU. Only members of your household can see them; photos are in a private folder.</li>
+          <li><b>Reminders:</b> if you turn them on, a device address for notifications and the hour you picked.</li>`}
+          <li><b>Plant scanning:</b> the photo you scan is sent to Pl@ntNet to identify the plant. It's not stored by LeafKin unless you add it to the timeline.</li>
+          <li>A copy of your plants and photos is kept on this phone so LeafKin works offline.</li>
+          <li>No ads, no tracking, no analytics.</li>
+          ${db.isGuest() ? "" : `<li>Delete your account under <b>Your account</b>. That removes your data from the server for good.</li>`}
+        </ul>
+      </details>
+    </div>
     <p class="hint">LeafKin ${APP_VERSION} · ${SPECIES.length} plants and ${CULTIVARS.length} varieties in the care library</p>`);
   s.querySelector("#pnSave").onclick = () => {
     const v = s.querySelector("#pnKey").value.trim();
@@ -992,7 +1135,8 @@ async function openSettings() {
   s.querySelector("#photoPeriod").onchange = (e) => setPhotoPeriod(e.target.value);
   if (hh) wireAccountSettings(s, owner);
   s.querySelector("#guestAcct")?.addEventListener("click", () => { closeSheet(); gateWelcome(); });
-  s.querySelector("#winterOn").onchange = (e) => { setWinterMode(e.target.checked); render(); };
+  s.querySelector("#winterOn").onchange = (e) => { setWinterMode(e.target.checked); render(); push.syncWinter(); };
+  if (hh && push.configured()) renderPushCard(s.querySelector("#pushCard"));
   s.querySelector("#splashOn").onchange = (e) => { try { localStorage.setItem("leafkin.splash", e.target.checked ? "on" : "off"); } catch {} };
   s.querySelector("#badgeBtn")?.addEventListener("click", async (e) => {
     const r = await Notification.requestPermission().catch(() => "denied");
@@ -1002,7 +1146,7 @@ async function openSettings() {
   });
   s.querySelector("#expBtn").onclick = async (e) => {
     e.target.disabled = true; e.target.textContent = "Preparing…";
-    try { await saveFile(`leafkin-backup-${new Date().toISOString().slice(0, 10)}.json`, await db.exportBackup()); }
+    try { await saveBackup(); }
     catch { s.querySelector("#bMsg").textContent = "Couldn't create the backup."; }
     e.target.disabled = false; e.target.textContent = "Save backup";
   };
@@ -1070,7 +1214,19 @@ function wireAccountSettings(s, owner) {
     $s("#soConfirm").hidden = false;
   };
   $s("#soNo").onclick = () => { $s("#soConfirm").hidden = true; };
-  $s("#soYes").onclick = async () => { await db.signOut(); closeSheet(); state.plants = []; render(); gateWelcome(); };
+  $s("#soYes").onclick = async () => { await push.turnOff(); await db.signOut(); closeSheet(); state.plants = []; render(); gateWelcome(); };
+  $s("#actBtn")?.addEventListener("click", openActivity);
+  $s("#delBtn").onclick = () => { $s("#delConfirm").hidden = false; $s("#delConfirm").scrollIntoView({ behavior: "smooth", block: "nearest" }); };
+  $s("#delNo").onclick = () => { $s("#delConfirm").hidden = true; };
+  $s("#delYes").onclick = async (e) => {
+    e.target.disabled = true; e.target.textContent = "Deleting…";
+    try {
+      await push.turnOff();
+      await db.deleteAccount();
+      closeSheet(); state.plants = []; render(); gateWelcome();
+      toast("Your account has been deleted");
+    } catch (er) { fail(er); e.target.disabled = false; e.target.textContent = "Delete for good"; }
+  };
 }
 
 /* ---------- account gate: sign in, then join or create a household ---------- */
@@ -1121,7 +1277,11 @@ function gateWelcome() {
   if (!guest) {
     $g("#wGuest").onclick = () => { $g("#wWarn").hidden = false; $g("#wGuest").hidden = true; $g("#wWarn").scrollIntoView({ behavior: "smooth", block: "nearest" }); };
     $g("#wGuestNo").onclick = () => { $g("#wWarn").hidden = true; $g("#wGuest").hidden = false; };
-    $g("#wGuestYes").onclick = async (e) => { e.target.disabled = true; await afterGate(await db.startGuest()); };
+    $g("#wGuestYes").onclick = async (e) => {
+      e.target.disabled = true;
+      try { if (!localStorage.getItem("leafkin.guestSince")) localStorage.setItem("leafkin.guestSince", new Date().toISOString()); } catch {}
+      await afterGate(await db.startGuest());
+    };
   }
 }
 
@@ -1177,9 +1337,11 @@ function gateEmail(mode) {
     try {
       const u = await db.verifyCode(email, code);
       clearInterval(wait);
+      const existed = create && u?.created_at && Date.now() - Date.parse(u.created_at) > 10 * 60 * 1000;
       const next = await db.signedIn(u);
-      if (name) await db.saveProfileName(name)?.catch(() => {});
+      if (name && !existed) await db.saveProfileName(name)?.catch(() => {});
       await afterGate(next);
+      if (existed) toast("You already had an account with this email, so you're signed in.");
     } catch (e) { err(authError(e)); $g("#gVerify").disabled = false; }
   };
   $g("#gCodeForm").onsubmit = (e) => { e.preventDefault(); verify(); };
@@ -1301,11 +1463,15 @@ $("#addBtn").onclick = () => openEdit(null);
 $("#emptyAdd").onclick = () => openEdit(null);
 $("#settingsBtn").onclick = openSettings;
 $("#search").addEventListener("input", (e) => { view.q = e.target.value; render(); });
+$("#backupNow").onclick = async () => { try { await saveBackup(); } catch { toast("Couldn't create the backup."); } };
+$("#backupAcct").onclick = () => gateWelcome();
+$("#backupClose").onclick = () => { try { localStorage.setItem("leafkin.backupNag", new Date().toISOString()); } catch {} $("#backupTip").hidden = true; };
 $("#swipeTipClose").onclick = () => { dismissTip("swipe"); $("#swipeTip").hidden = true; };
 document.addEventListener("visibilitychange", () => { if (!document.hidden) render(); });
 setInterval(render, 60 * 60 * 1000);
 
 runSplash();
+if (BETA) $(".top h1").insertAdjacentHTML("beforeend", ` <span class="pill food beta-pill">Beta</span>`);
 setupInstallHint();
 setupServiceWorker();
 db.onChange(async (what) => {

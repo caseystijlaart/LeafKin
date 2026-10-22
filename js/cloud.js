@@ -1,13 +1,14 @@
 // Everything that talks to Supabase: sign-in with an emailed code, household actions, data, photos, live updates.
 import { createClient } from "./vendor/supabase.js";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
+import { BETA } from "./util.js";
 
 // Accept the project URL with or without a path such as /rest/v1/ copied from the dashboard.
 const BASE_URL = String(SUPABASE_URL || "").trim().replace(/\/(rest|auth|storage|realtime)\/v1\/?$/, "").replace(/\/+$/, "");
 export const configured = !!(BASE_URL && SUPABASE_ANON_KEY);
 export const sb = configured
   ? createClient(BASE_URL, SUPABASE_ANON_KEY, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, storageKey: "leafkin.auth" },
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, storageKey: BETA ? "leafkin-beta.auth" : "leafkin.auth" },
     })
   : null;
 
@@ -46,6 +47,24 @@ export const joinHousehold = async (code) => check(await sb.rpc("join_household"
 export const leaveHousehold = async () => check(await sb.rpc("leave_household"));
 export const removeMember = async (userId) => check(await sb.rpc("remove_member", { p_user: userId }));
 export const renameHousehold = async (id, name) => check(await sb.from("households").update({ name }).eq("id", id));
+export const deleteAccount = async () => check(await sb.rpc("delete_account"));
+
+// Remove every photo of a household from Storage (used when the last member leaves or deletes their account).
+export async function deleteHouseholdPhotos(h) {
+  for (;;) {
+    const files = check(await sb.storage.from("photos").list(h, { limit: 100 }));
+    if (!files?.length) return;
+    check(await sb.storage.from("photos").remove(files.map((f) => `${h}/${f.name}`)));
+    if (files.length < 100) return;
+  }
+}
+
+// ---- push reminders ----
+export const savePushDevice = async (row) => check(await sb.from("push_subscriptions").upsert(row, { onConflict: "endpoint" }));
+export const updatePushDevice = async (endpoint, fields) => check(await sb.from("push_subscriptions").update(fields).eq("endpoint", endpoint));
+export const deletePushDevice = async (endpoint) => check(await sb.from("push_subscriptions").delete().eq("endpoint", endpoint));
+export const sendTestPush = async () => check(await sb.functions.invoke("send-reminders", { body: { test: true } }));
+
 export const setDisplayName = async (userId, name) => check(await sb.from("profiles").update({ display_name: name }).eq("id", userId));
 
 // ---- data ----

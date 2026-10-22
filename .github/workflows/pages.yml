@@ -1,11 +1,17 @@
 name: Deploy to GitHub Pages
 
+# One site, two versions:
+#   https://caseystijlaart.github.io/LeafKin/       ← the live app (LIVE_BRANCH)
+#   https://caseystijlaart.github.io/LeafKin/beta/  ← the test version (BETA_BRANCH), with its own storage and sign-in
+# A push to either branch rebuilds both.
 on:
   push:
-    # pwa-* branches deploy too, for testing on a phone before merging.
-    # Only one site exists, so a branch deploy replaces what main published.
     branches: [main, "pwa-*"]
   workflow_dispatch:
+
+env:
+  LIVE_BRANCH: pwa-v2   # becomes main once v2 is merged into main
+  BETA_BRANCH: pwa-beta
 
 permissions:
   contents: read
@@ -23,28 +29,52 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
-      - name: Collect site files
-        run: |
-          mkdir -p _site
-          cp -r index.html manifest.webmanifest sw.js css js icons _site/
-      - name: Add keys from repository secrets
+      - name: Check out the live version
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.LIVE_BRANCH }}
+          path: live
+      - name: Check out the beta version
+        id: beta
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BETA_BRANCH }}
+          path: beta
+      - name: Build the site
         env:
           PLANTNET_API_KEY: ${{ secrets.PLANTNET_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
+          HAS_BETA: ${{ steps.beta.outcome == 'success' }}
         run: |
-          node -e '
-            const k = (n) => JSON.stringify((process.env[n] || "").trim());
-            process.stdout.write(
-              "export const PLANTNET_KEY = " + k("PLANTNET_API_KEY") + ";\n" +
-              "export const SUPABASE_URL = " + k("SUPABASE_URL") + ";\n" +
-              "export const SUPABASE_ANON_KEY = " + k("SUPABASE_ANON_KEY") + ";\n")' > _site/js/config.js
-          for n in PLANTNET_API_KEY SUPABASE_URL SUPABASE_ANON_KEY; do
+          set -e
+          build() { # build <source dir> <target dir> <build id>
+            mkdir -p "$2"
+            cp -r "$1"/index.html "$1"/manifest.webmanifest "$1"/sw.js "$1"/css "$1"/js "$1"/icons "$2"/
+            node -e '
+              const k = (n) => JSON.stringify((process.env[n] || "").trim());
+              process.stdout.write(
+                "export const PLANTNET_KEY = " + k("PLANTNET_API_KEY") + ";\n" +
+                "export const SUPABASE_URL = " + k("SUPABASE_URL") + ";\n" +
+                "export const SUPABASE_ANON_KEY = " + k("SUPABASE_ANON_KEY") + ";\n" +
+                "export const VAPID_PUBLIC_KEY = " + k("VAPID_PUBLIC_KEY") + ";\n")' > "$2/js/config.js"
+            # Stamp the service worker so phones fetch fresh files after every deploy.
+            echo "// build $3" >> "$2/sw.js"
+          }
+          build live _site "$(git -C live rev-parse HEAD)"
+          if [ "$HAS_BETA" = "true" ]; then
+            build beta _site/beta "$(git -C beta rev-parse HEAD)"
+            sed -i 's/"name": "LeafKin"/"name": "LeafKin Beta"/; s/"short_name": "LeafKin"/"short_name": "LeafKin β"/' _site/beta/manifest.webmanifest
+            sed -i 's#<title>LeafKin</title>#<title>LeafKin Beta</title>#; s#content="LeafKin">#content="LeafKin β">#' _site/beta/index.html
+            echo "Beta added from $BETA_BRANCH."
+          else
+            echo "::notice::No $BETA_BRANCH branch yet, so only the live version was published."
+          fi
+          for n in PLANTNET_API_KEY SUPABASE_URL SUPABASE_ANON_KEY VAPID_PUBLIC_KEY; do
             [ -n "${!n}" ] && echo "$n added." || echo "::warning::$n secret is not set."
           done
-      - name: Stamp the service worker so phones fetch fresh files after every deploy
-        run: echo "// build ${GITHUB_SHA}" >> _site/sw.js
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

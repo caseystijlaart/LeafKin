@@ -29,7 +29,7 @@ const tmp = mkdtempSync(path.join(tmpdir(), "leafkin-sync-"));
 async function phone(name) {
   const dir = path.join(tmp, name); mkdirSync(dir);
   for (const f of ["sync.js", "util.js", "conditions.js"]) copyFileSync(path.join(root, "js", f), path.join(dir, f));
-  writeFileSync(path.join(dir, "db.js"), readFileSync(path.join(root, "js/db.js"), "utf8").replace('const DB_NAME = "leafkin";', `const DB_NAME = "leafkin-${name}";`));
+  writeFileSync(path.join(dir, "db.js"), readFileSync(path.join(root, "js/db.js"), "utf8").replace('const DB_NAME = BETA ? "leafkin-beta" : "leafkin";', `const DB_NAME = "leafkin-${name}";`));
   copyFileSync(path.join(here, "fake-cloud.mjs"), path.join(dir, "cloud.js"));
   const sync = await import(pathToFileURL(path.join(dir, "sync.js")));
   const cloud = await import(pathToFileURL(path.join(dir, "cloud.js")));
@@ -162,6 +162,18 @@ ok((await C.sync.getPlants()).length === 0 && (await C.sync.legacyPlants()).leng
 await C.sync.createHousehold("Cara's");
 await C.sync.importPlants(await C.sync.legacyPlants()); await C.sync.clearLegacy(); await C.sync.flush();
 ok((await sql("select count(*)::int as n from plants where household_id = $1", [C.sync.household().id]))[0].n === 1, "guest plants reach the server after moving them");
+
+// Cara deletes her account: she was the only member, so the household and its photos go too
+const ch = C.sync.household().id;
+const cp = (await C.sync.getPlants())[0], cphoto = crypto.randomUUID();
+await C.sync.putPhoto(cphoto, new Blob(["jpeg"], { type: "image/jpeg" }));
+cp.growth = [{ id: crypto.randomUUID(), at: new Date().toISOString(), photoId: cphoto }]; await C.sync.putPlant(cp); await C.sync.flush();
+ok(globalThis.__lk.files.has(`${ch}/${cphoto}.jpg`), "Cara's photo is uploaded");
+await C.sync.deleteAccount();
+ok((await sql("select count(*)::int as n from auth.users where email = 'cara@example.com'"))[0].n === 0, "deleting the account removes it");
+ok((await sql("select count(*)::int as n from households where id = $1", [ch]))[0].n === 0, "her household and plants are gone");
+ok(!globalThis.__lk.files.has(`${ch}/${cphoto}.jpg`) && (await sql("select count(*)::int as n from storage.objects where name like $1", [`${ch}/%`]))[0].n === 0, "her household's photos are removed from storage");
+ok(!C.sync.user() && (await C.sync.getPlants()).length === 0, "her phone is signed out and empty");
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

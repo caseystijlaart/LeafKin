@@ -1,3 +1,5 @@
+// The test copy of LeafKin lives at /beta/ and keeps its own storage and sign-in.
+export const BETA = typeof location !== "undefined" && /\/beta\//.test(location.pathname);
 // Small pure helpers: dates, escaping, ids, image resizing.
 
 export const DAY = 86400000;

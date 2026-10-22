@@ -6,6 +6,10 @@ From 2.0, plants live in a shared **household** on Supabase: everyone in it sees
 ## What it does
 
 - **Households**: sign in with a 6-digit email code, create a household or join one with an invite code; everyone sees the same plants, photos and care log, with who did what ("Watered · Bob")
+- **Start screen**: create an account, sign in, or continue as a guest (plants stay on the phone only; guests get a monthly backup reminder and can move their plants into an account later)
+- **Daily reminders**: a push notification at a time you pick, on days when plants need water or food (iPhone: LeafKin on the Home Screen, iOS 16.4+)
+- **Household activity**: what housemates did recently on the main screen, the full log in Settings
+- **Delete account** in Settings; a short privacy note explains what is stored where
 - **Sync**: live updates between phones; works offline and sends changes when back online; plants from LeafKin 1.x on a phone can be moved into the household
 
 - Add plants by **scanning** them (Pl@ntNet suggests up to 5 species, each with reference photos you can enlarge) or by typing, with **autocomplete** in English, Dutch or Latin
@@ -62,11 +66,12 @@ Service workers only run on `https://` or `localhost`.
 ## Deploy (GitHub Pages)
 
 1. Repo **Settings → Pages → Source: GitHub Actions**.
-2. Merge into `main`. The workflow publishes the site to `https://caseystijlaart.github.io/LeafKin/`.
+2. The workflow publishes two versions on every push to `main` or a `pwa-*` branch:
+   - `https://caseystijlaart.github.io/LeafKin/`: the live app, from `LIVE_BRANCH` (set at the top of `.github/workflows/pages.yml`)
+   - `https://caseystijlaart.github.io/LeafKin/beta/`: the test version, from the `pwa-beta` branch. It's called "LeafKin Beta", shows a Beta label, and keeps its own storage and sign-in on the phone, so testing never touches the live app. It uses the same Supabase project, so it sees the same household.
+3. Allow the branches once under **Settings → Environments → github-pages → Deployment branches and tags**: `main` and `pwa-*`.
 
-### Testing a branch on your phone
-
-Pushes to `pwa-*` branches deploy too. Allow them once under **Settings → Environments → github-pages → Deployment branches and tags → Add rule** with the pattern `pwa-*`. There is only one site, so a branch deploy replaces what `main` published; push to `main` again to go back.
+Workflow: build on a branch, push it to `pwa-beta`, test on the phone (add the beta to the Home Screen separately), then merge into the live branch.
 
 ## Plant scanning (Pl@ntNet, free)
 
@@ -104,19 +109,33 @@ Do this once before deploying the `v2` branch.
 4. **Site address**: **Authentication → URL Configuration → Site URL**: `https://caseystijlaart.github.io/LeafKin/`.
 5. **Email service**: Supabase's built-in email only reaches members of your Supabase team, 2 emails an hour. For anyone else, connect a free SMTP service under **Authentication → Emails → SMTP Settings**, e.g. Brevo (300 emails/day, works with a verified sender address) or Resend (needs your own domain).
 6. **Keys for the site**: **Project Settings → API**, copy the Project URL and the `anon` public key into repository secrets `SUPABASE_URL` and `SUPABASE_ANON_KEY` (**Settings → Secrets and variables → Actions**). The anon key is meant to be public; the security rules protect the data.
-7. **Deploy**: merge `v2` into `main`. On first open, LeafKin asks you to sign in; plants saved by 1.x on that phone are offered for import into your household.
+7. **Second migration**: in **SQL Editor**, run `supabase/migrations/20261023120000_account_reminders.sql` (delete account, reminder settings).
+8. **Deploy**: merge `v2` into `main`. On first open, LeafKin asks you to sign in; plants saved by 1.x on that phone are offered for import into your household.
 
 Free plan limits: 500 MB database, 1 GB photos, 5 GB transfer a month. A project with no activity for a week is paused; restore it from the dashboard.
+
+## Daily reminders (push notifications)
+
+The app subscribes each phone that turns reminders on (Settings → Reminders) and stores it with the chosen hour. The Edge Function `supabase/functions/send-reminders` runs every hour, finds the devices whose hour it is, works out which plants are due (same rules as the app, including winter care and "still damp") and sends one notification. Nothing due, nothing sent.
+
+One-time setup:
+
+1. **Keys**: on your computer run `npx web-push generate-vapid-keys`. It prints a public and a private key.
+2. **Site**: add the public key as repository secret `VAPID_PUBLIC_KEY`.
+3. **Function**: Supabase → **Edge Functions → Deploy a new function → Via editor**, name it `send-reminders`, paste `supabase/functions/send-reminders/index.ts`, deploy.
+4. **Function secrets**: Edge Functions → **Secrets**: `VAPID_PUBLIC_KEY` (public key), `VAPID_PRIVATE_KEY` (private key), `VAPID_SUBJECT` = `mailto:leafkinapp@outlook.com`. The private key goes only here.
+5. **Schedule**: **Integrations → Cron → Create job**: name `send-reminders`, schedule `0 * * * *` (every hour), type **Supabase Edge Function**, function `send-reminders`, method POST. (Enable the Cron integration first if asked.)
+6. In LeafKin (on the Home Screen): Settings → Reminders → **Turn on reminders**, then **Send a test**.
 
 ## Tests
 
 ```sh
 npm i --no-save @electric-sql/pglite fake-indexeddb
-node tests/sql/test-migration.mjs   # schema + security rules, several users
-node tests/sync/test-sync.mjs       # two phones sharing a household, offline queue, import
+node tests/sql/test-migration.mjs        # schema + security rules, several users, delete account
+node tests/sync/test-sync.mjs            # two phones sharing a household, offline queue, import, guest mode
+node tests/functions/test-reminders.mjs  # which plants a reminder lists (Node 22.18+)
 ```
 
 ## Not in this version
 
-- Push notifications (2.1.0: Web Push + a daily scheduled function; `push_subscriptions` table is ready)
 - AI photo diagnosis: the health check works from the symptoms you tick
