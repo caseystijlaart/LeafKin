@@ -2,9 +2,11 @@
 import { createClient } from "./vendor/supabase.js";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
-export const configured = !!(SUPABASE_URL && SUPABASE_ANON_KEY);
+// Accept the project URL with or without a path such as /rest/v1/ copied from the dashboard.
+const BASE_URL = String(SUPABASE_URL || "").trim().replace(/\/(rest|auth|storage|realtime)\/v1\/?$/, "").replace(/\/+$/, "");
+export const configured = !!(BASE_URL && SUPABASE_ANON_KEY);
 export const sb = configured
-  ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  ? createClient(BASE_URL, SUPABASE_ANON_KEY, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, storageKey: "leafkin.auth" },
     })
   : null;
