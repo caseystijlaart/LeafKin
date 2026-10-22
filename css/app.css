@@ -273,3 +273,4 @@ details.card[open] > summary::after { content: "−"; }
 }
 .gate-warn { background: var(--wash-alert); border: 1px solid var(--alert); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
 .gate-warn p { margin: 0; }
+.gate-junk { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--wash-food); font-size: .92rem; }

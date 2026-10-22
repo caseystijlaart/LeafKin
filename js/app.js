@@ -1140,6 +1140,7 @@ function gateEmail(mode) {
     <form id="gCodeForm" class="gate-form" hidden novalidate>
       <p id="gSent"></p>
       <div class="field"><label for="gCode">Code</label><input id="gCode" class="code-input mono" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="••••••"></div>
+      <p class="gate-junk"><b>Not in your inbox?</b> Look in your junk or spam folder. The email comes from leafkinapp@outlook.com.</p>
       <button class="btn primary" type="submit" id="gVerify">${create ? "Create account" : "Sign in"}</button>
       <div class="btnrow"><button type="button" class="btn grow" id="gResend">Send a new code</button><button type="button" class="btn grow" id="gOther">Other email</button></div>
     </form>
@@ -1156,7 +1157,7 @@ function gateEmail(mode) {
     try {
       await db.sendCode(email, create);
       $g("#gEmailForm").hidden = true; $g("#gCodeForm").hidden = false;
-      $g("#gSent").textContent = `We sent a code to ${email}. It can take a minute; check your spam folder too.`;
+      $g("#gSent").textContent = `We sent a code to ${email}. It can take a minute to arrive.`;
       $g("#gCode").value = ""; $g("#gCode").focus(); cooldown();
     } catch (e) { err(authError(e)); }
     btn.disabled = false;
