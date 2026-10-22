@@ -64,7 +64,15 @@ declare const Deno: any;
 if (typeof Deno !== "undefined") {
   const { createClient } = await import("npm:@supabase/supabase-js@2");
   const webpush = (await import("npm:web-push@3.6.7")).default;
-  webpush.setVapidDetails(Deno.env.get("VAPID_SUBJECT") || "mailto:leafkinapp@outlook.com", Deno.env.get("VAPID_PUBLIC_KEY"), Deno.env.get("VAPID_PRIVATE_KEY"));
+  // Keys pasted into Secrets sometimes carry spaces, quotes or a "PUBLIC:"/"PRIVATE:" label; keep only the key.
+  const cleanKey = (v: string | undefined) => String(v || "").replace(/^\s*(public|private)\s*:?/i, "").replace(/[\s"'=]/g, "");
+  let setupError = "";
+  try {
+    webpush.setVapidDetails((Deno.env.get("VAPID_SUBJECT") || "mailto:leafkinapp@outlook.com").trim(), cleanKey(Deno.env.get("VAPID_PUBLIC_KEY")), cleanKey(Deno.env.get("VAPID_PRIVATE_KEY")));
+  } catch (e: any) {
+    setupError = `VAPID keys not usable: ${e?.message || e}`;
+    console.error(setupError);
+  }
   // New projects have secret keys (SUPABASE_SECRET_KEYS, a JSON map); older ones the legacy service_role key.
   let serverKey = "";
   try { serverKey = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") || "{}").default || ""; } catch { /* not set */ }
@@ -92,6 +100,7 @@ if (typeof Deno !== "undefined") {
 
   Deno.serve(async (req: Request) => {
     if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+    if (setupError) return json({ error: setupError }, 500);
     let body: any = {};
     try { body = await req.json(); } catch { /* cron sends an empty body */ }
 
