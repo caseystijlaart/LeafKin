@@ -79,7 +79,7 @@ Branches: `live` is the live app, `beta` the test version. New work goes to `bet
 1. Create an account at [my.plantnet.org](https://my.plantnet.org) and generate an API key (free plan: 500 identifications per day).
 2. In the key settings, tick **expose my API key** and add `https://caseystijlaart.github.io` under **Authorized domains** (add `http://localhost:8080` too for local testing).
 3. In this repo: **Settings → Secrets and variables → Actions → New repository secret**, name `PLANTNET_API_KEY`, paste the key.
-4. Re-run the deploy (push to `main`, or **Actions → Deploy to GitHub Pages → Run workflow**).
+4. Re-run the deploy (push to `live`, or **Actions → Deploy to GitHub Pages → Run workflow**).
 
 The workflow writes the key into `js/config.js` on the published site only; the file in the repo stays empty. Every device then scans without setup. A key typed in the app's Settings overrides it on that device.
 
