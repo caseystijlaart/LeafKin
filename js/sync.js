@@ -17,6 +17,7 @@ const st = {
   unsubscribe: null,
   pullTimer: null,
   lastError: "",
+  guest: false,         // guest mode: plants stay on this phone only, nothing is sent
 };
 const listeners = new Set();
 export const onChange = (fn) => { listeners.add(fn); return () => listeners.delete(fn); };
@@ -28,6 +29,7 @@ export const household = () => st.household;
 export const members = () => st.members;
 export const memberName = (id) => (id && st.user && id === st.user.id ? "you" : st.members.find((m) => m.id === id)?.name || "");
 export const lastError = () => st.lastError;
+export const isGuest = () => st.guest;
 const isUuid = (s) => typeof s === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
 const clone = (x) => JSON.parse(JSON.stringify(x));
 
@@ -107,6 +109,7 @@ export async function getPlants() {
 }
 
 export async function putPlant(p) {
+  if (st.guest) return local.putPlant(p);
   if (!st.household) throw new Error("no_household");
   normalise(p);
   const ops = diff(st.shadow.get(p.id), p, st.household.id);
@@ -116,6 +119,11 @@ export async function putPlant(p) {
 }
 
 export async function deletePlant(p) {
+  if (st.guest) {
+    await local.deletePlant(p.id);
+    for (const id of photoIds(p)) await local.deletePhoto(id).catch(() => {});
+    return;
+  }
   if (!st.household) return;
   const ops = [{ op: "deletePlant", id: p.id }, ...[...photoIds(p)].map((id) => ({ op: "deletePhoto", household: st.household.id, id }))];
   st.shadow.delete(p.id);
@@ -219,9 +227,8 @@ export function status() {
 
 // ---------------- session ----------------
 
-// Called once at start. Returns "unconfigured" | "signed-out" | "no-household" | "ready".
+// Called once at start. Returns "guest" | "unconfigured" | "signed-out" | "no-household" | "ready".
 export async function start() {
-  if (!cloud.configured) return "unconfigured";
   // 1.x plants on this phone: keep them aside so they can be imported into the household.
   if (!(await local.getMeta("mode"))) {
     const old = await local.getPlants();
@@ -229,6 +236,8 @@ export async function start() {
     await local.replacePlants([]);
     await local.setMeta("mode", "cloud");
   }
+  if (await local.getMeta("guest")) { st.guest = true; return "guest"; }
+  if (!cloud.configured) return "unconfigured";
   const u = await cloud.currentUser().catch(() => null);
   if (!u) return "signed-out";
   st.user = { id: u.id, email: u.email };
@@ -270,7 +279,28 @@ function stopLive() {
 const onOnline = () => { st.online = true; pullSoon(0); };
 const onVisible = () => { if (!document.hidden) pullSoon(0); };
 
+// Guest mode: plants live only in this phone's storage. Plants kept aside from 1.x come back into the list.
+export async function startGuest() {
+  const legacy = (await local.getMeta("legacy")) || [];
+  if (legacy.length) {
+    await local.replacePlants([...(await local.getPlants()), ...legacy]);
+    await local.delMeta("legacy");
+  }
+  await local.setMeta("guest", true);
+  st.guest = true;
+  return "guest";
+}
+
 export async function signedIn(u) {
+  // Coming from guest mode: set the guest's plants aside so they can be moved into the household.
+  if (st.guest) {
+    const mine = await local.getPlants();
+    const legacy = (await local.getMeta("legacy")) || [];
+    if (mine.length) await local.setMeta("legacy", [...legacy, ...mine]);
+    await local.replacePlants([]);
+    await local.delMeta("guest");
+    st.guest = false;
+  }
   st.user = { id: u.id, email: u.email };
   return refreshHousehold();
 }
@@ -304,5 +334,6 @@ export async function setMyName(name) {
   st.members = await cloud.members(st.household.id);
   emit("members");
 }
-export const sendCode = (email) => cloud.sendCode(email);
+export const sendCode = (email, create) => cloud.sendCode(email, create);
+export const saveProfileName = (name) => (name && st.user ? cloud.setDisplayName(st.user.id, name) : null);
 export const verifyCode = (email, code) => cloud.verifyCode(email, code);

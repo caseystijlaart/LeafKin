@@ -23,7 +23,8 @@ export async function currentUser() {
   const { data } = await sb.auth.getSession();
   return data.session?.user || null;
 }
-export const sendCode = async (email) => check(await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: true } }));
+// "Sign in" only works for existing accounts; "Create account" makes one if needed.
+export const sendCode = async (email, create = false) => check(await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: !!create } }));
 export const verifyCode = async (email, token) => check(await sb.auth.verifyOtp({ email, token, type: "email" })).user;
 export const signOut = () => sb.auth.signOut();
 export const onAuthChange = (fn) => sb.auth.onAuthStateChange((event, session) => fn(event, session?.user || null));

@@ -16,7 +16,7 @@ const db = new PGlite();
 await db.exec(readFileSync(path.join(root, "tests/sql/supabase-stubs.sql"), "utf8"));
 for (const f of readdirSync(path.join(root, "supabase/migrations")).sort()) await db.exec(readFileSync(path.join(root, "supabase/migrations", f), "utf8"));
 const users = {};
-for (const n of ["ann", "bob"]) { users[`${n}@example.com`] = crypto.randomUUID(); await db.query("insert into auth.users values ($1, $2)", [users[`${n}@example.com`], `${n}@example.com`]); }
+for (const n of ["ann", "bob", "cara"]) { users[`${n}@example.com`] = crypto.randomUUID(); await db.query("insert into auth.users values ($1, $2)", [users[`${n}@example.com`], `${n}@example.com`]); }
 globalThis.__lk = { db, users, files: new Map() };
 
 // Browser bits sync.js touches (set after PGlite starts, or it thinks it's in a browser).
@@ -145,6 +145,23 @@ ok(refreshed && (await B.sync.getPlants()).find((p) => p.id === pid).name === "L
 ok(await B.sync.leaveHousehold() === "no-household" && (await B.sync.getPlants()).length === 0, "Bob leaves and his phone forgets the plants");
 await A.sync.pull();
 ok((await A.sync.getPlants()).length === 1 && A.sync.members().length === 1, "Ann keeps the household and plants");
+
+// Cara tries LeafKin as a guest first (she had one 1.x plant), then creates an account
+const C = await phone("cara");
+await C.local.putPlant({ id: "old-c", name: "Old cactus", species: "Cactus", waterEvery: 14, feedEvery: 0, care: {}, history: [], growth: [], checks: [] });
+ok(await C.sync.start() === "signed-out", "Cara's first start: welcome screen");
+ok(await C.sync.startGuest() === "guest" && (await C.sync.getPlants()).length === 1, "guest mode brings her 1.x plant back into the list");
+const gp = { id: crypto.randomUUID(), name: "Basil", species: "Basil", waterEvery: 2, feedEvery: 14, care: {}, history: [{ id: crypto.randomUUID(), type: "water", at: new Date().toISOString() }], growth: [], checks: [] };
+await C.sync.putPlant(gp);
+ok((await C.sync.getPlants()).length === 2 && await C.sync.pendingCount() === 0, "guest plants are saved locally, nothing is queued for the server");
+ok(await C.sync.start() === "guest", "reopening the app stays in guest mode");
+await C.sync.deletePlant((await C.sync.getPlants()).find((p) => p.name === "Old cactus"));
+ok((await C.sync.getPlants()).length === 1, "guest can delete a plant");
+ok(await C.sync.signedIn(await C.cloud.verifyCode("cara@example.com", "111111")) === "no-household" && !C.sync.isGuest(), "Cara creates an account and leaves guest mode");
+ok((await C.sync.getPlants()).length === 0 && (await C.sync.legacyPlants()).length === 1, "her guest plants wait to be moved into a household");
+await C.sync.createHousehold("Cara's");
+await C.sync.importPlants(await C.sync.legacyPlants()); await C.sync.clearLegacy(); await C.sync.flush();
+ok((await sql("select count(*)::int as n from plants where household_id = $1", [C.sync.household().id]))[0].n === 1, "guest plants reach the server after moving them");
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

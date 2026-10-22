@@ -200,7 +200,7 @@ body.gated .fab { display: none; }
 /* splash: roots grow down, the stem grows up, leaves unfold, then the plant sways */
 .splash { position: fixed; inset: 0; z-index: 50; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding-bottom: 6vh; transition: opacity .5s ease; }
 .splash.out { opacity: 0; pointer-events: none; }
-.splash.go { animation: splash-away .5s ease 6.6s forwards; } /* backup if the script that closes it never runs */
+.splash.go { animation: splash-away .4s ease 4s forwards; } /* backup if the script that closes it never runs */
 @keyframes splash-away { to { opacity: 0; visibility: hidden; pointer-events: none; } }
 .splash svg { width: min(72vw, 300px); height: auto; overflow: visible; }
 .splash path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
@@ -212,14 +212,14 @@ body.gated .fab { display: none; }
 .splash .lf { fill: var(--leaf); stroke: none; transform-box: view-box; transform: scale(0); }
 .splash .shoot { transform-box: view-box; transform-origin: 110px 170px; }
 .splash.go [data-draw] { animation: draw var(--dur, .9s) ease-out var(--d) both; }
-.splash.go .lf { animation: unfold .7s cubic-bezier(.3, 1.45, .5, 1) var(--d) both; }
-.splash.go .shoot { animation: sway 2.4s ease-in-out 4.1s infinite alternate; }
+.splash.go .lf { animation: unfold .45s cubic-bezier(.3, 1.45, .5, 1) var(--d) both; }
+.splash.go .shoot { animation: sway 2.4s ease-in-out 2.4s infinite alternate; }
 .splash.calm .lf { animation-timing-function: ease-out; }
 .splash.calm .shoot { animation: none; }
 .splash-name { font-family: var(--display); font-weight: 700; font-size: 2.6rem; letter-spacing: -.01em; color: var(--leaf); margin-top: 8px; opacity: 0; transform: translateY(8px); }
 .splash-tag { color: var(--muted); font-size: 1rem; opacity: 0; transform: translateY(6px); }
-.splash.go .splash-name { animation: rise .7s ease-out 3.95s both; }
-.splash.go .splash-tag { animation: rise .7s ease-out 4.3s both; }
+.splash.go .splash-name { animation: rise .45s ease-out 2.3s both; }
+.splash.go .splash-tag { animation: rise .45s ease-out 2.5s both; }
 @keyframes draw { from { opacity: 1; } to { stroke-dashoffset: 0; opacity: 1; } }
 @keyframes unfold { from { transform: scale(0); } to { transform: scale(1); } }
 @keyframes sway { from { transform: rotate(-1.5deg); } to { transform: rotate(1.5deg); } }
@@ -271,3 +271,5 @@ details.card[open] > summary::after { content: "−"; }
   .sheet, .thinking { animation: none; }
   .btn:active { transform: none; }
 }
+.gate-warn { background: var(--wash-alert); border: 1px solid var(--alert); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.gate-warn p { margin: 0; }

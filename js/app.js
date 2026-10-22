@@ -929,7 +929,7 @@ async function openSettings() {
         <span class="mrole">${m.role === "owner" ? `<span class="pill plain">Owner</span>` : ""}${owner && m.id !== me?.id ? `<button class="btn sm danger" data-rm="${esc(m.id)}">Remove</button>` : ""}</span></li>`).join("")}</ul>
       <button class="btn" id="invBtn">Invite someone</button>
       <div class="invite" id="invOut" hidden></div>
-      ${legacy.length ? `<button class="btn" id="legacyBtn">Move ${legacy.length} plant${legacy.length === 1 ? "" : "s"} from before accounts into this household</button>` : ""}
+      ${legacy.length ? `<button class="btn" id="legacyBtn">Move ${legacy.length} plant${legacy.length === 1 ? "" : "s"} saved on this phone into this household</button>` : ""}
       <button class="btn danger" id="leaveBtn">Leave household</button>
       <div class="confirm" id="leaveConfirm" hidden><span>${mem.length > 1 ? "You'll lose access to these plants. Leave?" : "You're the only member, so the household and all its plants and photos will be deleted. Leave?"}</span><button class="btn danger" id="leaveYes">Leave</button><button class="btn" id="leaveNo">Stay</button></div>
     </div>
@@ -939,6 +939,11 @@ async function openSettings() {
       <p class="hint">Signed in as ${esc(me?.email || "")}</p>
       <button class="btn" id="signOutBtn">Sign out</button>
       <div class="confirm" id="soConfirm" hidden><span id="soTxt"></span><button class="btn danger" id="soYes">Sign out</button><button class="btn" id="soNo">Cancel</button></div>
+    </div>` : ""}
+    ${db.isGuest() ? `<div class="card">
+      <h3>Guest mode</h3>
+      <p>Your plants are only saved on this phone and can be lost. Create an account to keep them safe and share them; your plants come along.</p>
+      <button class="btn primary" id="guestAcct">Create account or sign in</button>
     </div>` : ""}
     <div class="card">
       <h3>Plant scanning</h3>
@@ -972,7 +977,7 @@ async function openSettings() {
     </div>
     <div class="card">
       <h3>Backup</h3>
-      <p>Save a copy of all plants and photos as a file. Adding from a backup puts its plants into this household.</p>
+      <p>Save a copy of all plants and photos as a file. ${db.isGuest() ? "Do this now and then: in guest mode it's the only copy." : "Adding from a backup puts its plants into this household."}</p>
       <div class="btnrow"><button class="btn grow" id="expBtn">Save backup</button><button class="btn grow" id="impBtn">Add from backup</button></div>
       <input type="file" id="impIn" accept="application/json,.json" hidden>
       <p class="hint" id="bMsg">${mb ? `Using about ${mb} MB.` : ""}</p>
@@ -986,6 +991,7 @@ async function openSettings() {
   s.querySelector("#pnClear")?.addEventListener("click", () => { plantnet.setKey(""); s.querySelector("#pnKey").value = ""; s.querySelector("#pnMsg").textContent = "Key removed."; });
   s.querySelector("#photoPeriod").onchange = (e) => setPhotoPeriod(e.target.value);
   if (hh) wireAccountSettings(s, owner);
+  s.querySelector("#guestAcct")?.addEventListener("click", () => { closeSheet(); gateWelcome(); });
   s.querySelector("#winterOn").onchange = (e) => { setWinterMode(e.target.checked); render(); };
   s.querySelector("#splashOn").onchange = (e) => { try { localStorage.setItem("leafkin.splash", e.target.checked ? "on" : "off"); } catch {} };
   s.querySelector("#badgeBtn")?.addEventListener("click", async (e) => {
@@ -1064,7 +1070,7 @@ function wireAccountSettings(s, owner) {
     $s("#soConfirm").hidden = false;
   };
   $s("#soNo").onclick = () => { $s("#soConfirm").hidden = true; };
-  $s("#soYes").onclick = async () => { await db.signOut(); closeSheet(); state.plants = []; render(); gateSignIn(); };
+  $s("#soYes").onclick = async () => { await db.signOut(); closeSheet(); state.plants = []; render(); gateWelcome(); };
 }
 
 /* ---------- account gate: sign in, then join or create a household ---------- */
@@ -1079,6 +1085,7 @@ function hideGate() { const g = $("#gate"); g.hidden = true; g.innerHTML = ""; d
 
 function authError(e) {
   const m = String(e?.message || e || "");
+  if (/signups? not allowed|otp_disabled|user not found/i.test(m)) return "There's no LeafKin account for this email yet. Go back and choose Create account.";
   if (/not authori[sz]ed/i.test(m)) return "Codes can't be sent to this address yet: LeafKin's email service still needs to be set up for other people.";
   if (/rate|too many|security purposes|seconds/i.test(m)) return "Please wait a minute before asking for another code.";
   if (/expired|invalid|token/i.test(m)) return "That code is wrong or has expired. Ask for a new one.";
@@ -1088,27 +1095,55 @@ function authError(e) {
   return "Something went wrong. Try again.";
 }
 
-function gateUnconfigured() {
-  showGate(`<h2>Almost ready</h2><p class="muted">This copy of LeafKin isn't connected to its database yet. Add the Supabase settings to the repository and deploy again; the README explains how.</p>`);
+function gateUnconfigured() { gateWelcome(); }
+
+// First screen: create an account, sign in, or try LeafKin as a guest.
+function gateWelcome() {
+  const guest = db.isGuest();
+  const g = showGate(`
+    <h2>${guest ? "Save your plants" : "Welcome"}</h2>
+    <p class="muted">${guest ? "With an account your plants are kept safe online and you can share them with the people you live with. Your plants on this phone come along." : "Reminders for watering and feeding, care guides and a growth timeline. With an account you can share your plants with the people you live with."}</p>
+    ${db.configured ? `<button class="btn primary" id="wCreate">Create account</button>
+    <button class="btn" id="wSignIn">Sign in</button>` : `<p class="hint">Accounts aren't available in this copy of LeafKin yet.</p>`}
+    ${guest ? `<button class="btn" id="wBack">Back to my plants</button>` : `<button class="btn" id="wGuest">Continue as guest</button>
+    <div class="gate-warn" id="wWarn" hidden>
+      <p><b>Your plants are only saved on this phone.</b> They're lost if you delete LeafKin, clear Safari's website data, or iOS clears storage to make space. They won't sync to other devices and you can't share them.</p>
+      <p class="hint">You can create an account later and move your plants into it. Saving a backup in Settings also helps.</p>
+      <button class="btn primary" id="wGuestYes">I understand, continue</button>
+      <button class="btn" id="wGuestNo">Back</button>
+    </div>`}`);
+  const $g = (q) => g.querySelector(q);
+  $g("#wCreate")?.addEventListener("click", () => gateEmail("create"));
+  $g("#wSignIn")?.addEventListener("click", () => gateEmail("signin"));
+  $g("#wBack")?.addEventListener("click", () => afterGate("guest"));
+  if (!guest) {
+    $g("#wGuest").onclick = () => { $g("#wWarn").hidden = false; $g("#wGuest").hidden = true; $g("#wWarn").scrollIntoView({ behavior: "smooth", block: "nearest" }); };
+    $g("#wGuestNo").onclick = () => { $g("#wWarn").hidden = true; $g("#wGuest").hidden = false; };
+    $g("#wGuestYes").onclick = async (e) => { e.target.disabled = true; await afterGate(await db.startGuest()); };
+  }
 }
 
-function gateSignIn() {
+// Email + 6-digit code. mode: "signin" (existing account) or "create" (new account, asks for a name).
+function gateEmail(mode) {
+  const create = mode === "create";
   const g = showGate(`
-    <h2>Sign in</h2>
+    <h2>${create ? "Create account" : "Sign in"}</h2>
     <p class="muted">We'll email you a 6-digit code. No password needed.</p>
     <form id="gEmailForm" class="gate-form" novalidate>
+      ${create ? `<div class="field"><label for="gName">Your name</label><input id="gName" maxlength="40" autocomplete="given-name" placeholder="Shown to the people you share with"></div>` : ""}
       <div class="field"><label for="gEmail">Email</label><input id="gEmail" type="email" autocomplete="email" inputmode="email" autocapitalize="off" placeholder="you@example.com"></div>
       <button class="btn primary" type="submit">Send code</button>
+      <button class="btn" type="button" id="gBack">Back</button>
     </form>
     <form id="gCodeForm" class="gate-form" hidden novalidate>
       <p id="gSent"></p>
       <div class="field"><label for="gCode">Code</label><input id="gCode" class="code-input mono" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="••••••"></div>
-      <button class="btn primary" type="submit" id="gVerify">Sign in</button>
+      <button class="btn primary" type="submit" id="gVerify">${create ? "Create account" : "Sign in"}</button>
       <div class="btnrow"><button type="button" class="btn grow" id="gResend">Send a new code</button><button type="button" class="btn grow" id="gOther">Other email</button></div>
     </form>
     <p class="err" id="gErr" hidden></p>`);
   const $g = (q) => g.querySelector(q);
-  let email = "", wait = null;
+  let email = "", name = "", wait = null;
   const err = (m) => { $g("#gErr").textContent = m || ""; $g("#gErr").hidden = !m; };
   const cooldown = () => {
     let left = 60; const b = $g("#gResend"); b.disabled = true; clearInterval(wait);
@@ -1117,25 +1152,32 @@ function gateSignIn() {
   const send = async (btn) => {
     err(""); btn.disabled = true;
     try {
-      await db.sendCode(email);
+      await db.sendCode(email, create);
       $g("#gEmailForm").hidden = true; $g("#gCodeForm").hidden = false;
       $g("#gSent").textContent = `We sent a code to ${email}. It can take a minute; check your spam folder too.`;
       $g("#gCode").value = ""; $g("#gCode").focus(); cooldown();
     } catch (e) { err(authError(e)); }
     btn.disabled = false;
   };
+  $g("#gBack").onclick = () => { clearInterval(wait); gateWelcome(); };
   $g("#gEmailForm").onsubmit = (e) => {
     e.preventDefault();
+    name = create ? $g("#gName").value.trim() : "";
     email = $g("#gEmail").value.trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return err("Enter a valid email address.");
-    send($g("#gEmailForm button"));
+    send($g("#gEmailForm button[type=submit]"));
   };
   const verify = async () => {
     const code = $g("#gCode").value.replace(/\D/g, "");
     if (code.length < 6) return err("Enter the 6-digit code from the email.");
     err(""); $g("#gVerify").disabled = true;
-    try { const u = await db.verifyCode(email, code); await afterGate(await db.signedIn(u)); }
-    catch (e) { err(authError(e)); $g("#gVerify").disabled = false; }
+    try {
+      const u = await db.verifyCode(email, code);
+      clearInterval(wait);
+      const next = await db.signedIn(u);
+      if (name) await db.saveProfileName(name)?.catch(() => {});
+      await afterGate(next);
+    } catch (e) { err(authError(e)); $g("#gVerify").disabled = false; }
   };
   $g("#gCodeForm").onsubmit = (e) => { e.preventDefault(); verify(); };
   $g("#gCode").addEventListener("input", (e) => { if (e.target.value.replace(/\D/g, "").length === 6) verify(); });
@@ -1170,14 +1212,15 @@ function gateHousehold() {
     run($g("#gJoin button"), () => db.joinHousehold(code));
   };
   $g("#gCreate").onsubmit = (e) => { e.preventDefault(); run($g("#gCreate button"), () => db.createHousehold($g("#gName").value.trim() || "Our plants")); };
-  $g("#gSignOut").onclick = async () => { await db.signOut(); gateSignIn(); };
+  $g("#gSignOut").onclick = async () => { await db.signOut(); gateWelcome(); };
 }
 
 async function afterGate(result) {
   if (result === "unconfigured") return gateUnconfigured();
-  if (result === "signed-out") return gateSignIn();
+  if (result === "signed-out") return gateWelcome();
   if (result === "no-household") return gateHousehold();
   hideGate();
+  if (result === "guest") { await load(); render(); db.persist(); updateSyncNote(); return; }
   if (location.search.includes("join=")) history.replaceState(null, "", location.pathname);
   await load(); render(); db.persist();
   updateSyncNote();
@@ -1189,7 +1232,7 @@ function offerLegacyImport(legacy) {
   const n = legacy.length;
   const s = sheet("import", `
     <div class="sheet-head"><h2>Plants on this phone</h2><button class="x" data-close aria-label="Close">×</button></div>
-    <p>This phone has ${n} plant${n === 1 ? "" : "s"} from before accounts. Move ${n === 1 ? "it" : "them"} into ${esc(db.household()?.name || "your household")}, with photos and history, so everyone in it can see ${n === 1 ? "it" : "them"}?</p>
+    <p>This phone has ${n} plant${n === 1 ? "" : "s"} that ${n === 1 ? "isn't" : "aren't"} in a household yet. Move ${n === 1 ? "it" : "them"} into ${esc(db.household()?.name || "your household")}, with photos and history, so everyone in it can see ${n === 1 ? "it" : "them"}?</p>
     <button class="btn primary" id="liYes">Move ${n} plant${n === 1 ? "" : "s"}</button>
     <button class="btn" id="liLater">Not now</button>
     <p class="hint">"Not now" keeps them on this phone. You can still move them from Settings.</p>`);
@@ -1205,6 +1248,7 @@ function offerLegacyImport(legacy) {
 // "Offline · 3 changes waiting" under the date, only when something is pending or wrong.
 async function updateSyncNote() {
   const el = $("#syncNote"); if (!el) return;
+  if (db.isGuest()) { el.textContent = "Guest · saved on this phone only"; el.hidden = false; el.classList.remove("warn"); return; }
   const n = await db.pendingCount().catch(() => 0);
   const { online } = db.status();
   const err = db.lastError();
@@ -1219,7 +1263,7 @@ function runSplash() {
   const el = $("#splash"); if (!el) return;
   const done = () => { el.classList.add("out"); setTimeout(() => el.remove(), 550); };
   el.addEventListener("click", done, { once: true });
-  setTimeout(done, 6000);
+  setTimeout(done, 3500);
 }
 
 function setupInstallHint() {
