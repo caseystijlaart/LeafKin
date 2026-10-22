@@ -63,7 +63,14 @@ export async function deleteHouseholdPhotos(h) {
 export const savePushDevice = async (row) => check(await sb.from("push_subscriptions").upsert(row, { onConflict: "endpoint" }));
 export const updatePushDevice = async (endpoint, fields) => check(await sb.from("push_subscriptions").update(fields).eq("endpoint", endpoint));
 export const deletePushDevice = async (endpoint) => check(await sb.from("push_subscriptions").delete().eq("endpoint", endpoint));
-export const sendTestPush = async () => check(await sb.functions.invoke("send-reminders", { body: { test: true } }));
+export async function sendTestPush() {
+  const { data, error } = await sb.functions.invoke("send-reminders", { body: { test: true } });
+  if (!error) return data;
+  // Pass on what the server said (status and message), so the app can show it.
+  let detail = error.message || "error";
+  try { const r = error.context; if (r?.status) detail = `${r.status} ${(await r.text()).slice(0, 160)}`; } catch {}
+  throw new Error(detail);
+}
 
 export const setDisplayName = async (userId, name) => check(await sb.from("profiles").update({ display_name: name }).eq("id", userId));
 

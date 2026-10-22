@@ -1010,7 +1010,7 @@ async function renderPushCard(card) {
     card.querySelector("#pushTest").onclick = async (e) => {
       e.target.disabled = true; msg.textContent = "Sending…";
       try { const r = await push.sendTest(); msg.textContent = r?.sent ? "Sent. It should appear in a few seconds." : "Nothing was sent. Try turning reminders off and on."; }
-      catch { msg.textContent = "The reminder service isn't reachable. Check that the send-reminders function is set up in Supabase."; }
+      catch (er) { msg.textContent = `The reminder service didn't work (${er?.message || "no answer"}). Check Supabase → Edge Functions → send-reminders → Logs.`; }
       e.target.disabled = false;
     };
     card.querySelector("#pushOff").onclick = async () => { await push.turnOff(); renderPushCard(card); toast("Reminders are off on this device"); };
