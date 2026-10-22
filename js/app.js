@@ -1085,6 +1085,8 @@ function hideGate() { const g = $("#gate"); g.hidden = true; g.innerHTML = ""; d
 
 function authError(e) {
   const m = String(e?.message || e || "");
+  if (/error sending|smtp|email.*(send|deliver)/i.test(m)) return `The code email couldn't be sent (${m}). Check the SMTP settings in Supabase, then try again.`;
+  if (/database error/i.test(m)) return `The account couldn't be created (${m}). Check Supabase → Logs → Auth.`;
   if (/signups? not allowed|otp_disabled|user not found/i.test(m)) return "There's no LeafKin account for this email yet. Go back and choose Create account.";
   if (/not authori[sz]ed/i.test(m)) return "Codes can't be sent to this address yet: LeafKin's email service still needs to be set up for other people.";
   if (/rate|too many|security purposes|seconds/i.test(m)) return "Please wait a minute before asking for another code.";
@@ -1092,7 +1094,7 @@ function authError(e) {
   if (/fetch|network|load failed/i.test(m)) return "You're offline. Connect to the internet to sign in.";
   if (/invalid_code/.test(m)) return "That code doesn't work. Invite codes last 7 days; ask for a new one.";
   if (/already_in_household/.test(m)) return "You're already in a household.";
-  return "Something went wrong. Try again.";
+  return m ? `Something went wrong: ${m}` : "Something went wrong. Try again.";
 }
 
 function gateUnconfigured() { gateWelcome(); }
