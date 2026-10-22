@@ -6,12 +6,12 @@ name: Deploy to GitHub Pages
 # A push to either branch rebuilds both.
 on:
   push:
-    branches: [main, "pwa-*"]
+    branches: [live, beta]
   workflow_dispatch:
 
 env:
-  LIVE_BRANCH: main
-  BETA_BRANCH: pwa-beta
+  LIVE_BRANCH: live
+  BETA_BRANCH: beta
 
 permissions:
   contents: read

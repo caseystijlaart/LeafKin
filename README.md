@@ -67,12 +67,12 @@ Service workers only run on `https://` or `localhost`.
 ## Deploy (GitHub Pages)
 
 1. Repo **Settings → Pages → Source: GitHub Actions**.
-2. The workflow publishes two versions on every push to `main` or a `pwa-*` branch:
+2. The workflow publishes two versions on every push to `live` or `beta`:
    - `https://caseystijlaart.github.io/LeafKin/`: the live app, from `LIVE_BRANCH` (set at the top of `.github/workflows/pages.yml`)
-   - `https://caseystijlaart.github.io/LeafKin/beta/`: the test version, from the `pwa-beta` branch. It's called "LeafKin β" on the Home Screen, has an amber icon with a β badge (`icons/beta/`, made by `tools/make-beta-icons.py`), shows a Beta label, and keeps its own storage and sign-in on the phone, so testing never touches the live app. It uses the same Supabase project, so it sees the same household.
-3. Allow the branches once under **Settings → Environments → github-pages → Deployment branches and tags**: `main` and `pwa-*`.
+   - `https://caseystijlaart.github.io/LeafKin/beta/`: the test version, from the `beta` branch. It's called "LeafKin β" on the Home Screen, has an amber icon with a β badge (`icons/beta/`, made by `tools/make-beta-icons.py`), shows a Beta label, and keeps its own storage and sign-in on the phone, so testing never touches the live app. It uses the same Supabase project, so it sees the same household.
+3. Allow the branches once under **Settings → Environments → github-pages → Deployment branches and tags**: `live` and `beta`.
 
-Branches: `main` is the live app, `pwa-beta` the test version. New work goes to `pwa-beta` (bigger features on their own branch first), gets tested on the phone in LeafKin β, then is merged into `main`.
+Branches: `live` is the live app, `beta` the test version. New work goes to `beta` (bigger features on their own branch first), gets tested on the phone in LeafKin β, then is merged into `live`.
 
 ## Plant scanning (Pl@ntNet, free)
 
@@ -111,7 +111,7 @@ Do this once before deploying the `v2` branch.
 5. **Email service**: Supabase's built-in email only reaches members of your Supabase team, 2 emails an hour. For anyone else, connect a free SMTP service under **Authentication → Emails → SMTP Settings**, e.g. Brevo (300 emails/day, works with a verified sender address) or Resend (needs your own domain).
 6. **Keys for the site**: **Project Settings → API**, copy the Project URL and the `anon` public key into repository secrets `SUPABASE_URL` and `SUPABASE_ANON_KEY` (**Settings → Secrets and variables → Actions**). The anon key is meant to be public; the security rules protect the data.
 7. **Second migration**: in **SQL Editor**, run `supabase/migrations/20261023120000_account_reminders.sql` (delete account, reminder settings). Then `supabase/migrations/20261023130000_server_access.sql` (lets the reminder function read devices and plants).
-8. **Deploy**: push to `main`. On first open, LeafKin asks you to sign in; plants saved by 1.x on that phone are offered for import into your household.
+8. **Deploy**: push to `live`. On first open, LeafKin asks you to sign in; plants saved by 1.x on that phone are offered for import into your household.
 
 Free plan limits: 500 MB database, 1 GB photos, 5 GB transfer a month. A project with no activity for a week is paused; restore it from the dashboard.
 
