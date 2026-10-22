@@ -66,7 +66,10 @@ jobs:
           build live _site "$(git -C live rev-parse HEAD)"
           if [ "$HAS_BETA" = "true" ]; then
             build beta _site/beta "$(git -C beta rev-parse HEAD)"
-            sed -i 's/"name": "LeafKin"/"name": "LeafKin Beta"/; s/"short_name": "LeafKin"/"short_name": "LeafKin β"/' _site/beta/manifest.webmanifest
+            # Amber icon with a β badge and an amber bar, so the beta is easy to tell apart on the Home Screen.
+            [ -d beta/icons/beta ] && cp beta/icons/beta/*.png _site/beta/icons/
+            sed -i 's/"name": "LeafKin"/"name": "LeafKin Beta"/; s/"short_name": "LeafKin"/"short_name": "LeafKin β"/; s/"theme_color": "#2f5d3a"/"theme_color": "#b06812"/' _site/beta/manifest.webmanifest
+            sed -i 's#content="\#2f5d3a" media="(prefers-color-scheme: light)"#content="\#b06812" media="(prefers-color-scheme: light)"#' _site/beta/index.html
             sed -i 's#<title>LeafKin</title>#<title>LeafKin Beta</title>#; s#content="LeafKin">#content="LeafKin β">#' _site/beta/index.html
             echo "Beta added from $BETA_BRANCH."
           else

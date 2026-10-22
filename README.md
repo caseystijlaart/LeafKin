@@ -68,7 +68,7 @@ Service workers only run on `https://` or `localhost`.
 1. Repo **Settings → Pages → Source: GitHub Actions**.
 2. The workflow publishes two versions on every push to `main` or a `pwa-*` branch:
    - `https://caseystijlaart.github.io/LeafKin/`: the live app, from `LIVE_BRANCH` (set at the top of `.github/workflows/pages.yml`)
-   - `https://caseystijlaart.github.io/LeafKin/beta/`: the test version, from the `pwa-beta` branch. It's called "LeafKin Beta", shows a Beta label, and keeps its own storage and sign-in on the phone, so testing never touches the live app. It uses the same Supabase project, so it sees the same household.
+   - `https://caseystijlaart.github.io/LeafKin/beta/`: the test version, from the `pwa-beta` branch. It's called "LeafKin β" on the Home Screen, has an amber icon with a β badge (`icons/beta/`, made by `tools/make-beta-icons.py`), shows a Beta label, and keeps its own storage and sign-in on the phone, so testing never touches the live app. It uses the same Supabase project, so it sees the same household.
 3. Allow the branches once under **Settings → Environments → github-pages → Deployment branches and tags**: `main` and `pwa-*`.
 
 Workflow: build on a branch, push it to `pwa-beta`, test on the phone (add the beta to the Home Screen separately), then merge into the live branch.
