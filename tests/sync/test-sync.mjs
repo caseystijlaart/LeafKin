@@ -15,7 +15,6 @@ const root = process.env.LEAFKIN_ROOT || path.resolve(here, "../..");
 const db = new PGlite();
 await db.exec(readFileSync(path.join(root, "tests/sql/supabase-stubs.sql"), "utf8"));
 for (const f of readdirSync(path.join(root, "supabase/migrations")).sort()) await db.exec(readFileSync(path.join(root, "supabase/migrations", f), "utf8"));
-await db.exec("grant select, insert, update, delete on all tables in schema public to authenticated; grant execute on all functions in schema public to authenticated;");
 const users = {};
 for (const n of ["ann", "bob"]) { users[`${n}@example.com`] = crypto.randomUUID(); await db.query("insert into auth.users values ($1, $2)", [users[`${n}@example.com`], `${n}@example.com`]); }
 globalThis.__lk = { db, users, files: new Map() };

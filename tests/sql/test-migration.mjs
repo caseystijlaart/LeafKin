@@ -12,9 +12,6 @@ await db.exec(readFileSync(path.join(here, "supabase-stubs.sql"), "utf8"));
 for (const f of readdirSync(path.join(root, "supabase/migrations")).sort()) {
   await db.exec(readFileSync(path.join(root, "supabase/migrations", f), "utf8"));
 }
-// Supabase grants table access to these roles by default; RLS then decides per row.
-await db.exec(`grant select, insert, update, delete on all tables in schema public to authenticated;
-               grant execute on all functions in schema public to authenticated;`);
 
 let pass = 0, fail = 0;
 const ok = (cond, msg) => { cond ? pass++ : fail++; console.log(`${cond ? "✓" : "✗"} ${msg}`); };

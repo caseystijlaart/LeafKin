@@ -295,6 +295,18 @@ create policy "members use health checks" on public.health_checks for all to aut
 create policy "own devices" on public.push_subscriptions for all to authenticated
   using (user_id = auth.uid()) with check (user_id = auth.uid());
 
+-- Explicit access for signed-in users, so this works even with "Automatically expose new tables" off.
+-- Row level security above still decides which rows each person sees. Signed-out visitors get nothing.
+grant usage on schema public to authenticated;
+grant select, insert, update, delete on public.plants, public.care_events, public.growth_snapshots,
+  public.health_checks, public.push_subscriptions to authenticated;
+grant select, update on public.profiles, public.households to authenticated;
+grant select on public.household_members to authenticated;
+grant select, delete on public.invites to authenticated;
+grant execute on function public.is_member(uuid), public.is_owner(uuid), public.plant_in_household(uuid, uuid) to authenticated;
+revoke all on public.profiles, public.households, public.household_members, public.invites, public.plants,
+  public.care_events, public.growth_snapshots, public.health_checks, public.push_subscriptions from anon;
+
 grant execute on function public.create_household(text), public.create_invite(), public.join_household(text),
   public.leave_household(), public.remove_member(uuid) to authenticated;
 revoke execute on function public.create_household(text), public.create_invite(), public.join_household(text),
