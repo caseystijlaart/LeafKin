@@ -109,7 +109,7 @@ Do this once before deploying the `v2` branch.
 4. **Site address**: **Authentication → URL Configuration → Site URL**: `https://caseystijlaart.github.io/LeafKin/`.
 5. **Email service**: Supabase's built-in email only reaches members of your Supabase team, 2 emails an hour. For anyone else, connect a free SMTP service under **Authentication → Emails → SMTP Settings**, e.g. Brevo (300 emails/day, works with a verified sender address) or Resend (needs your own domain).
 6. **Keys for the site**: **Project Settings → API**, copy the Project URL and the `anon` public key into repository secrets `SUPABASE_URL` and `SUPABASE_ANON_KEY` (**Settings → Secrets and variables → Actions**). The anon key is meant to be public; the security rules protect the data.
-7. **Second migration**: in **SQL Editor**, run `supabase/migrations/20261023120000_account_reminders.sql` (delete account, reminder settings).
+7. **Second migration**: in **SQL Editor**, run `supabase/migrations/20261023120000_account_reminders.sql` (delete account, reminder settings). Then `supabase/migrations/20261023130000_server_access.sql` (lets the reminder function read devices and plants).
 8. **Deploy**: merge `v2` into `main`. On first open, LeafKin asks you to sign in; plants saved by 1.x on that phone are offered for import into your household.
 
 Free plan limits: 500 MB database, 1 GB photos, 5 GB transfer a month. A project with no activity for a week is paused; restore it from the dashboard.

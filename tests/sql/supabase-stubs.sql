@@ -1,6 +1,7 @@
 -- Minimal stand-ins for the parts of Supabase the migration relies on, so it can be tested in plain Postgres.
 create role anon nologin;
 create role authenticated nologin;
+create role service_role nologin bypassrls;
 create schema auth;
 create table auth.users (id uuid primary key, email text);
 create function auth.uid() returns uuid language sql stable as $$
