@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 env:
-  LIVE_BRANCH: pwa-v2   # becomes main once v2 is merged into main
+  LIVE_BRANCH: main
   BETA_BRANCH: pwa-beta
 
 permissions:
