@@ -3,11 +3,12 @@ import { BETA, DAY, daysBetween, dueIn, dueLabel, ageLabel, fmtDate, fmtDateTime
 import { PLANTS, SPECIES, CULTIVARS, LIGHT, SUN, SUN_SHORT, WATER, HUMIDITY, PET, searchPlants, matchScientific, matchAny, cultivarsForGenus } from "./care-library.js";
 import * as plantnet from "./plantnet.js";
 import * as push from "./push.js";
+import { privacyHtml, PRIVACY_VERSION } from "./privacy.js";
 import { SYMPTOMS, assess, STATUS_LABEL } from "./health.js";
 import { ROOMS, adjustForConditions, fitText } from "./conditions.js";
 import { waterDue, feedDue, urgency, waterInterval, feedInterval, winterActive, winterModeOn, setWinterMode, snoozeDate, repotDue, photoDue, lastPhotoAt, isWinter as inWinter, PHOTO_PERIODS, photoPeriod, setPhotoPeriod, blockingPhoto, nextPhotoDate } from "./schedule.js";
 
-const APP_VERSION = "2.0.0";
+const APP_VERSION = "2.1.0";
 const $ = (s, root = document) => root.querySelector(s);
 const state = { plants: [] };
 const isWinter = () => inWinter();
@@ -910,6 +911,18 @@ async function saveFile(filename, blob) {
   return true;
 }
 
+/* ---------- privacy policy ---------- */
+// Opens on top of everything, including the start screen. `back` reopens what was open before.
+function openPrivacy(back) {
+  const s = sheet("privacy", `
+    <div class="sheet-head"><h2>Privacy policy</h2><button class="x" data-close aria-label="Close">×</button></div>
+    ${privacyHtml()}
+    <button class="btn" id="privClose">${back ? "Back" : "Close"}</button>`);
+  const done = () => { closeSheet(); back?.(); };
+  s.querySelector("#privClose").onclick = done;
+  s.querySelector("[data-close]").onclick = done;
+}
+
 /* ---------- backup ---------- */
 async function saveBackup() {
   await saveFile(`leafkin-backup-${new Date().toISOString().slice(0, 10)}.json`, await db.exportBackup());
@@ -1113,17 +1126,8 @@ async function openSettings() {
     </div>
     <div class="card">
       <h3>Privacy</h3>
-      <details><summary class="hint" style="cursor:pointer">What LeafKin stores, and where</summary>
-        <ul class="plain-list">
-          ${db.isGuest() ? `<li>As a guest, everything stays on this phone. Nothing is sent to LeafKin's servers.</li>` : `<li><b>Your account:</b> your email address and the name you choose. Signing in uses a code sent by email; there's no password.</li>
-          <li><b>Your household:</b> plants, care log, growth timeline, health checks and photos, stored with Supabase in the EU. Only members of your household can see them; photos are in a private folder.</li>
-          <li><b>Reminders:</b> if you turn them on, a device address for notifications and the hour you picked.</li>`}
-          <li><b>Plant scanning:</b> the photo you scan is sent to Pl@ntNet to identify the plant. It's not stored by LeafKin unless you add it to the timeline.</li>
-          <li>A copy of your plants and photos is kept on this phone so LeafKin works offline.</li>
-          <li>No ads, no tracking, no analytics.</li>
-          ${db.isGuest() ? "" : `<li>Delete your account under <b>Your account</b>. That removes your data from the server for good.</li>`}
-        </ul>
-      </details>
+      <p>${db.isGuest() ? "As a guest, nothing is stored on LeafKin's servers: your plants stay on this phone only." : "LeafKin only stores what it needs to share your plants with your household. No ads, no tracking."} Scanned photos go to Pl@ntNet for identification.</p>
+      <button class="btn" id="privBtn">Read the privacy policy</button>
     </div>
     <p class="hint">LeafKin ${APP_VERSION} · ${SPECIES.length} plants and ${CULTIVARS.length} varieties in the care library</p>`);
   s.querySelector("#pnSave").onclick = () => {
@@ -1137,6 +1141,7 @@ async function openSettings() {
   s.querySelector("#guestAcct")?.addEventListener("click", () => { closeSheet(); gateWelcome(); });
   s.querySelector("#winterOn").onchange = (e) => { setWinterMode(e.target.checked); render(); push.syncWinter(); };
   if (hh && push.configured()) renderPushCard(s.querySelector("#pushCard"));
+  s.querySelector("#privBtn").onclick = () => openPrivacy(openSettings);
   s.querySelector("#splashOn").onchange = (e) => { try { localStorage.setItem("leafkin.splash", e.target.checked ? "on" : "off"); } catch {} };
   s.querySelector("#badgeBtn")?.addEventListener("click", async (e) => {
     const r = await Notification.requestPermission().catch(() => "denied");
@@ -1269,14 +1274,16 @@ function gateWelcome() {
     ${guest ? `<button class="btn" id="wBack">Back to my plants</button>` : `<button class="btn" id="wGuest">Continue as guest</button>
     <div class="gate-warn" id="wWarn" hidden>
       <p><b>Your plants are only saved on this phone.</b> They're lost if you delete LeafKin, clear Safari's website data, or iOS clears storage to make space. They won't sync to other devices and you can't share them.</p>
-      <p class="hint">You can create an account later and move your plants into it. Saving a backup in Settings also helps.</p>
+      <p class="hint">Nothing is sent to or stored on LeafKin's servers; only a photo you scan goes to Pl@ntNet to identify the plant. You can create an account later and move your plants into it. Saving a backup in Settings also helps.</p>
       <button class="btn primary" id="wGuestYes">I understand, continue</button>
       <button class="btn" id="wGuestNo">Back</button>
-    </div>`}`);
+    </div>`}
+    <button class="linkbtn gate-link" id="wPrivacy">Privacy policy</button>`);
   const $g = (q) => g.querySelector(q);
   $g("#wCreate")?.addEventListener("click", () => gateEmail("create"));
   $g("#wSignIn")?.addEventListener("click", () => gateEmail("signin"));
   $g("#wBack")?.addEventListener("click", () => afterGate("guest"));
+  $g("#wPrivacy").onclick = () => openPrivacy();
   if (!guest) {
     $g("#wGuest").onclick = () => { $g("#wWarn").hidden = false; $g("#wGuest").hidden = true; $g("#wWarn").scrollIntoView({ behavior: "smooth", block: "nearest" }); };
     $g("#wGuestNo").onclick = () => { $g("#wWarn").hidden = true; $g("#wGuest").hidden = false; };
@@ -1297,6 +1304,7 @@ function gateEmail(mode) {
     <form id="gEmailForm" class="gate-form" novalidate>
       ${create ? `<div class="field"><label for="gName">Your name</label><input id="gName" maxlength="40" autocomplete="given-name" placeholder="Shown to the people you share with"></div>` : ""}
       <div class="field"><label for="gEmail">Email</label><input id="gEmail" type="email" autocomplete="email" inputmode="email" autocapitalize="off" placeholder="you@example.com"></div>
+      ${create ? `<label class="check consent"><input type="checkbox" id="gAgree"> <span>I've read and agree to the <button type="button" class="linkbtn" id="gPolicy">privacy policy</button></span></label>` : ""}
       <button class="btn primary" type="submit">Send code</button>
       <button class="btn" type="button" id="gBack">Back</button>
     </form>
@@ -1307,9 +1315,11 @@ function gateEmail(mode) {
       <button class="btn primary" type="submit" id="gVerify">${create ? "Create account" : "Sign in"}</button>
       <div class="btnrow"><button type="button" class="btn grow" id="gResend">Send a new code</button><button type="button" class="btn grow" id="gOther">Other email</button></div>
     </form>
-    <p class="err" id="gErr" hidden></p>`);
+    <p class="err" id="gErr" hidden></p>
+    ${create ? "" : `<button class="linkbtn gate-link" id="gPolicy">Privacy policy</button>`}`);
   const $g = (q) => g.querySelector(q);
   let email = "", name = "", wait = null;
+  $g("#gPolicy").onclick = (e) => { e.preventDefault(); openPrivacy(); };
   const err = (m) => { $g("#gErr").textContent = m || ""; $g("#gErr").hidden = !m; };
   const cooldown = () => {
     let left = 60; const b = $g("#gResend"); b.disabled = true; clearInterval(wait);
@@ -1318,7 +1328,7 @@ function gateEmail(mode) {
   const send = async (btn) => {
     err(""); btn.disabled = true;
     try {
-      await db.sendCode(email, create);
+      await db.sendCode(email, create, create ? { privacy_version: PRIVACY_VERSION, privacy_accepted_at: new Date().toISOString() } : undefined);
       $g("#gEmailForm").hidden = true; $g("#gCodeForm").hidden = false;
       $g("#gSent").textContent = `We sent a code to ${email}. It can take a minute to arrive.`;
       $g("#gCode").value = ""; $g("#gCode").focus(); cooldown();
@@ -1331,6 +1341,7 @@ function gateEmail(mode) {
     name = create ? $g("#gName").value.trim() : "";
     email = $g("#gEmail").value.trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return err("Enter a valid email address.");
+    if (create && !$g("#gAgree").checked) return err("Please read and accept the privacy policy to create an account.");
     send($g("#gEmailForm button[type=submit]"));
   };
   const verify = async () => {

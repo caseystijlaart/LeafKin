@@ -2,13 +2,18 @@
 // Bump VERSION whenever app files change, so phones pick up the new version.
 // The test copy at /beta/ has its own worker and caches; the live worker leaves /beta/ alone.
 const BETA = self.location.pathname.includes("/beta/");
-const VERSION = (BETA ? "leafkin-beta-" : "leafkin-") + "v2.0.0";
+const VERSION = (BETA ? "leafkin-beta-" : "leafkin-") + "v2.1.0";
 const mine = (k) => k.startsWith("leafkin-beta-") === BETA; // only clean up our own old caches
 const SHELL = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
   "./css/app.css",
+  "./css/fonts.css",
+  "./fonts/bricolage-grotesque.woff2",
+  "./fonts/atkinson-hyperlegible-400.woff2",
+  "./fonts/atkinson-hyperlegible-700.woff2",
+  "./fonts/jetbrains-mono-500.woff2",
   "./js/app.js",
   "./js/db.js",
   "./js/util.js",
@@ -22,6 +27,7 @@ const SHELL = [
   "./js/sync.js",
   "./js/cloud.js",
   "./js/push.js",
+  "./js/privacy.js",
   "./js/vendor/supabase.js",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
@@ -65,16 +71,6 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Google Fonts: serve from cache when offline, refresh in the background.
-  if (url.hostname.endsWith("fonts.googleapis.com") || url.hostname.endsWith("fonts.gstatic.com")) {
-    event.respondWith(
-      caches.open(VERSION + "-fonts").then(async (cache) => {
-        const hit = await cache.match(req);
-        const net = fetch(req).then((res) => { cache.put(req, res.clone()); return res; }).catch(() => hit);
-        return hit || net;
-      })
-    );
-  }
 });
 
 // Daily reminder from the send-reminders Edge Function.

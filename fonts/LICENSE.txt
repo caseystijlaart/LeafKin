@@ -1,0 +1,5 @@
+Bricolage Grotesque, Atkinson Hyperlegible and JetBrains Mono are licensed under the SIL Open Font License, Version 1.1
+(https://openfontlicense.org). Files taken from the Fontsource packages (latin subset).
+- Bricolage Grotesque: Copyright 2022 The Bricolage Grotesque Project Authors
+- Atkinson Hyperlegible: Copyright 2020 Braille Institute of America, Inc.
+- JetBrains Mono: Copyright 2020 The JetBrains Mono Project Authors

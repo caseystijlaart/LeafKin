@@ -356,6 +356,6 @@ export async function setMyName(name) {
   st.members = await cloud.members(st.household.id);
   emit("members");
 }
-export const sendCode = (email, create) => cloud.sendCode(email, create);
+export const sendCode = (email, create, data) => cloud.sendCode(email, create, data);
 export const saveProfileName = (name) => (name && st.user ? cloud.setDisplayName(st.user.id, name) : null);
 export const verifyCode = (email, code) => cloud.verifyCode(email, code);

@@ -1,0 +1,21 @@
+/* Fonts served with the app (no requests to Google). All three are SIL Open Font License 1.1; see fonts/LICENSE.txt. */
+@font-face {
+  font-family: "Bricolage Grotesque";
+  font-style: normal; font-display: swap; font-weight: 200 800;
+  src: url(../fonts/bricolage-grotesque.woff2) format("woff2-variations"), url(../fonts/bricolage-grotesque.woff2) format("woff2");
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  font-style: normal; font-display: swap; font-weight: 400;
+  src: url(../fonts/atkinson-hyperlegible-400.woff2) format("woff2");
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  font-style: normal; font-display: swap; font-weight: 700;
+  src: url(../fonts/atkinson-hyperlegible-700.woff2) format("woff2");
+}
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal; font-display: swap; font-weight: 500;
+  src: url(../fonts/jetbrains-mono-500.woff2) format("woff2");
+}

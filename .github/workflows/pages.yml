@@ -53,6 +53,7 @@ jobs:
           build() { # build <source dir> <target dir> <build id>
             mkdir -p "$2"
             cp -r "$1"/index.html "$1"/manifest.webmanifest "$1"/sw.js "$1"/css "$1"/js "$1"/icons "$2"/
+            [ -d "$1/fonts" ] && cp -r "$1/fonts" "$2"/
             node -e '
               const k = (n) => JSON.stringify((process.env[n] || "").trim());
               process.stdout.write(

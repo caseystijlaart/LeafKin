@@ -9,7 +9,8 @@ From 2.0, plants live in a shared **household** on Supabase: everyone in it sees
 - **Start screen**: create an account, sign in, or continue as a guest (plants stay on the phone only; guests get a monthly backup reminder and can move their plants into an account later)
 - **Daily reminders**: a push notification at a time you pick, on days when plants need water or food (iPhone: LeafKin on the Home Screen, iOS 16.4+)
 - **Household activity**: what housemates did recently on the main screen, the full log in Settings
-- **Delete account** in Settings; a short privacy note explains what is stored where
+- **Privacy**: a privacy policy in the app (`js/privacy.js`), accepted with a checkbox when creating an account (the accepted version and time are saved on the account); guests are told nothing leaves their phone. Fonts are served with the app, so it loads nothing from Google or other third parties
+- **Delete account** in Settings
 - **Sync**: live updates between phones; works offline and sends changes when back online; plants from LeafKin 1.x on a phone can be moved into the household
 
 - Add plants by **scanning** them (Pl@ntNet suggests up to 5 species, each with reference photos you can enlarge) or by typing, with **autocomplete** in English, Dutch or Latin

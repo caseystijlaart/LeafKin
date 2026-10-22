@@ -25,7 +25,8 @@ export async function currentUser() {
   return data.session?.user || null;
 }
 // "Sign in" only works for existing accounts; "Create account" makes one if needed.
-export const sendCode = async (email, create = false) => check(await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: !!create } }));
+// `data` (privacy version and acceptance time) is saved on the account when it's created.
+export const sendCode = async (email, create = false, data) => check(await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: !!create, ...(data ? { data } : {}) } }));
 export const verifyCode = async (email, token) => check(await sb.auth.verifyOtp({ email, token, type: "email" })).user;
 export const signOut = () => sb.auth.signOut();
 export const onAuthChange = (fn) => sb.auth.onAuthStateChange((event, session) => fn(event, session?.user || null));
