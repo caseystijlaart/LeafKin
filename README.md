@@ -122,7 +122,7 @@ One-time setup:
 
 1. **Keys**: on your computer run `npx web-push generate-vapid-keys`. It prints a public and a private key.
 2. **Site**: add the public key as repository secret `VAPID_PUBLIC_KEY`.
-3. **Function**: Supabase → **Edge Functions → Deploy a new function → Via editor**, name it `send-reminders`, paste `supabase/functions/send-reminders/index.ts`, deploy.
+3. **Function**: Supabase → **Edge Functions → Deploy a new function → Via editor**, name it `send-reminders`, paste `supabase/functions/send-reminders/index.ts` (replacing the example code), deploy. Then in the function's **Details**/settings, turn **Verify JWT** off (the new API keys aren't JWTs).
 4. **Function secrets**: Edge Functions → **Secrets**: `VAPID_PUBLIC_KEY` (public key), `VAPID_PRIVATE_KEY` (private key), `VAPID_SUBJECT` = `mailto:leafkinapp@outlook.com`. The private key goes only here.
 5. **Schedule**: **Integrations → Cron → Create job**: name `send-reminders`, schedule `0 * * * *` (every hour), type **Supabase Edge Function**, function `send-reminders`, method POST. (Enable the Cron integration first if asked.)
 6. In LeafKin (on the Home Screen): Settings → Reminders → **Turn on reminders**, then **Send a test**.

@@ -4,7 +4,9 @@
 // POST { "test": true } with a signed-in user's token sends a test notification to that person's devices.
 //
 // Secrets (Edge Functions → Secrets): VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT (mailto:you@example.com).
-// SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are provided by Supabase automatically.
+// SUPABASE_URL and the server key are provided by Supabase automatically.
+// Turn OFF "Verify JWT" for this function: the new API keys aren't JWTs. The test request checks the
+// signed-in user itself; the hourly run is safe to trigger (each device gets at most one reminder a day).
 
 type Plant = {
   name: string; water_every: number; feed_every: number;
@@ -63,7 +65,11 @@ if (typeof Deno !== "undefined") {
   const { createClient } = await import("npm:@supabase/supabase-js@2");
   const webpush = (await import("npm:web-push@3.6.7")).default;
   webpush.setVapidDetails(Deno.env.get("VAPID_SUBJECT") || "mailto:leafkinapp@outlook.com", Deno.env.get("VAPID_PUBLIC_KEY"), Deno.env.get("VAPID_PRIVATE_KEY"));
-  const sb = createClient(Deno.env.get("SUPABASE_URL"), Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"), { auth: { persistSession: false } });
+  // New projects have secret keys (SUPABASE_SECRET_KEYS, a JSON map); older ones the legacy service_role key.
+  let serverKey = "";
+  try { serverKey = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") || "{}").default || ""; } catch { /* not set */ }
+  serverKey ||= Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  const sb = createClient(Deno.env.get("SUPABASE_URL"), serverKey, { auth: { persistSession: false, autoRefreshToken: false } });
 
   const cors = {
     "Access-Control-Allow-Origin": "*",
