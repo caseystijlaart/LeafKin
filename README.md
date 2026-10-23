@@ -148,6 +148,6 @@ On `beta` the top entry can be ahead of `live` until it's merged. Each version m
 - **2.0.0**: accounts with email codes, shared households, sync and offline queue, guest mode, daily push reminders, household activity, delete account, beta site
 - **1.5.1**: last version without accounts (plants stored on the phone only)
 
-## Not in this version
+## Roadmap
 
-- AI photo diagnosis: the health check works from the symptoms you tick
+Planned and possible features, starting with AI health diagnosis from a photo: see [ROADMAP.md](ROADMAP.md).
