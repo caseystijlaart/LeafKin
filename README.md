@@ -1,5 +1,7 @@
 # LeafKin
 
+**Version 2.0.0** · see the [changelog](#changelog)
+
 A plant care app that installs on your iPhone home screen as a Progressive Web App (PWA). No App Store, no developer certificates.
 From 2.0, plants live in a shared **household** on Supabase: everyone in it sees the same plants, on every device.
 
@@ -134,7 +136,15 @@ npm i --no-save @electric-sql/pglite fake-indexeddb
 node tests/sql/test-migration.mjs        # schema + security rules, several users, delete account
 node tests/sync/test-sync.mjs            # two phones sharing a household, offline queue, import, guest mode
 node tests/functions/test-reminders.mjs  # which plants a reminder lists (Node 22.18+)
+node tests/check-version.mjs             # README, app and service worker show the same version
 ```
+
+## Changelog
+
+On `beta` the top entry can be ahead of `live` until it's merged. Each version merged into `live` gets a GitHub release with the same tag (e.g. `v2.1.0`).
+
+- **2.0.0**: accounts with email codes, shared households, sync and offline queue, guest mode, daily push reminders, household activity, delete account, beta site
+- **1.5.1**: last version without accounts (plants stored on the phone only)
 
 ## Not in this version
 
