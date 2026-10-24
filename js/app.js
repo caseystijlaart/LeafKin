@@ -1171,7 +1171,7 @@ async function openSettings() {
     </div>
     ${BETA ? `<div class="card">
       <h3>Lab <span class="pill food">Beta only</span></h3>
-      <p>Compare the photo check with Pl@ntNet and Kindwise on the same test photos.</p>
+      <p>Compare the photo check models with Pl@ntNet on the same test photos.</p>
       <button class="btn" id="labBtn">Open the Lab</button>
     </div>` : ""}
     <div class="card">

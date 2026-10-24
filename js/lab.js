@@ -1,13 +1,10 @@
 // Lab (beta only): compare photo health checks on the same labelled test photos (lab/testset.json, never used to
-// train LeafKin's model). Own model runs on the phone; Pl@ntNet and Kindwise are called with the developer's keys.
+// train LeafKin's model). Own models run on the phone; Pl@ntNet is called with the site's key.
 import { diagnose } from "./diagnose.js";
 import { identifyDisease, deviceKey, hasSiteKey, errorText } from "./plantnet.js";
 import { esc } from "./util.js";
 
 const LAB = new URL("../lab/", import.meta.url);
-const KW_KEY = "leafkin.kindwiseKey";
-const kwKey = () => { try { return localStorage.getItem(KW_KEY) || ""; } catch { return ""; } };
-const setKwKey = (v) => { try { v ? localStorage.setItem(KW_KEY, v.trim()) : localStorage.removeItem(KW_KEY); } catch {} };
 
 // One model run gives all three own variants; keep it for the photo being checked.
 let lastBlob = null, lastRun = null;
@@ -32,27 +29,6 @@ const OPTIONS = {
       try { res = await identifyDisease(blob); } catch (e) { throw new Error(e?.code ? `Pl@ntNet: ${errorText(e.code)}` : String(e)); }
       // No "healthy" answer exists: the confidence of the best disease is used as "sick".
       return { sick: res.length ? res[0].score : 0, top: res.length ? `${res[0].name} (${Math.round(res[0].score * 100)}%)` : "nothing found", answered: res.length > 0, ms: Math.round(performance.now() - t) };
-    },
-  },
-  kindwise: {
-    name: "Kindwise plant.health",
-    async run(blob) {
-      const t = performance.now();
-      const b64 = await new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1]); r.onerror = no; r.readAsDataURL(blob); });
-      let res;
-      try {
-        res = await fetch("https://plant.id/api/v3/health_assessment", {
-          method: "POST", headers: { "Content-Type": "application/json", "Api-Key": kwKey() },
-          body: JSON.stringify({ images: [b64], similar_images: false }),
-        });
-      } catch { throw new Error("Kindwise can't be reached from the browser (blocked, perhaps CORS)"); }
-      if (res.status === 401 || res.status === 403) throw new Error("Kindwise didn't accept the key");
-      if (res.status === 429) throw new Error("Kindwise credits used up");
-      if (!res.ok) throw new Error(`Kindwise error ${res.status}`);
-      const d = (await res.json()).result || {};
-      const healthy = d.is_healthy?.probability;
-      const s = d.disease?.suggestions?.[0];
-      return { sick: typeof healthy === "number" ? 1 - healthy : null, top: s ? `${s.name} (${Math.round(s.probability * 100)}%)` : "no suggestion", ms: Math.round(performance.now() - t) };
     },
   },
 };
@@ -93,19 +69,17 @@ export function renderLab(root, { closeBack }) {
       <h3>Options</h3>
       <label class="check"><input type="checkbox" id="lOwn" checked disabled> Own model, on the phone and free: A+B as used in the app, plus A (without PlantDoc) and B (with PlantDoc) separately</label>
       <label class="check"><input type="checkbox" id="lPn" ${hasSiteKey() || deviceKey() ? "checked" : "disabled"}> Pl@ntNet diseases (1 scan credit per photo, 500 free a day)</label>
-      <label class="check"><input type="checkbox" id="lKw" ${kwKey() ? "checked" : ""}> Kindwise plant.health (1 credit per photo, 100 free in total)</label>
-      <div class="field"><label for="lKwKey">Kindwise API key</label><input id="lKwKey" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="From admin.kindwise.com" value="${esc(kwKey())}"></div>
-      <p class="hint">The Kindwise key is stored on this device only. Photos sent to Pl@ntNet and Kindwise are the test photos below, not your own.</p>
+      <p class="hint">Photos sent to Pl@ntNet are the test photos, not your own.</p>
       <div class="field"><label for="lN">Number of test photos</label>
         <select id="lN"><option value="20">20</option><option value="50" selected>50</option><option value="100">100</option><option value="160">All 160</option></select></div>
-      <p class="hint">Each first group is balanced across plants and problems. 50 photos keeps Kindwise within its free credits with room to spare.</p>
+      <p class="hint">Each first group is balanced across plants and problems.</p>
       <div class="btnrow"><button class="btn primary grow" id="lRun">Run comparison</button><button class="btn" id="lStop" hidden>Stop</button></div>
       <p class="hint" id="lStatus"></p>
     </div>
     <div id="lOut"></div>
     <div class="card">
       <h3>Try one photo</h3>
-      <p class="hint">See what each option says about a photo of your own. Pl@ntNet and Kindwise receive this photo.</p>
+      <p class="hint">See what each option says about a photo of your own. Pl@ntNet receives this photo.</p>
       <input type="file" id="lOneIn" accept="image/*" hidden>
       <button class="btn" id="lOne">Choose a photo</button>
       <div id="lOneOut"></div>
@@ -113,8 +87,7 @@ export function renderLab(root, { closeBack }) {
     <button class="btn" id="lBack">Back to Settings</button>`;
   const $ = (q) => root.querySelector(q);
   $("#lBack").onclick = closeBack;
-  $("#lKwKey").onchange = (e) => { setKwKey(e.target.value); $("#lKw").checked = !!e.target.value.trim(); };
-  const chosen = () => ["own", "ownA", "ownB", ...($("#lPn").checked ? ["plantnet"] : []), ...($("#lKw").checked && kwKey() ? ["kindwise"] : [])];
+  const chosen = () => ["own", "ownA", "ownB", ...($("#lPn").checked ? ["plantnet"] : []), ];
 
   let stop = false, rows = [];
   $("#lStop").onclick = () => { stop = true; };

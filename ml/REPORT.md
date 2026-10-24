@@ -142,6 +142,30 @@ Final Lab set: 184 photos (the 160 above + 24 PlantDoc test photos: 8 healthy, 8
 On the 24 real-world photos alone: A+B names the right symptom 75% of the time (A 29%, B 83%), misses 12% (A 44%, B 0%).
 The browser reproduces all three outputs exactly (checked on 30 photos, difference below 0.0001).
 
+## Phone results and the guard idea (24 October 2026)
+
+**Lab on Casey's phone, 50 photos** (own models in the browser, Pl@ntNet over the internet):
+
+| | AUC | Balanced | False alarms | Misses | Right symptom |
+|---|---|---|---|---|---|
+| **Own A+B** | **1.00** | **97%** | 6% | **0%** | **87%** |
+| Own A | 0.99 | 96% | 6% | 3% | 80% |
+| Own B | 0.99 | 94% | 11% | 0% | 87% |
+| Pl@ntNet diseases | 0.53 | 53% | 22% | 72% | – |
+
+Pl@ntNet is no better than chance on these leaves: it mostly names crop diseases and only recognised the cactus insects
+(also on 2 healthy cacti). Kindwise was dropped: 100 free credits once, then paid.
+
+**A separate healthy-vs-sick guard** (`guard_test.py`; same network, its own classifier trained on the same photos):
+
+| | Lab | Real-world | Other plants | Unseen houseplant |
+|---|---|---|---|---|
+| A+B (current) | **94%**, AUC 0.99 | 85%, AUC 0.95 | **88%**, AUC 0.98 | AUC **0.84** |
+| Guard | 87%, AUC 0.95 | **91%**, AUC 0.96 | 75%, AUC 0.97 | AUC 0.80 |
+
+Worse on three of four tests: trained on the same photos it adds nothing A+B doesn't already know. A guard is worth it
+only with something new: more healthy/sick photos, or a "this isn't a leaf" check.
+
 ## Recommended next steps
 
 1. **2.2.0 in the beta**: "Check with a photo" in the health check: close-up of one leaf → *looks healthy* / *something
