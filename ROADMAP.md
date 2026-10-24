@@ -8,15 +8,27 @@ Ideas for future versions, roughly in order of priority. Nothing here is promise
 ### AI health diagnosis from a photo
 Take a photo of a struggling plant and get likely problems (pests, disease, over- or underwatering, sunburn,
 nutrient shortage) with what to do, instead of only ticking symptoms by hand.
+The current health check (`js/health.js`) stays as the offline fallback. Version: 2.2.0.
 
-- The current health check (`js/health.js`) stays as the free, offline fallback; AI adds a "Diagnose from photo" step on top.
-- Runs through a Supabase Edge Function, so no AI key is ever in the app.
-- Options to compare before building (cost, quality, privacy):
-  - a plant-health API such as Kindwise plant.id health assessment (made for this, limited free credits)
-  - a general vision model API (Claude, Gemini, OpenAI), which also gives care advice in plain language
-  - limits per household per day, so costs stay predictable
-- Privacy policy update: photos sent for diagnosis go to that provider.
-- Version: 2.2.0 (new feature).
+Options compared (October 2026):
+
+| Option | Cost | Fit for houseplants | Privacy |
+|---|---|---|---|
+| Pl@ntNet disease API | free, same 500/day quota and key as scanning | limited list of species and diseases | EU (France), already in the policy |
+| Kindwise plant.health | 100 free credits, then about €0.01–0.05 each | made for this | extra provider |
+| Gemini API | free tier not allowed for apps used in the EEA; paid only | good, plain-language advice | paid tier: not used for training |
+| Groq / Cloudflare Workers AI (Llama vision) | free daily limits | general model, decent | Meta's licence excludes EU-based users for the multimodal Llama models; US servers |
+| Own model in the browser | free | as good as the training data | photo never leaves the phone |
+
+Plan:
+1. Try Pl@ntNet diseases first: no cost, no new provider, a few lines of code. Check how many houseplant problems it knows.
+2. Build an own on-device model that recognises *symptoms* (yellowing, brown tips, spots, wilting, webbing/pests, mildew,
+   sunburn) rather than exact diseases, and feeds them into the existing health check for causes and fixes.
+   - Start with a zero-shot image–text model (no training) as a baseline, then fine-tune a small model (MobileNet/EfficientNet class).
+   - Data: PlantWild (18.5k in-the-wild images, 89 classes), PlantDoc, the Indoor Plant Disease set (money/snake/spider plant),
+     relabelled to symptoms, plus own photos. PlantVillage alone won't do: lab photos of crop leaves; models trained like that drop
+     sharply on real-world photos.
+   - Runs in the browser (ONNX Runtime Web), cached for offline use. Supabase functions are too small for this (256 MB, 2 s CPU).
 
 ## Later
 
