@@ -155,10 +155,10 @@ if __name__ == "__main__":
     print("groups", results["duplicate_groups"], flush=True)
     results["E3d_shortcut_colour"] = shortcut_colour(); print("E3d", results["E3d_shortcut_colour"], flush=True)
     for b in [x for x in BACKBONES if os.path.exists(f"{DATA}/feat_{x}.npz")]:
-        for C in [0.3, 1, 3]:   # small choice of regularisation, picked on E3a only
+        for C in [1, 3, 10, 30]:   # small choice of regularisation, picked on E3a only
             results[f"{b}|C={C}"] = run(b, G, C=C)
             print(b, C, {k: round(v["macro_f1"], 3) for k, v in results[f"{b}|C={C}"].items() if k in ("E3a_same_species", "E3b_mean")}, flush=True)
-    best_C = {b: max([0.3, 1, 3], key=lambda C: results[f"{b}|C={C}"]["E3a_same_species"]["macro_f1"]) for b in BACKBONES if f"{b}|C=1" in results}
+    best_C = {b: max([1, 3, 10, 30], key=lambda C: results[f"{b}|C={C}"]["E3a_same_species"]["macro_f1"]) for b in BACKBONES if f"{b}|C=1" in results}
     results["best_C"] = best_C
     for b, C in best_C.items():
         results[f"E1|{b}"] = results[f"{b}|C={C}"]
