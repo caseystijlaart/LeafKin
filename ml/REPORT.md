@@ -166,6 +166,31 @@ Pl@ntNet is no better than chance on these leaves: it mostly names crop diseases
 Worse on three of four tests: trained on the same photos it adds nothing A+B doesn't already know. A guard is worth it
 only with something new: more healthy/sick photos, or a "this isn't a leaf" check.
 
+## Leaf check (24 October 2026)
+
+Before the health check, the app checks the photo is a usable close-up of a leaf (`leaf_guard.py`). Three signals
+from the same MobileNetV2, no extra network download (prototypes: 650 KB):
+
+1. **Sharpness**: variance of the Laplacian on the grey 224×224 image.
+2. **ImageNet guess**: the network's original 1,000-class head ("Egyptian cat", "espresso", "motor scooter").
+   Plant-like classes never count against a photo (insects, vegetables, fruit, flowers, fungi, pots, vases).
+3. **Familiarity**: highest cosine similarity to 128 prototypes (k-means) of the training leaves.
+
+"Blurry" and "not a leaf" only count when the photo also looks unlike the training leaves (familiarity < 0.85):
+a first version without that rule turned away 6% of the Lab's leaf photos (aloe on black looked "blurry", a spider
+plant leaf looked like a "broom"). Thresholds come from a grid search: catch as many non-leaf and blurred photos as
+possible while letting through at least 98% of held-out leaves.
+
+| | Result |
+|---|---|
+| Held-out leaf photos let through (1,262: Lab, PlantDoc test, other plants) | **99.2%** |
+| Lab photos let through (184) | **98.4%** |
+| Non-leaf images turned away (232: scikit-image samples, 200 faces, noise, plain colours) | **98.3%** |
+| Leaf photos blurred on purpose, turned away (120) | **98.3%** |
+
+The person can always tap "Check this photo anyway". The browser reproduces all three signals exactly. Caveat: the
+non-leaf set is small and the faces are tiny, so real phone photos of other things are the real test.
+
 ## Recommended next steps
 
 1. **2.2.0 in the beta**: "Check with a photo" in the health check: close-up of one leaf → *looks healthy* / *something

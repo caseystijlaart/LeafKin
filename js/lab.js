@@ -13,7 +13,7 @@ async function ownRun(blob, variant) {
   const r = await lastRun;
   const v = variant ? r.variants[variant] : r;
   const top = Object.entries(v.probs).sort((a, b) => b[1] - a[1])[0][0];
-  return { sick: v.sick, top, probs: v.probs, ms: r.ms };
+  return { sick: v.sick, top, probs: v.probs, ms: r.ms, guard: r.guard?.verdict, looksLike: r.guard?.looksLike };
 }
 
 // Each option returns { sick: 0..1 or null (no answer), top: "text", ms }
@@ -54,6 +54,7 @@ function summarise(rows, key) {
   return {
     n: done.length, errors: rows.filter((r) => r[key]?.error).length, answered: ans.length,
     auc: auc(sc, y), bal: fa === null || miss === null ? null : 1 - (fa + miss) / 2, fa, miss,
+    turnedAway: key.startsWith("own") && done.length ? done.filter((r) => r[key].guard && r[key].guard !== "ok").length / done.length : null,
     top1: key.startsWith("own") && known.length ? known.filter((r) => r[key].top === r.label).length / known.length : null,
     ms: done.length ? Math.round(done.reduce((a, r) => a + r[key].ms, 0) / done.length) : null,
   };
@@ -136,6 +137,7 @@ export function renderLab(root, { closeBack }) {
           <tr><td>Healthy called sick</td>${keys.map((k) => `<td>${pct(S[k].fa)}</td>`).join("")}</tr>
           <tr><td>Sick called healthy</td>${keys.map((k) => `<td>${pct(S[k].miss)}</td>`).join("")}</tr>
           <tr><td>Right symptom (labelled sick and healthy photos, not "other plants")</td>${keys.map((k) => `<td>${pct(S[k].top1)}</td>`).join("")}</tr>
+          <tr><td>Turned away by the leaf check (these are all leaves)</td>${keys.map((k) => `<td>${pct(S[k].turnedAway)}</td>`).join("")}</tr>
           <tr><td>Time per photo</td>${keys.map((k) => `<td>${S[k].ms === null ? "–" : S[k].ms + " ms"}</td>`).join("")}</tr>
         </table></div>
         <p class="hint">Pl@ntNet has no "healthy" answer, so its best disease confidence counts as "sick". The symptom row only applies to LeafKin's own models. "Real-world" photos are PlantDoc photos of garden and crop plants.</p>
@@ -170,6 +172,6 @@ export function renderLab(root, { closeBack }) {
     const res = {};
     for (const k of keys) { try { res[k] = await OPTIONS[k].run(f); } catch (e) { res[k] = { error: e?.message || String(e) }; } }
     out.querySelector(".hint").outerHTML = `<ul class="plain-list">${keys.map((k) => `<li><b>${esc(OPTIONS[k].name)}:</b> ${res[k].error ? `<span class="err">${esc(res[k].error)}</span>`
-      : `${esc(res[k].top)}, sick ${res[k].sick === null ? "–" : Math.round(res[k].sick * 100) + "%"}${res[k].probs ? ` <span class="muted">(${Object.entries(res[k].probs).sort((a, b) => b[1] - a[1]).map(([c, v]) => `${c} ${Math.round(v * 100)}%`).join(", ")})</span>` : ""}`}</li>`).join("")}</ul>`;
+      : `${res[k].guard && res[k].guard !== "ok" ? `<span class="err">Leaf check: ${esc(res[k].guard.replace("_", " "))}${res[k].guard === "not_leaf" ? ` (looks like ${esc(res[k].looksLike)})` : ""}.</span> Anyway: ` : ""}${esc(res[k].top)}, sick ${res[k].sick === null ? "–" : Math.round(res[k].sick * 100) + "%"}${res[k].probs ? ` <span class="muted">(${Object.entries(res[k].probs).sort((a, b) => b[1] - a[1]).map(([c, v]) => `${c} ${Math.round(v * 100)}%`).join(", ")})</span>` : ""}`}</li>`).join("")}</ul>`;
   };
 }

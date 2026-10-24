@@ -657,8 +657,33 @@ function openHealth(id) {
     aiBox.innerHTML = `<span class="spin"></span> Looking at the photo…<span class="hint" id="hAiSlow"></span>`;
     const slow = setTimeout(() => { const el = aiBox.querySelector("#hAiSlow"); if (el) el.textContent = " The first time, the photo check downloads (about 25 MB); after that it works offline."; }, 1500);
     try {
-      const r = await photoCheck.diagnose(photo);
+      const full = await photoCheck.diagnose(photo);
       if (!isOpen("health")) return;
+      showResult(full, false);
+    } catch {
+      aiBox.className = "ai-note"; aiBox.innerHTML = navigator.onLine === false
+        ? "The photo check needs a connection the first time (it downloads once). Tick what you see below."
+        : "The photo check didn't work this time. Tick what you see below.";
+    } finally { clearTimeout(slow); }
+  }
+  const GUARD_TEXT = {
+    blurry: "The photo is too blurry to check. Hold the phone steady and tap the leaf to focus.",
+    not_leaf: (x) => `This looks like ${/^[aeiou]/i.test(x) ? "an" : "a"} ${esc(x)}, not a leaf.`,
+    unfamiliar: "This doesn't look like a leaf close-up the photo check knows.",
+  };
+  function showResult(full, anyway) {
+      // First the leaf check: is this a usable close-up of a leaf?
+      if (!anyway && full.guard?.verdict && full.guard.verdict !== "ok") {
+        const g = full.guard, t = GUARD_TEXT[g.verdict];
+        aiBox.className = "ai-note";
+        const msg = g.verdict !== "blurry" && g.guess ? GUARD_TEXT.not_leaf(g.guess) : typeof t === "function" ? t(g.looksLike) : t;
+        aiBox.innerHTML = `<div><b>${msg}</b> Take a close-up of one leaf that fills the frame, or tick what you see below.</div>
+          <button type="button" class="linkbtn" id="hAnyway">Check this photo anyway</button>`;
+        aiBox.querySelector("#hAnyway").onclick = () => showResult(full, true);
+        return;
+      }
+      const choice = BETA ? photoModelChoice() : "AB";
+      const r = choice === "A" ? full.variants.A : choice === "B" ? full.variants.B : full;
       // Undo earlier suggestions from a previous photo, unless the person changed them.
       aiTicked.forEach((k) => { const b = s.querySelector(`.chipbtn[data-k="${k}"]`); if (b?.dataset.ai === "1") { b.setAttribute("aria-pressed", "false"); picked.delete(k); delete b.dataset.ai; } });
       aiTicked = new Set();
@@ -671,12 +696,7 @@ function openHealth(id) {
       aiBox.innerHTML = r.verdict === "off"
         ? `<div><b>Photo check: something seems off</b> (${Math.round(r.sick * 100)}% sure).${sugg.length ? ` Suggested: ${sugg.map((x) => esc(label(x.symptom).toLowerCase())).join(" and ")}, ticked below. Change them if they don't match.` : " Tick what you see below."}</div>`
         : `<div><b>Photo check: the leaf looks healthy</b> (${Math.round((1 - r.sick) * 100)}% sure). Still tick anything you notice.</div>`;
-      aiBox.insertAdjacentHTML("beforeend", `<details class="hint"><summary>About the photo check</summary>It runs on your phone; the photo isn't sent anywhere. It's trained on leaf close-ups of aloe, cactus, money plant, snake plant and spider plant, plus real-world photos of garden and crop plants, so on other plants treat its symptom suggestions as a hint. ${esc(photoCheck.CREDITS)}</details>`);
-    } catch {
-      aiBox.className = "ai-note"; aiBox.innerHTML = navigator.onLine === false
-        ? "The photo check needs a connection the first time (it downloads once). Tick what you see below."
-        : "The photo check didn't work this time. Tick what you see below.";
-    } finally { clearTimeout(slow); }
+      aiBox.insertAdjacentHTML("beforeend", `<details class="hint"><summary>About the photo check</summary>It runs on your phone; the photo isn't sent anywhere. It's trained on leaf close-ups of aloe, cactus, money plant, snake plant and spider plant, plus real-world photos of garden and crop plants, so on other plants treat its symptom suggestions as a hint.${BETA ? ` Beta: model ${choice === "AB" ? "A+B" : choice} (change in Settings → Lab).` : ""} ${esc(photoCheck.CREDITS)}</details>`);
   }
   s.querySelectorAll(".chipbtn").forEach((b) => (b.onclick = () => {
     const on = b.getAttribute("aria-pressed") !== "true";
@@ -946,6 +966,7 @@ async function saveFile(filename, blob) {
 }
 
 /* ---------- Lab (beta only): compare photo health checks ---------- */
+function photoModelChoice() { try { const v = localStorage.getItem("leafkin.photoModel"); return v === "A" || v === "B" ? v : "AB"; } catch { return "AB"; } }
 async function openLab() {
   const s = sheet("lab", `<p class="muted">Opening the Lab…</p>`);
   try {
@@ -1172,6 +1193,8 @@ async function openSettings() {
     ${BETA ? `<div class="card">
       <h3>Lab <span class="pill food">Beta only</span></h3>
       <p>Compare the photo check models with Pl@ntNet on the same test photos.</p>
+      <div class="field"><label for="photoModel">Model used by the health check</label>
+        <select id="photoModel">${[["AB", "A+B combined (default)"], ["A", "A: houseplant sets only"], ["B", "B: with PlantDoc"]].map(([v, t]) => `<option value="${v}" ${photoModelChoice() === v ? "selected" : ""}>${t}</option>`).join("")}</select></div>
       <button class="btn" id="labBtn">Open the Lab</button>
     </div>` : ""}
     <div class="card">
@@ -1193,6 +1216,7 @@ async function openSettings() {
   if (hh && push.configured()) renderPushCard(s.querySelector("#pushCard"));
   s.querySelector("#privBtn").onclick = () => openPrivacy(openSettings);
   s.querySelector("#labBtn")?.addEventListener("click", openLab);
+  s.querySelector("#photoModel")?.addEventListener("change", (e) => { try { localStorage.setItem("leafkin.photoModel", e.target.value); } catch {} toast("Photo check model changed"); });
   s.querySelector("#splashOn").onchange = (e) => { try { localStorage.setItem("leafkin.splash", e.target.checked ? "on" : "off"); } catch {} };
   s.querySelector("#badgeBtn")?.addEventListener("click", async (e) => {
     const r = await Notification.requestPermission().catch(() => "denied");

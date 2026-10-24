@@ -19,6 +19,8 @@ M = np.zeros((len(ca), len(cb)), np.float32)      # A's classes → positions in
 for i, c in enumerate(ca): M[i, cb.index(c)] = 1
 
 g = feature_model("mobilenetv2"); graph = g.graph; feat = BACKBONES["mobilenetv2"][2]
+imagenet_out = [n for n in graph.node if n.op_type == "Gemm"][-1].output[0]
+graph.node.append(helper.make_node("Identity", [imagenet_out], ["imagenet"]))
 del graph.output[:]
 init = lambda arr, name: graph.initializer.append(numpy_helper.from_array(arr, name))
 init(np.array([0, -1], np.int64), "lk_shape"); init(np.array([1e-12], np.float32), "lk_eps")
@@ -39,6 +41,10 @@ graph.node.extend([
     helper.make_node("Mul", ["lk_sum", "lk_half"], ["probs"]),
 ])
 graph.output.extend([helper.make_tensor_value_info(n, TensorProto.FLOAT, ["N", k]) for n, k in [("probs", len(cb)), ("probs_a", len(ca)), ("probs_b", len(cb))]])
+# For the leaf check (leaf_guard.py): the network's original ImageNet logits and the unit-length features.
+graph.node.append(helper.make_node("Identity", ["lk_unit"], ["embedding"]))
+graph.output.extend([helper.make_tensor_value_info("imagenet", TensorProto.FLOAT, ["N", 1000]),
+                     helper.make_tensor_value_info("embedding", TensorProto.FLOAT, ["N", 1280])])
 onnx.checker.check_model(g)
 path = f"{DATA}/leafkin-symptoms.onnx"; onnx.save(g, path)
 

@@ -123,6 +123,8 @@ The health check runs a small image model on the phone (`js/diagnose.js`, model 
 `js/vendor/ort/`); it loads the first time it's used (about 25 MB) and is then cached for offline use. How it was
 built and tested: `ml/PLAN.md` and `ml/REPORT.md`. When `models/` changes, bump `ML_VERSION` in `sw.js`.
 
+Before the check, a **leaf check** (`ml/leaf_guard.py`) turns away blurry photos and photos of other things ("This looks like an Egyptian cat, not a leaf"), with a "Check this photo anyway" option.
+
 The beta has a **Lab** (Settings → Lab) that runs the same 160 labelled test photos (`lab/`, never used for training)
 through the own models (A, B and A+B) and Pl@ntNet's disease API, and shows a score table plus a CSV. (Kindwise was
 left out: its 100 free credits don't renew.)
@@ -154,7 +156,7 @@ node tests/check-version.mjs             # README, app and service worker show t
 
 On `beta` the top entry can be ahead of `live` until it's merged. Each version merged into `live` gets a GitHub release with the same tag (e.g. `v2.1.0`).
 
-- **2.2.0**: photo health check on the phone (own model trained on houseplant sets and PlantDoc, suggests symptoms to confirm: spots, brown tips, wilting, sunburn, mildew, yellowing); beta-only Lab to compare it with Pl@ntNet
+- **2.2.0**: photo health check on the phone (own model trained on houseplant sets and PlantDoc, suggests symptoms to confirm: spots, brown tips, wilting, sunburn, mildew, yellowing), with a leaf check first; beta-only Lab to compare it with Pl@ntNet
 - **2.1.0**: privacy policy in the app, consent when creating an account, guest privacy note; fonts served with the app (nothing loaded from Google)
 - **2.0.0**: accounts with email codes, shared households, sync and offline queue, guest mode, daily push reminders, household activity, delete account, beta site
 - **1.5.1**: last version without accounts (plants stored on the phone only)

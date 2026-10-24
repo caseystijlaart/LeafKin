@@ -20,7 +20,9 @@
  "outputs": {
   "probs": "A+B",
   "probs_a": "A",
-  "probs_b": "B"
+  "probs_b": "B",
+  "imagenet": "ImageNet logits",
+  "embedding": "unit features"
  },
  "input": {
   "size": 224,
@@ -28,6 +30,6 @@
   "normalise": "imagenet",
   "resize": "centre square crop, BOX filter"
  },
- "version": "2026-10-24b",
+ "version": "2026-10-24c",
  "backbone": "mobilenetv2"
 }

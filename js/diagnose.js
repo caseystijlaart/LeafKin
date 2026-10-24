@@ -16,12 +16,13 @@ function load() {
     const ort = await import("./vendor/ort/ort.wasm.min.mjs");
     ort.env.wasm.wasmPaths = VENDOR.href;
     ort.env.wasm.numThreads = 1;   // GitHub Pages can't enable the cross-origin isolation threads need
-    const [info, model] = await Promise.all([
-      fetch(new URL("leafkin-symptoms.json", MODELS)).then((r) => { if (!r.ok) throw new Error("model_info"); return r.json(); }),
-      fetch(new URL("leafkin-symptoms.onnx", MODELS)).then((r) => { if (!r.ok) throw new Error("model"); return r.arrayBuffer(); }),
+    const get = (f, as) => fetch(new URL(f, MODELS)).then((r) => { if (!r.ok) throw new Error(f); return r[as](); });
+    const [info, model, check, protoBuf] = await Promise.all([
+      get("leafkin-symptoms.json", "json"), get("leafkin-symptoms.onnx", "arrayBuffer"),
+      get("leaf-check.json", "json"), get("leafkin-prototypes.bin", "arrayBuffer"),
     ]);
     const session = await ort.InferenceSession.create(model, { executionProviders: ["wasm"] });
-    return { ort, session, info };
+    return { ort, session, info, check: { ...check, allowedSet: new Set(check.allowed), proto: new Float32Array(protoBuf) } };
   })();
   loading.catch(() => { loading = null; });   // allow a retry after a failed download
   return loading;
@@ -51,7 +52,43 @@ async function toTensor(ort, source) {
   for (let i = 0; i < 224 * 224; i++) {
     for (let ch = 0; ch < 3; ch++) data[ch * 224 * 224 + i] = (px[i * 3 + ch] / 255 - MEAN[ch]) / STD[ch];
   }
-  return new ort.Tensor("float32", data, [1, 3, 224, 224]);
+  return { tensor: new ort.Tensor("float32", data, [1, 3, 224, 224]), px };
+}
+
+// Sharpness = variance of the Laplacian on the grey 224×224 image (as ml/leaf_guard.py, PIL's grey conversion).
+function sharpness(px) {
+  const n = 224, g = new Float32Array(n * n);
+  for (let i = 0; i < n * n; i++) g[i] = (px[i * 3] * 19595 + px[i * 3 + 1] * 38470 + px[i * 3 + 2] * 7471 + 0x8000) >> 16;
+  let sum = 0, sum2 = 0, cnt = 0;
+  for (let y = 1; y < n - 1; y++) for (let x = 1; x < n - 1; x++) {
+    const v = g[y * n + x - 1] + g[y * n + x + 1] + g[(y - 1) * n + x] + g[(y + 1) * n + x] - 4 * g[y * n + x];
+    sum += v; sum2 += v * v; cnt++;
+  }
+  const mean = sum / cnt;
+  return sum2 / cnt - mean * mean;
+}
+
+// Leaf check (ml/leaf_guard.py): blurry? confidently something else (ImageNet)? unlike every training leaf?
+function leafCheck(check, logits, embedding, sharp) {
+  let max = -Infinity, arg = 0;
+  for (let i = 0; i < logits.length; i++) if (logits[i] > max) { max = logits[i]; arg = i; }
+  let sum = 0;
+  for (let i = 0; i < logits.length; i++) sum += Math.exp(logits[i] - max);
+  const p = 1 / sum;
+  const { proto, prototypes: { count, dim }, thresholds: t } = check;
+  let fam = -1;
+  for (let k = 0; k < count; k++) {
+    let d = 0;
+    for (let j = 0; j < dim; j++) d += proto[k * dim + j] * embedding[j];
+    if (d > fam) fam = d;
+  }
+  // "Blurry" and "not a leaf" only count when the photo also looks unlike the training leaves (leaf_like).
+  const leafLike = fam >= t.leaf_like, otherThing = !check.allowedSet.has(arg);
+  const verdict = sharp < t.sharpness && !leafLike ? "blurry"
+    : p >= t.imagenet_prob && otherThing && !leafLike ? "not_leaf"
+    : fam < t.familiarity ? "unfamiliar" : "ok";
+  // A confident guess of something that isn't a plant is worth naming in the message.
+  return { verdict, looksLike: check.names[arg], guess: p >= 0.5 && otherThing ? check.names[arg] : null, p, familiarity: fam, sharpness: sharp };
 }
 
 function boxCoeffs(nIn, nOut) {
@@ -100,12 +137,13 @@ function canvas(w, h) {
 
 // The model file has three outputs: model A (houseplant photos), model B (+ PlantDoc's real-world photos) and their
 // average, which the app uses (see ml/REPORT.md). The Lab shows all three.
-// Returns { probs: {class: p}, sick, verdict, suggestions: [{ symptom, p }], variants: { A, B }, ms }
+// Returns { probs: {class: p}, sick, verdict, suggestions: [{ symptom, p }], variants: { A, B },
+//           guard: { verdict: "ok" | "blurry" | "not_leaf" | "unfamiliar", looksLike, ... }, ms }
 export async function diagnose(photo) {
-  const { ort, session, info } = await load();
+  const { ort, session, info, check } = await load();
   const t0 = performance.now();
-  const input = await toTensor(ort, photo);
-  const out = await session.run({ [session.inputNames[0]]: input });
+  const { tensor, px } = await toTensor(ort, photo);
+  const out = await session.run({ [session.inputNames[0]]: tensor });
   const read = (name, classes) => (out[name] ? Object.fromEntries(classes.map((c, i) => [c, out[name].data[i]])) : null);
   const summary = (probs) => {
     const sick = 1 - probs.healthy;
@@ -119,7 +157,8 @@ export async function diagnose(photo) {
   const main = summary(read("probs", info.classes));
   const A = info.classes_a && out.probs_a ? { ...summary(read("probs_a", info.classes_a)), ms } : null;
   const B = out.probs_b ? { ...summary(read("probs_b", info.classes)), ms } : null;
-  return { ...main, variants: { A, B }, ms };
+  const guard = out.imagenet && out.embedding ? leafCheck(check, out.imagenet.data, out.embedding.data, sharpness(px)) : { verdict: "ok" };
+  return { ...main, variants: { A, B }, guard, ms };
 }
 
 export const CREDITS = "Trained on the Aloe Vera Leaf Disease Detection Dataset (Khan et al.), the Cactus dataset (Benali & Jdey), " +
