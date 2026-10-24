@@ -34,6 +34,7 @@ const SHELL = [
   "./js/push.js",
   "./js/privacy.js",
   "./js/diagnose.js",
+  "./js/leaf-colour.js",
   "./js/vendor/supabase.js",
   "./icons/icon-192.png",
   "./icons/icon-512.png",

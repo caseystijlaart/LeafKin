@@ -6,6 +6,7 @@ import * as push from "./push.js";
 import { privacyHtml, PRIVACY_VERSION } from "./privacy.js";
 import { SYMPTOMS, EXTENT, WHERE, assess, STATUS_LABEL } from "./health.js";
 import * as photoCheck from "./diagnose.js";
+import { naturalLeafColour } from "./leaf-colour.js";
 import { ROOMS, adjustForConditions, fitText } from "./conditions.js";
 import { waterDue, feedDue, urgency, waterInterval, feedInterval, winterActive, winterModeOn, setWinterMode, snoozeDate, repotDue, photoDue, lastPhotoAt, isWinter as inWinter, PHOTO_PERIODS, photoPeriod, setPhotoPeriod, blockingPhoto, nextPhotoDate } from "./schedule.js";
 
@@ -343,6 +344,11 @@ function openEdit(id) {
         <div class="field"><label for="f-feed">Feed every (days)</label><input id="f-feed" type="number" min="0" inputmode="numeric" value="${p.feedEvery ?? ""}"></div>
       </div>
       <p class="hint" id="schedMsg" hidden></p>
+      <div class="field"><label for="f-leafc">Leaf colour</label><select id="f-leafc">
+        <option value="" ${!c.leafColour ? "selected" : ""}>Automatic (from the plant type)</option>
+        <option value="yes" ${c.leafColour === "yes" ? "selected" : ""}>Naturally coloured, patterned or spotted</option>
+        <option value="no" ${c.leafColour === "no" ? "selected" : ""}>Plain green</option></select>
+        <p class="hint">Helps the photo check: brown, red, silver or spotted leaves can be normal for this plant.</p></div>
       <div class="field"><label for="f-pet">Pets</label><select id="f-pet">${options(PET, c.pet)}</select></div>
       <div class="field"><label for="f-repot">Last repotted (optional)</label><input id="f-repot" type="month" max="${new Date().toISOString().slice(0, 7)}" value="${p.lastRepotted ? p.lastRepotted.slice(0, 7) : ""}"></div>
       <div class="field"><label for="f-notes">Own note (optional)</label><input id="f-notes" maxlength="140" placeholder="e.g. repotted March 2026" value="${esc(c.notes)}"></div>
@@ -539,7 +545,7 @@ function openEdit(id) {
     const typedExact = m && [m.en, m.nl, m.sci].some((x) => x.toLowerCase() === p.species.toLowerCase());
     const looksLatin = /^[A-Z][a-z]+ [a-z×-]+/.test(p.species);
     p.sci = m?.cultivar ? m.sci : bracket ? bracket : typedExact ? m.sci : looksLatin ? p.species : (m?.sci || "");
-    p.care = { room: v("#f-room"), light: v("#f-light"), sun: v("#f-sun"), water: v("#f-wstyle"), humidity: v("#f-hum"), pet: v("#f-pet"), notes: v("#f-notes"), tip };
+    p.care = { room: v("#f-room"), light: v("#f-light"), sun: v("#f-sun"), water: v("#f-wstyle"), humidity: v("#f-hum"), pet: v("#f-pet"), notes: v("#f-notes"), leafColour: v("#f-leafc") || undefined, tip };
     if (scanFile) {
       try { const photoId = await storePhoto(scanFile); p.growth = [...(p.growth || []), { id: uid(), at: new Date().toISOString(), photoId, note: "Added to LeafKin" }]; }
       catch { /* photo is optional */ }
@@ -690,7 +696,14 @@ function openHealth(id) {
         return;
       }
       const choice = BETA ? photoModelChoice() : "AB";
-      const r = choice === "A" ? full.variants.A : choice === "B" ? full.variants.B : full;
+      const raw = choice === "A" ? full.variants.A : choice === "B" ? full.variants.B : full;
+      // Naturally coloured or patterned leaves: colour-based symptoms are easily mistaken, so only call it "off"
+      // when the model is very sure, and suggest colour symptoms without ticking them.
+      const colourful = naturalLeafColour(p);
+      const COLOUR_SYMPTOMS = ["spots", "scorch", "yellow_all"];
+      const r = colourful ? { ...raw, verdict: raw.sick >= 0.85 ? "off" : "healthy",
+        suggestions: raw.suggestions.filter((x) => !COLOUR_SYMPTOMS.includes(x.symptom)),
+        maybe: raw.sick >= 0.5 ? raw.suggestions.filter((x) => COLOUR_SYMPTOMS.includes(x.symptom)) : [] } : raw;
       // Undo earlier suggestions from a previous photo, unless the person changed them.
       aiTicked.forEach((k) => { const b = s.querySelector(`.chipbtn[data-k="${k}"]`); if (b?.dataset.ai === "1") { b.setAttribute("aria-pressed", "false"); picked.delete(k); delete b.dataset.ai; } }); updateScope();
       aiTicked = new Set();
@@ -704,6 +717,7 @@ function openHealth(id) {
       aiBox.innerHTML = r.verdict === "off"
         ? `<div><b>Photo check: something seems off</b> (${Math.round(r.sick * 100)}% sure).${sugg.length ? ` Suggested: ${sugg.map((x) => esc(label(x.symptom).toLowerCase())).join(" and ")}, ticked below. Change them if they don't match.` : " Tick what you see below."} Then say how much of the plant looks like this: one old leaf is usually just ageing.</div>`
         : `<div><b>Photo check: the leaf looks healthy</b> (${Math.round((1 - r.sick) * 100)}% sure). Still tick anything you notice.</div>`;
+      if (colourful) aiBox.insertAdjacentHTML("beforeend", `<div class="hint">This plant naturally has ${esc(colourful)} leaves, so the photo check is extra careful${r.maybe?.length ? `. If it's not the leaf's normal look, consider: ${r.maybe.map((x) => esc(label(x.symptom).toLowerCase())).join(", ")}` : ""}.</div>`);
       aiBox.insertAdjacentHTML("beforeend", `<details class="hint"><summary>About the photo check</summary>It runs on your phone; the photo isn't sent anywhere. It's trained on leaf close-ups of aloe, cactus, money plant, snake plant and spider plant, plus real-world photos of garden and crop plants, so on other plants treat its symptom suggestions as a hint.${BETA ? ` Beta: model ${choice === "AB" ? "A+B" : choice} (change in Settings → Lab).` : ""} ${esc(photoCheck.CREDITS)}</details>`);
   }
   s.querySelectorAll(".chipbtn[data-k]").forEach((b) => (b.onclick = () => {

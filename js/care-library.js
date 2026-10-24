@@ -19,7 +19,7 @@ export const CULTIVARS = CULTIVAR_ROWS.map(([baseSci, cv, variegated, tip]) => {
   const base = SPECIES.find((p) => p.sci === baseSci);
   if (!base) return null;
   return {
-    ...base, base: base.sci, cultivar: cv,
+    ...base, base: base.sci, cultivar: cv, variegated: !!variegated,
     sci: `${base.sci} '${cv}'`, en: `${base.en} '${cv}'`, nl: `${base.nl} '${cv}'`,
     light: variegated ? brighter[base.light] : base.light,
     tip: tip || (variegated ? "Variegated: bright, indirect light keeps the colour; no harsh sun." : base.tip),
