@@ -150,13 +150,14 @@ node tests/sql/test-migration.mjs        # schema + security rules, several user
 node tests/sync/test-sync.mjs            # two phones sharing a household, offline queue, import, guest mode
 node tests/functions/test-reminders.mjs  # which plants a reminder lists (Node 22.18+)
 node tests/check-version.mjs             # README, app and service worker show the same version
+node tests/health/test-scope.mjs         # health check: "how much of the plant" (one old leaf = ageing)
 ```
 
 ## Changelog
 
 On `beta` the top entry can be ahead of `live` until it's merged. Each version merged into `live` gets a GitHub release with the same tag (e.g. `v2.1.0`).
 
-- **2.2.0**: photo health check on the phone (own model trained on houseplant sets and PlantDoc, suggests symptoms to confirm: spots, brown tips, wilting, sunburn, mildew, yellowing), with a leaf check first; beta-only Lab to compare it with Pl@ntNet
+- **2.2.0**: photo health check on the phone (own model trained on houseplant sets and PlantDoc, suggests symptoms to confirm: spots, brown tips, wilting, sunburn, mildew, yellowing), with a leaf check first and a "how much of the plant?" question (one or two old leaves = normal ageing); beta-only Lab to compare it with Pl@ntNet
 - **2.1.0**: privacy policy in the app, consent when creating an account, guest privacy note; fonts served with the app (nothing loaded from Google)
 - **2.0.0**: accounts with email codes, shared households, sync and offline queue, guest mode, daily push reminders, household activity, delete account, beta site
 - **1.5.1**: last version without accounts (plants stored on the phone only)

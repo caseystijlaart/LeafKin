@@ -4,7 +4,7 @@ import { PLANTS, SPECIES, CULTIVARS, LIGHT, SUN, SUN_SHORT, WATER, HUMIDITY, PET
 import * as plantnet from "./plantnet.js";
 import * as push from "./push.js";
 import { privacyHtml, PRIVACY_VERSION } from "./privacy.js";
-import { SYMPTOMS, assess, STATUS_LABEL } from "./health.js";
+import { SYMPTOMS, EXTENT, WHERE, assess, STATUS_LABEL } from "./health.js";
 import * as photoCheck from "./diagnose.js";
 import { ROOMS, adjustForConditions, fitText } from "./conditions.js";
 import { waterDue, feedDue, urgency, waterInterval, feedInterval, winterActive, winterModeOn, setWinterMode, snoozeDate, repotDue, photoDue, lastPhotoAt, isWinter as inWinter, PHOTO_PERIODS, photoPeriod, setPhotoPeriod, blockingPhoto, nextPhotoDate } from "./schedule.js";
@@ -635,6 +635,13 @@ function openHealth(id) {
     <label class="check" id="hKeepRow" hidden><input type="checkbox" id="hKeep" ${blk ? "" : "checked"}> ${blk ? `Replace the timeline photo from ${fmtDate(blk.at)} (one per ${periodWord()})` : "Add photo to the growth timeline"}</label>
     <h3>What do you see?</h3>
     <div class="chipset" role="group" aria-label="Symptoms">${SYMPTOMS.map(([k, label]) => `<button type="button" class="chipbtn" aria-pressed="false" data-k="${k}">${esc(label)}</button>`).join("")}</div>
+    <div class="scope" id="hScope" hidden>
+      <h3>How much of the plant?</h3>
+      <div class="chipset" role="radiogroup" aria-label="How much of the plant">${EXTENT.map(([k, l]) => `<button type="button" class="chipbtn" role="radio" aria-checked="false" aria-pressed="false" data-extent="${k}">${esc(l)}</button>`).join("")}</div>
+      <h3>Which leaves?</h3>
+      <div class="chipset" role="radiogroup" aria-label="Which leaves">${WHERE.map(([k, l]) => `<button type="button" class="chipbtn" role="radio" aria-checked="false" aria-pressed="false" data-where="${k}">${esc(l)}</button>`).join("")}</div>
+      <p class="hint">One or two old leaves turning brown or yellow is usually just ageing.</p>
+    </div>
     <button class="btn primary" id="hGo">Check</button>
     <div id="hOut"></div>`);
   s.querySelector("#hBack").onclick = () => openDetail(id);
@@ -685,27 +692,39 @@ function openHealth(id) {
       const choice = BETA ? photoModelChoice() : "AB";
       const r = choice === "A" ? full.variants.A : choice === "B" ? full.variants.B : full;
       // Undo earlier suggestions from a previous photo, unless the person changed them.
-      aiTicked.forEach((k) => { const b = s.querySelector(`.chipbtn[data-k="${k}"]`); if (b?.dataset.ai === "1") { b.setAttribute("aria-pressed", "false"); picked.delete(k); delete b.dataset.ai; } });
+      aiTicked.forEach((k) => { const b = s.querySelector(`.chipbtn[data-k="${k}"]`); if (b?.dataset.ai === "1") { b.setAttribute("aria-pressed", "false"); picked.delete(k); delete b.dataset.ai; } }); updateScope();
       aiTicked = new Set();
       const sugg = r.verdict === "off" ? r.suggestions : [];
       sugg.forEach(({ symptom }) => {
         const b = s.querySelector(`.chipbtn[data-k="${symptom}"]`);
         if (b && b.getAttribute("aria-pressed") !== "true") { b.setAttribute("aria-pressed", "true"); b.dataset.ai = "1"; picked.add(symptom); aiTicked.add(symptom); }
       });
+      updateScope();
       aiBox.className = "ai-note " + (r.verdict === "off" ? "off" : "ok");
       aiBox.innerHTML = r.verdict === "off"
-        ? `<div><b>Photo check: something seems off</b> (${Math.round(r.sick * 100)}% sure).${sugg.length ? ` Suggested: ${sugg.map((x) => esc(label(x.symptom).toLowerCase())).join(" and ")}, ticked below. Change them if they don't match.` : " Tick what you see below."}</div>`
+        ? `<div><b>Photo check: something seems off</b> (${Math.round(r.sick * 100)}% sure).${sugg.length ? ` Suggested: ${sugg.map((x) => esc(label(x.symptom).toLowerCase())).join(" and ")}, ticked below. Change them if they don't match.` : " Tick what you see below."} Then say how much of the plant looks like this: one old leaf is usually just ageing.</div>`
         : `<div><b>Photo check: the leaf looks healthy</b> (${Math.round((1 - r.sick) * 100)}% sure). Still tick anything you notice.</div>`;
       aiBox.insertAdjacentHTML("beforeend", `<details class="hint"><summary>About the photo check</summary>It runs on your phone; the photo isn't sent anywhere. It's trained on leaf close-ups of aloe, cactus, money plant, snake plant and spider plant, plus real-world photos of garden and crop plants, so on other plants treat its symptom suggestions as a hint.${BETA ? ` Beta: model ${choice === "AB" ? "A+B" : choice} (change in Settings → Lab).` : ""} ${esc(photoCheck.CREDITS)}</details>`);
   }
-  s.querySelectorAll(".chipbtn").forEach((b) => (b.onclick = () => {
+  s.querySelectorAll(".chipbtn[data-k]").forEach((b) => (b.onclick = () => {
     const on = b.getAttribute("aria-pressed") !== "true";
     b.setAttribute("aria-pressed", String(on)); delete b.dataset.ai;
     on ? picked.add(b.dataset.k) : picked.delete(b.dataset.k);
+    updateScope();
   }));
+  // "How much of the plant?" appears once something is ticked; one choice per row, tap again to clear.
+  const scope = {};
+  const updateScope = () => { s.querySelector("#hScope").hidden = picked.size === 0; };
+  for (const key of ["extent", "where"]) {
+    s.querySelectorAll(`.chipbtn[data-${key}]`).forEach((b) => (b.onclick = () => {
+      const on = scope[key] !== b.dataset[key];
+      scope[key] = on ? b.dataset[key] : undefined;
+      s.querySelectorAll(`.chipbtn[data-${key}]`).forEach((x) => { const sel = on && x === b; x.setAttribute("aria-pressed", String(sel)); x.setAttribute("aria-checked", String(sel)); });
+    }));
+  }
   s.querySelector("#hGo").onclick = async (e) => {
     e.target.disabled = true;
-    const result = assess(p, [...picked]);
+    const result = assess(p, [...picked], scope);
     let photoId = null;
     if (file) { try { photoId = await storePhoto(file); } catch { /* optional */ } }
     p.checks = [{ id: uid(), at: new Date().toISOString(), status: result.status, symptoms: [...picked], causes: result.causes.map((x) => ({ title: x.title })), photoId }, ...(p.checks || [])];

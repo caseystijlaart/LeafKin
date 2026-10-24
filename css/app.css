@@ -309,3 +309,5 @@ body.gated .scrim { z-index: 40; } /* the privacy policy opens on top of the sta
 .labtable th { font-size: .8rem; color: var(--muted); }
 .labtable.small { font-size: .8rem; }
 .labtable img { border-radius: 6px; object-fit: cover; }
+.scope { display: flex; flex-direction: column; gap: 8px; }
+.scope h3 { margin-top: 6px; }

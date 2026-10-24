@@ -22,8 +22,20 @@ export const SYMPTOMS = [
 
 const winter = (d = new Date()) => [10, 11, 0, 1].includes(d.getMonth());
 
+// How much of the plant is affected, asked once a symptom is ticked (both optional).
+export const EXTENT = [["one", "One or two leaves"], ["several", "Several leaves"], ["much", "Much of the plant"]];
+export const WHERE = [["old", "Old, lower leaves"], ["new", "New growth"], ["all", "All over"]];
+const SERIOUS = ["mushy", "pests", "powder", "soil_mould"];   // never "just ageing"
+
 // Returns { status: "healthy" | "watch" | "attention", causes: [{ title, why, actions: [] }] }
-export function assess(plant, symptoms) {
+// scope: { extent: "one" | "several" | "much", where: "old" | "new" | "all" } (optional)
+export function assess(plant, symptoms, scope = {}) {
+  const { extent, where } = scope;
+  // One or two old, lower leaves browning, yellowing or drying is how plants shed old leaves.
+  if (symptoms.length && extent === "one" && where === "old" && !symptoms.some((s) => SERIOUS.includes(s))) {
+    return { status: "healthy", causes: [{ title: "Normal leaf ageing", why: "Older, lower leaves fade, brown and die off as the plant grows. One or two at a time is normal, as long as new leaves look good.",
+      actions: ["Pull the leaf off once it comes loose, or snip it off near the stem.", "Check again if more leaves follow, or if new leaves show the same."] }] };
+  }
   const set = new Set(symptoms);
   const c = plant.care || {};
   const W = waterInterval(plant) || 0;
@@ -99,7 +111,14 @@ export function assess(plant, symptoms) {
 
   let status = "healthy";
   if (out.length) status = ["Root or stem rot", "Pests", "Powdery mildew"].some((t) => out.some((x) => x.title === t)) ? "attention" : "watch";
-  return { status, causes: out.slice(0, 3) };
+  // The more of the plant is affected, and the newer the leaves, the more it matters.
+  if (out.length && (extent === "much" || where === "new" || where === "all")) status = "attention";
+  const causes = out.slice(0, 3);
+  if (out.length && where === "new") causes.unshift({ title: "New growth is affected", why: "Problems on fresh leaves point to something going on now, not old age.",
+    actions: ["Act on the causes below soon.", "Check again in a week: new leaves should come out healthy."] });
+  else if (out.length && extent === "much") causes.unshift({ title: "Much of the plant is affected", why: "When many leaves show it, the cause is affecting the whole plant.",
+    actions: ["Start with the most likely cause below.", "Take a photo now and again in two weeks to see if it stops spreading."] });
+  return { status, causes: causes.slice(0, 3) };
 }
 
 export const STATUS_LABEL = { healthy: "Looks healthy", watch: "Keep an eye on it", attention: "Needs attention" };
