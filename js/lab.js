@@ -9,16 +9,21 @@ const KW_KEY = "leafkin.kindwiseKey";
 const kwKey = () => { try { return localStorage.getItem(KW_KEY) || ""; } catch { return ""; } };
 const setKwKey = (v) => { try { v ? localStorage.setItem(KW_KEY, v.trim()) : localStorage.removeItem(KW_KEY); } catch {} };
 
+// One model run gives all three own variants; keep it for the photo being checked.
+let lastBlob = null, lastRun = null;
+async function ownRun(blob, variant) {
+  if (blob !== lastBlob) { lastBlob = blob; lastRun = diagnose(blob); }
+  const r = await lastRun;
+  const v = variant ? r.variants[variant] : r;
+  const top = Object.entries(v.probs).sort((a, b) => b[1] - a[1])[0][0];
+  return { sick: v.sick, top, probs: v.probs, ms: r.ms };
+}
+
 // Each option returns { sick: 0..1 or null (no answer), top: "text", ms }
 const OPTIONS = {
-  own: {
-    name: "Own model (on the phone)",
-    async run(blob) {
-      const r = await diagnose(blob);
-      const top = Object.entries(r.probs).sort((a, b) => b[1] - a[1])[0][0];
-      return { sick: r.sick, top, probs: r.probs, ms: r.ms };
-    },
-  },
+  own: { name: "Own model A+B (in the app)", run: (blob) => ownRun(blob, null) },
+  ownA: { name: "Own model A (no PlantDoc)", run: (blob) => ownRun(blob, "A") },
+  ownB: { name: "Own model B (with PlantDoc)", run: (blob) => ownRun(blob, "B") },
   plantnet: {
     name: "Pl@ntNet diseases",
     async run(blob) {
@@ -73,7 +78,7 @@ function summarise(rows, key) {
   return {
     n: done.length, errors: rows.filter((r) => r[key]?.error).length, answered: ans.length,
     auc: auc(sc, y), bal: fa === null || miss === null ? null : 1 - (fa + miss) / 2, fa, miss,
-    top1: key === "own" && known.length ? known.filter((r) => r.own.top === r.label).length / known.length : null,
+    top1: key.startsWith("own") && known.length ? known.filter((r) => r[key].top === r.label).length / known.length : null,
     ms: done.length ? Math.round(done.reduce((a, r) => a + r[key].ms, 0) / done.length) : null,
   };
 }
@@ -86,7 +91,7 @@ export function renderLab(root, { closeBack }) {
     <p class="muted">Compare photo health checks on the same ${"labelled"} test photos. None of them were used to train LeafKin's model. Beta only.</p>
     <div class="card">
       <h3>Options</h3>
-      <label class="check"><input type="checkbox" id="lOwn" checked disabled> Own model (on the phone, free)</label>
+      <label class="check"><input type="checkbox" id="lOwn" checked disabled> Own model, on the phone and free: A+B as used in the app, plus A (without PlantDoc) and B (with PlantDoc) separately</label>
       <label class="check"><input type="checkbox" id="lPn" ${hasSiteKey() || deviceKey() ? "checked" : "disabled"}> Pl@ntNet diseases (1 scan credit per photo, 500 free a day)</label>
       <label class="check"><input type="checkbox" id="lKw" ${kwKey() ? "checked" : ""}> Kindwise plant.health (1 credit per photo, 100 free in total)</label>
       <div class="field"><label for="lKwKey">Kindwise API key</label><input id="lKwKey" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="From admin.kindwise.com" value="${esc(kwKey())}"></div>
@@ -109,7 +114,7 @@ export function renderLab(root, { closeBack }) {
   const $ = (q) => root.querySelector(q);
   $("#lBack").onclick = closeBack;
   $("#lKwKey").onchange = (e) => { setKwKey(e.target.value); $("#lKw").checked = !!e.target.value.trim(); };
-  const chosen = () => ["own", ...($("#lPn").checked ? ["plantnet"] : []), ...($("#lKw").checked && kwKey() ? ["kindwise"] : [])];
+  const chosen = () => ["own", "ownA", "ownB", ...($("#lPn").checked ? ["plantnet"] : []), ...($("#lKw").checked && kwKey() ? ["kindwise"] : [])];
 
   let stop = false, rows = [];
   $("#lStop").onclick = () => { stop = true; };
@@ -157,10 +162,10 @@ export function renderLab(root, { closeBack }) {
           <tr><td>Balanced accuracy</td>${keys.map((k) => `<td>${pct(S[k].bal)}</td>`).join("")}</tr>
           <tr><td>Healthy called sick</td>${keys.map((k) => `<td>${pct(S[k].fa)}</td>`).join("")}</tr>
           <tr><td>Sick called healthy</td>${keys.map((k) => `<td>${pct(S[k].miss)}</td>`).join("")}</tr>
-          <tr><td>Right symptom (known plants)</td>${keys.map((k) => `<td>${pct(S[k].top1)}</td>`).join("")}</tr>
+          <tr><td>Right symptom (labelled sick and healthy photos, not "other plants")</td>${keys.map((k) => `<td>${pct(S[k].top1)}</td>`).join("")}</tr>
           <tr><td>Time per photo</td>${keys.map((k) => `<td>${S[k].ms === null ? "–" : S[k].ms + " ms"}</td>`).join("")}</tr>
         </table></div>
-        <p class="hint">Pl@ntNet has no "healthy" answer, so its best disease confidence counts as "sick". The symptom row only applies to LeafKin's own model.</p>
+        <p class="hint">Pl@ntNet has no "healthy" answer, so its best disease confidence counts as "sick". The symptom row only applies to LeafKin's own models. "Real-world" photos are PlantDoc photos of garden and crop plants.</p>
         ${errs.length ? `<p class="err">${errs.map(esc).join("<br>")}</p>` : ""}
         <button class="btn" id="lCsv">Download results (CSV)</button>
         <details><summary class="hint">Every photo</summary>

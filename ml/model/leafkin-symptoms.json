@@ -1,9 +1,16 @@
 {
  "backbone": "mobilenetv2",
- "C": 30.0,
- "trained_on": 10003,
- "with_provided_aug": true,
  "classes": [
+  "brown_tips",
+  "healthy",
+  "mildew",
+  "pests",
+  "scorch",
+  "spots",
+  "wilting",
+  "yellowing"
+ ],
+ "classes_a": [
   "brown_tips",
   "healthy",
   "pests",
@@ -11,13 +18,19 @@
   "spots",
   "wilting"
  ],
- "lab_photos_held_out": true,
+ "outputs": {
+  "probs": "A+B",
+  "probs_a": "A",
+  "probs_b": "B"
+ },
+ "trained_on_a": 10003,
+ "trained_on_b": 12316,
  "input": {
   "size": 224,
   "layout": "NCHW",
-  "normalise": "imagenet"
+  "normalise": "imagenet",
+  "resize": "centre square crop, BOX filter"
  },
- "max_abs_diff_vs_python": 1.7881393432617188e-07,
- "ms_per_photo_cpu": 4.8,
+ "max_abs_diff_vs_python": 1.1920928955078125e-06,
  "mb": 14.0
 }

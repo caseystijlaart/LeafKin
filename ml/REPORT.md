@@ -107,6 +107,41 @@ A small gain on unseen species, so the final model uses them.
 - 8-bit quantisation (3.8 MB instead of 14 MB) was tried and rejected: right symptom dropped from 94% to 86%.
 - The beta's Lab page (Settings → Lab) compares it with Pl@ntNet diseases and Kindwise on the same test photos.
 
+## Adding PlantDoc (24 October 2026)
+
+PlantDoc (Singh et al., 2020, CC BY 4.0): 2,578 real-world photos from the internet: crops, fruit and garden plants,
+often whole plants, outdoors, some stock photos with watermarks. It adds two symptoms the health check knows:
+**mildew** (squash powdery mildew) and **yellowing** (tomato mosaic and yellow-leaf viruses). Its "spider mites" class
+(2 photos) is left out. 27 training photos that duplicate its test photos are dropped. Scripts: `add_plantdoc.py`,
+`compare_plantdoc.py`, `tune_plantdoc.py`, `ensemble_plantdoc.py`, `export_combined.py`.
+
+Model A = the houseplant sets (as before), model B = A's data + PlantDoc's training photos. Same network, classifier
+and settings. A+B = the two classifiers' probabilities averaged (one extra layer of a few KB on the same network).
+
+| Test | A (without) | B (with PlantDoc) | **A+B** |
+|---|---|---|---|
+| T1 Lab photos (160): false alarms / misses | 5% / 4% | 27% / 1% | **8% / 0%** |
+| T2 PlantDoc test (236 real-world): AUC, misses, right symptom | 0.84, 37%, 14% | 0.96, 6%, 81% | **0.94, 18%, 57%** |
+| T3 other plants, plain background: false alarms | 5% | 65% | **22%** |
+| T4 unseen houseplant: AUC | 0.83 | 0.82 | **0.84** |
+
+- B is far better on real-world photos but calls plain-background close-ups "sick" much more often. A tuned cut-off
+  (chosen on training folds only) and weighting both sources equally were tried; neither fixed that (T3 false alarms
+  stayed at 53–59%).
+- PlantDoc doesn't help with houseplants the model has never seen (T4): its plants are crops and garden plants.
+- **A+B is never the worst and keeps the Lab-level accuracy, so the app uses A+B.** A and B stay available in the Lab.
+
+Final Lab set: 184 photos (the 160 above + 24 PlantDoc test photos: 8 healthy, 8 spots, 4 mildew, 4 yellowing).
+
+| Lab, all 184 photos | AUC | Balanced | False alarms | Misses | Right symptom |
+|---|---|---|---|---|---|
+| A | 0.98 | 92% | 6% | 10% | 82% |
+| B | 0.97 | 86% | 26% | 1% | 90% |
+| **A+B** | **0.99** | **94%** | 10% | 2% | **90%** |
+
+On the 24 real-world photos alone: A+B names the right symptom 75% of the time (A 29%, B 83%), misses 12% (A 44%, B 0%).
+The browser reproduces all three outputs exactly (checked on 30 photos, difference below 0.0001).
+
 ## Recommended next steps
 
 1. **2.2.0 in the beta**: "Check with a photo" in the health check: close-up of one leaf → *looks healthy* / *something

@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import f1_score, roc_auc_score
 from sklearn.model_selection import StratifiedGroupKFold
-from common import load_index, symptom, SYMPTOMS, DATA
+from common import load_index, symptom, SYMPTOMS, DATA, PLANTDOC_SKIP
 
 BACKBONES = ["mobilenetv2", "efficientnet", "resnet50"]
 TRAIN_SOURCES = ["aloe", "cactus", "nursery"]
@@ -18,8 +18,8 @@ def feats(name):
     return dict(zip(z["ids"], X))
 
 # ---------- duplicate groups: same photo (or a copy of it) must stay on one side of every split ----------
-def build_groups(F, thr=0.93):
-    orig = [r for r in rows if r["kind"] == "orig" and r["source"] in TRAIN_SOURCES]
+def build_groups(F, thr=0.93, sources=TRAIN_SOURCES):
+    orig = [r for r in rows if r["kind"] == "orig" and r["source"] in sources and r["cls"] not in PLANTDOC_SKIP]
     ids = [r["id"] for r in orig]; X = np.stack([F[i] for i in ids])
     parent = list(range(len(ids)))
     def find(i):

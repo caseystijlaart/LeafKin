@@ -8,7 +8,7 @@ const MEAN = [0.485, 0.456, 0.406], STD = [0.229, 0.224, 0.225];
 
 // Model output → the health check's symptom ids (js/health.js). "pests" is left out on purpose: in the training
 // data it only exists for cactus, and those photos can be told apart by camera alone (ml/REPORT.md).
-export const TO_SYMPTOM = { spots: "spots", brown_tips: "brown_tips", wilting: "droop", scorch: "scorch" };
+export const TO_SYMPTOM = { spots: "spots", brown_tips: "brown_tips", wilting: "droop", scorch: "scorch", mildew: "powder", yellowing: "yellow_all" };
 
 let loading = null;
 function load() {
@@ -98,21 +98,29 @@ function canvas(w, h) {
   return { canvas: cv, ctx: cv.getContext("2d", { willReadFrequently: true }) };
 }
 
-// Returns { probs: {class: p}, sick, verdict: "healthy" | "off", suggestions: [{ symptom, p }], ms }
+// The model file has three outputs: model A (houseplant photos), model B (+ PlantDoc's real-world photos) and their
+// average, which the app uses (see ml/REPORT.md). The Lab shows all three.
+// Returns { probs: {class: p}, sick, verdict, suggestions: [{ symptom, p }], variants: { A, B }, ms }
 export async function diagnose(photo) {
   const { ort, session, info } = await load();
   const t0 = performance.now();
   const input = await toTensor(ort, photo);
   const out = await session.run({ [session.inputNames[0]]: input });
-  const p = out.probs.data;
-  const probs = Object.fromEntries(info.classes.map((c, i) => [c, p[i]]));
-  const sick = 1 - probs.healthy;
-  const suggestions = Object.entries(probs)
-    .filter(([c, v]) => TO_SYMPTOM[c] && v >= 0.15)
-    .sort((a, b) => b[1] - a[1]).slice(0, 2)
-    .map(([c, v]) => ({ symptom: TO_SYMPTOM[c], p: v }));
-  return { probs, sick, verdict: sick >= 0.5 ? "off" : "healthy", suggestions, ms: Math.round(performance.now() - t0) };
+  const read = (name, classes) => (out[name] ? Object.fromEntries(classes.map((c, i) => [c, out[name].data[i]])) : null);
+  const summary = (probs) => {
+    const sick = 1 - probs.healthy;
+    const suggestions = Object.entries(probs)
+      .filter(([c, v]) => TO_SYMPTOM[c] && v >= 0.15)
+      .sort((a, b) => b[1] - a[1]).slice(0, 2)
+      .map(([c, v]) => ({ symptom: TO_SYMPTOM[c], p: v }));
+    return { probs, sick, verdict: sick >= 0.5 ? "off" : "healthy", suggestions };
+  };
+  const ms = Math.round(performance.now() - t0);
+  const main = summary(read("probs", info.classes));
+  const A = info.classes_a && out.probs_a ? { ...summary(read("probs_a", info.classes_a)), ms } : null;
+  const B = out.probs_b ? { ...summary(read("probs_b", info.classes)), ms } : null;
+  return { ...main, variants: { A, B }, ms };
 }
 
-export const CREDITS = "Trained on the Aloe Vera Leaf Disease Detection Dataset (Khan et al.), the Cactus dataset (Benali & Jdey) " +
-  "and the Indoor Plant Disease Image Dataset (Mahmud Opu et al.), all CC BY 4.0. Runs with ONNX Runtime Web (MIT).";
+export const CREDITS = "Trained on the Aloe Vera Leaf Disease Detection Dataset (Khan et al.), the Cactus dataset (Benali & Jdey), " +
+  "the Indoor Plant Disease Image Dataset (Mahmud Opu et al.) and PlantDoc (Singh et al.), all CC BY 4.0. Runs with ONNX Runtime Web (MIT).";

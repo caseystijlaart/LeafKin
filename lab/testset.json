@@ -1,5 +1,5 @@
 {
- "about": "Lab test photos: never used to train the photo check model (ml/testpack.py). Ordered so any first N is balanced.",
+ "about": "Lab test photos: never used to train the photo check models (ml/testpack.py, PlantDoc photos from its test split). Ordered so any first N is balanced.",
  "photos": [
   {
    "file": "photos/13af09962f42bd47.jpg",
@@ -44,6 +44,13 @@
    "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
   },
   {
+   "file": "photos/pde2b76fc2ed59dc.jpg",
+   "label": "healthy",
+   "species": "real-world",
+   "cls": "Tomato leaf",
+   "source": "PlantDoc (Singh et al., 2020), CC BY 4.0"
+  },
+  {
    "file": "photos/50dfe9b9f6e8e62b.jpg",
    "label": "spots",
    "species": "Money",
@@ -84,6 +91,13 @@
    "species": "Spider",
    "cls": "Spider_Plant_Leaf_Tip_Necrosis",
    "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/pdff5e0de1598dbe.jpg",
+   "label": "spots",
+   "species": "real-world",
+   "cls": "Tomato Septoria leaf spot",
+   "source": "PlantDoc (Singh et al., 2020), CC BY 4.0"
   },
   {
    "file": "photos/182426a5b0b5d503.jpg",
@@ -128,6 +142,13 @@
    "source": "Aloe Vera Leaf Disease Detection Dataset (Khan et al.), CC BY 4.0"
   },
   {
+   "file": "photos/pde674359fc8477a.jpg",
+   "label": "mildew",
+   "species": "real-world",
+   "cls": "Squash Powdery mildew leaf",
+   "source": "PlantDoc (Singh et al., 2020), CC BY 4.0"
+  },
+  {
    "file": "photos/de861e744aacb11d.jpg",
    "label": "spots",
    "species": "Aloe",
@@ -168,6 +189,13 @@
    "species": "Money",
    "cls": "Money_Plant_Bacterial_wilt_disease",
    "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/pd6c7e7101a8dbbb.jpg",
+   "label": "yellowing",
+   "species": "real-world",
+   "cls": "Tomato leaf mosaic virus",
+   "source": "PlantDoc (Singh et al., 2020), CC BY 4.0"
   },
   {
    "file": "photos/13473e73eb0972c7.jpg",
@@ -212,6 +240,13 @@
    "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
   },
   {
+   "file": "photos/pdf6afe3a9351626.jpg",
+   "label": "healthy",
+   "species": "real-world",
+   "cls": "Cherry leaf",
+   "source": "PlantDoc (Singh et al., 2020), CC BY 4.0"
+  },
+  {
    "file": "photos/71ddf8a19c3ea7a7.jpg",
    "label": "healthy",
    "species": "other",
@@ -252,6 +287,13 @@
    "species": "Cactus",
    "cls": "Cactus_Healthy",
    "source": "Cactus dataset (Benali & Jdey), CC BY 4.0"
+  },
+  {
+   "file": "photos/pd4b0846a2f63963.jpg",
+   "label": "spots",
+   "species": "real-world",
+   "cls": "Bell_pepper leaf spot",
+   "source": "PlantDoc (Singh et al., 2020), CC BY 4.0"
   },
   {
    "file": "photos/fa062cfa8e1d8c5e.jpg",
@@ -296,6 +338,13 @@
    "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
   },
   {
+   "file": "photos/pdf5721981d83a9a.jpg",
+   "label": "mildew",
+   "species": "real-world",
+   "cls": "Squash Powdery mildew leaf",
+   "source": "PlantDoc (Singh et al., 2020), CC BY 4.0"
+  },
+  {
    "file": "photos/c9737c01b8385487.jpg",
    "label": "wilting",
    "species": "Snake",
@@ -336,6 +385,13 @@
    "species": "other",
    "cls": "unhealthy",
    "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/pd7e750839b51e1e.jpg",
+   "label": "yellowing",
+   "species": "real-world",
+   "cls": "Tomato leaf mosaic virus",
+   "source": "PlantDoc (Singh et al., 2020), CC BY 4.0"
   },
   {
    "file": "photos/f73232d9b2c2e91d.jpg",
@@ -380,6 +436,13 @@
    "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
   },
   {
+   "file": "photos/pde25ca8eb584266.jpg",
+   "label": "healthy",
+   "species": "real-world",
+   "cls": "Apple leaf",
+   "source": "PlantDoc (Singh et al., 2020), CC BY 4.0"
+  },
+  {
    "file": "photos/e9fec8dd4aaea3e3.jpg",
    "label": "spots",
    "species": "Money",
@@ -420,6 +483,13 @@
    "species": "Spider",
    "cls": "Spider_Plant_Leaf_Tip_Necrosis",
    "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/pd9fb5021aaebd09.jpg",
+   "label": "spots",
+   "species": "real-world",
+   "cls": "grape leaf black rot",
+   "source": "PlantDoc (Singh et al., 2020), CC BY 4.0"
   },
   {
    "file": "photos/8b474862e1802069.jpg",
@@ -464,6 +534,13 @@
    "source": "Aloe Vera Leaf Disease Detection Dataset (Khan et al.), CC BY 4.0"
   },
   {
+   "file": "photos/pd4bd22cad79c1b0.jpg",
+   "label": "mildew",
+   "species": "real-world",
+   "cls": "Squash Powdery mildew leaf",
+   "source": "PlantDoc (Singh et al., 2020), CC BY 4.0"
+  },
+  {
    "file": "photos/80834ee307c55e26.jpg",
    "label": "spots",
    "species": "Aloe",
@@ -504,6 +581,13 @@
    "species": "Money",
    "cls": "Money_Plant_Bacterial_wilt_disease",
    "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/pd4fd78ab9b19ceb.jpg",
+   "label": "yellowing",
+   "species": "real-world",
+   "cls": "Tomato leaf yellow virus",
+   "source": "PlantDoc (Singh et al., 2020), CC BY 4.0"
   },
   {
    "file": "photos/d790ffbe685d9ae9.jpg",
@@ -548,6 +632,13 @@
    "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
   },
   {
+   "file": "photos/pd42c15188030f3a.jpg",
+   "label": "healthy",
+   "species": "real-world",
+   "cls": "Blueberry leaf",
+   "source": "PlantDoc (Singh et al., 2020), CC BY 4.0"
+  },
+  {
    "file": "photos/ed5795fbde66fb00.jpg",
    "label": "healthy",
    "species": "other",
@@ -588,6 +679,13 @@
    "species": "Cactus",
    "cls": "Cactus_Healthy",
    "source": "Cactus dataset (Benali & Jdey), CC BY 4.0"
+  },
+  {
+   "file": "photos/pd8035c6f1d7421e.jpg",
+   "label": "spots",
+   "species": "real-world",
+   "cls": "Apple rust leaf",
+   "source": "PlantDoc (Singh et al., 2020), CC BY 4.0"
   },
   {
    "file": "photos/01ee7d6ef038a087.jpg",
@@ -632,6 +730,13 @@
    "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
   },
   {
+   "file": "photos/pd2397aaa7238a2f.jpg",
+   "label": "mildew",
+   "species": "real-world",
+   "cls": "Squash Powdery mildew leaf",
+   "source": "PlantDoc (Singh et al., 2020), CC BY 4.0"
+  },
+  {
    "file": "photos/76ea34879e782fa8.jpg",
    "label": "wilting",
    "species": "Snake",
@@ -672,6 +777,13 @@
    "species": "other",
    "cls": "unhealthy",
    "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/pdcafba79350a0d4.jpg",
+   "label": "yellowing",
+   "species": "real-world",
+   "cls": "Tomato leaf yellow virus",
+   "source": "PlantDoc (Singh et al., 2020), CC BY 4.0"
   },
   {
    "file": "photos/0827a8afd86a1a24.jpg",
@@ -716,6 +828,13 @@
    "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
   },
   {
+   "file": "photos/pda75108d805fe98.jpg",
+   "label": "healthy",
+   "species": "real-world",
+   "cls": "Soyabean leaf",
+   "source": "PlantDoc (Singh et al., 2020), CC BY 4.0"
+  },
+  {
    "file": "photos/2d35d28bc60aa3e3.jpg",
    "label": "spots",
    "species": "Money",
@@ -756,6 +875,13 @@
    "species": "Spider",
    "cls": "Spider_Plant_Leaf_Tip_Necrosis",
    "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/pd6240874b37c246.jpg",
+   "label": "spots",
+   "species": "real-world",
+   "cls": "Tomato leaf bacterial spot",
+   "source": "PlantDoc (Singh et al., 2020), CC BY 4.0"
   },
   {
    "file": "photos/552369dd2bf8fc1d.jpg",
@@ -800,6 +926,13 @@
    "source": "Aloe Vera Leaf Disease Detection Dataset (Khan et al.), CC BY 4.0"
   },
   {
+   "file": "photos/pd63daf34a6aa57d.jpg",
+   "label": "healthy",
+   "species": "real-world",
+   "cls": "Blueberry leaf",
+   "source": "PlantDoc (Singh et al., 2020), CC BY 4.0"
+  },
+  {
    "file": "photos/96e7f152bb99e692.jpg",
    "label": "spots",
    "species": "Aloe",
@@ -840,6 +973,13 @@
    "species": "Money",
    "cls": "Money_Plant_Bacterial_wilt_disease",
    "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/pd9d6d59d0a93fa4.jpg",
+   "label": "spots",
+   "species": "real-world",
+   "cls": "Potato leaf early blight",
+   "source": "PlantDoc (Singh et al., 2020), CC BY 4.0"
   },
   {
    "file": "photos/71c4ef55fe382b63.jpg",
@@ -884,6 +1024,13 @@
    "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
   },
   {
+   "file": "photos/pd5511a651c61935.jpg",
+   "label": "healthy",
+   "species": "real-world",
+   "cls": "Bell_pepper leaf",
+   "source": "PlantDoc (Singh et al., 2020), CC BY 4.0"
+  },
+  {
    "file": "photos/e4aa1e0c3c5b4783.jpg",
    "label": "healthy",
    "species": "other",
@@ -924,6 +1071,13 @@
    "species": "other",
    "cls": "unhealthy",
    "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/pd94b1754f427b49.jpg",
+   "label": "spots",
+   "species": "real-world",
+   "cls": "Corn rust leaf",
+   "source": "PlantDoc (Singh et al., 2020), CC BY 4.0"
   },
   {
    "file": "photos/1d845d0105d3e10f.jpg",
@@ -968,6 +1122,13 @@
    "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
   },
   {
+   "file": "photos/pd062463ff289491.jpg",
+   "label": "healthy",
+   "species": "real-world",
+   "cls": "Strawberry leaf",
+   "source": "PlantDoc (Singh et al., 2020), CC BY 4.0"
+  },
+  {
    "file": "photos/c281386f41f0526c.jpg",
    "label": "healthy",
    "species": "other",
@@ -1008,6 +1169,13 @@
    "species": "other",
    "cls": "unhealthy",
    "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/pdcbe18f9d9310eb.jpg",
+   "label": "spots",
+   "species": "real-world",
+   "cls": "Tomato Early blight leaf",
+   "source": "PlantDoc (Singh et al., 2020), CC BY 4.0"
   },
   {
    "file": "photos/8ee51f44f3151428.jpg",

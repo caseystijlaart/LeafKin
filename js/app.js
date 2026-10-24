@@ -671,7 +671,7 @@ function openHealth(id) {
       aiBox.innerHTML = r.verdict === "off"
         ? `<div><b>Photo check: something seems off</b> (${Math.round(r.sick * 100)}% sure).${sugg.length ? ` Suggested: ${sugg.map((x) => esc(label(x.symptom).toLowerCase())).join(" and ")}, ticked below. Change them if they don't match.` : " Tick what you see below."}</div>`
         : `<div><b>Photo check: the leaf looks healthy</b> (${Math.round((1 - r.sick) * 100)}% sure). Still tick anything you notice.</div>`;
-      aiBox.insertAdjacentHTML("beforeend", `<details class="hint"><summary>About the photo check</summary>It runs on your phone; the photo isn't sent anywhere. It's trained on leaf close-ups of aloe, cactus, money plant, snake plant and spider plant, so on other plants treat its symptom suggestions as a hint. ${esc(photoCheck.CREDITS)}</details>`);
+      aiBox.insertAdjacentHTML("beforeend", `<details class="hint"><summary>About the photo check</summary>It runs on your phone; the photo isn't sent anywhere. It's trained on leaf close-ups of aloe, cactus, money plant, snake plant and spider plant, plus real-world photos of garden and crop plants, so on other plants treat its symptom suggestions as a hint. ${esc(photoCheck.CREDITS)}</details>`);
     } catch {
       aiBox.className = "ai-note"; aiBox.innerHTML = navigator.onLine === false
         ? "The photo check needs a connection the first time (it downloads once). Tick what you see below."

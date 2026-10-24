@@ -6,7 +6,7 @@ const VERSION = (BETA ? "leafkin-beta-" : "leafkin-") + "v2.2.0";
 const mine = (k) => k.startsWith("leafkin-beta-") === BETA; // only clean up our own old caches
 // The photo check's model and runtime (25 MB) are cached on first use, separately from the app files, so app
 // updates don't download them again. Change ML_VERSION when models/ or js/vendor/ort/ change.
-const ML_VERSION = "2026-10-24";
+const ML_VERSION = "2026-10-24b";
 const ML_CACHE = (BETA ? "leafkin-beta-" : "leafkin-") + "ml-" + ML_VERSION;
 const isML = (url) => /\/(models|js\/vendor\/ort)\//.test(url.pathname);
 const SHELL = [

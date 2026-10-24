@@ -14,11 +14,22 @@ SYMPTOM = {
     "Money_Plant_Bacterial_wilt_disease": "wilting", "Snake_Plant_Leaf_Withering": "wilting",
     "Aloe_Sunburn": "scorch",
     "Cactus_Dactylopius_Opuntia": "pests",
+    # PlantDoc (real-world photos of crops, fruit and garden plants)
+    "Apple Scab Leaf": "spots", "Apple rust leaf": "spots", "Bell_pepper leaf spot": "spots",
+    "Corn Gray leaf spot": "spots", "Corn leaf blight": "spots", "Corn rust leaf": "spots",
+    "Potato leaf early blight": "spots", "Potato leaf late blight": "spots", "Tomato Early blight leaf": "spots",
+    "Tomato Septoria leaf spot": "spots", "Tomato leaf bacterial spot": "spots", "Tomato leaf late blight": "spots",
+    "Tomato mold leaf": "spots", "grape leaf black rot": "spots",
+    "Squash Powdery mildew leaf": "mildew",
+    "Tomato leaf mosaic virus": "yellowing", "Tomato leaf yellow virus": "yellowing",
 }
-SYMPTOMS = ["healthy", "spots", "brown_tips", "wilting", "scorch", "pests"]
+PLANTDOC_HEALTHY = {"Apple leaf", "Bell_pepper leaf", "Blueberry leaf", "Cherry leaf", "Peach leaf", "Raspberry leaf",
+                    "Soyabean leaf", "Strawberry leaf", "Tomato leaf", "grape leaf"}
+PLANTDOC_SKIP = {"Tomato two spotted spider mites leaf"}   # only 2 photos
+SYMPTOMS = ["healthy", "spots", "brown_tips", "wilting", "scorch", "pests", "mildew", "yellowing"]
 
 def symptom(cls):
-    return "healthy" if cls.endswith("Healthy") else SYMPTOM[cls]
+    return "healthy" if cls.endswith("Healthy") or cls in PLANTDOC_HEALTHY else SYMPTOM[cls]
 
 def load_index():
     rows = []

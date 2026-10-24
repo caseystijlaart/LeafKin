@@ -154,7 +154,7 @@ node tests/check-version.mjs             # README, app and service worker show t
 
 On `beta` the top entry can be ahead of `live` until it's merged. Each version merged into `live` gets a GitHub release with the same tag (e.g. `v2.1.0`).
 
-- **2.2.0**: photo health check on the phone (own model, suggests symptoms to confirm), sunburn symptom; beta-only Lab to compare it with Pl@ntNet and Kindwise
+- **2.2.0**: photo health check on the phone (own model trained on houseplant sets and PlantDoc, suggests symptoms to confirm: spots, brown tips, wilting, sunburn, mildew, yellowing); beta-only Lab to compare it with Pl@ntNet and Kindwise
 - **2.1.0**: privacy policy in the app, consent when creating an account, guest privacy note; fonts served with the app (nothing loaded from Google)
 - **2.0.0**: accounts with email codes, shared households, sync and offline queue, guest mode, daily push reminders, household activity, delete account, beta site
 - **1.5.1**: last version without accounts (plants stored on the phone only)
