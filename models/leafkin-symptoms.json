@@ -1,0 +1,17 @@
+{
+ "classes": [
+  "brown_tips",
+  "healthy",
+  "pests",
+  "scorch",
+  "spots",
+  "wilting"
+ ],
+ "input": {
+  "size": 224,
+  "layout": "NCHW",
+  "normalise": "imagenet"
+ },
+ "version": "2026-10-24",
+ "backbone": "mobilenetv2"
+}

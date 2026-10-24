@@ -45,6 +45,11 @@ export function privacyHtml() {
     </ul>
     <p>The fonts and everything else the app needs come with the app itself; LeafKin doesn't load anything from Google or other third parties.</p>
 
+    <h3>Photo health check</h3>
+    <p>When you check a plant's health with a photo, the photo is analysed on your phone by a small model that comes with
+    the app. That photo isn't sent anywhere for the check. If you choose to add it to the timeline, it's stored like any
+    other timeline photo.</p>
+
     <h3>Plant scanning</h3>
     <p>When you scan a plant, that photo is sent to Pl@ntNet to identify it, and the reference photos in the results are loaded from Pl@ntNet. The scan photo isn't stored by LeafKin unless you add it to the timeline. This applies to guests too.</p>
 

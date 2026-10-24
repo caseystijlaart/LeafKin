@@ -42,6 +42,25 @@ export async function identify(blob) {
   }));
 }
 
+// Disease identification (same key and daily quota as scanning; "a limited list of species and pathologies").
+// Returns [{ code, name, score }] best first; [] when Pl@ntNet finds nothing.
+export async function identifyDisease(blob) {
+  const key = getKey();
+  if (!key) throw new IdentifyError("no_key");
+  const form = new FormData();
+  form.append("images", blob, "leaf.jpg");
+  form.append("organs", "leaf");
+  let res;
+  try { res = await fetch(`https://my-api.plantnet.org/v2/diseases/identify?api-key=${encodeURIComponent(key)}&lang=en&nb-results=5`, { method: "POST", body: form }); }
+  catch { throw new IdentifyError(navigator.onLine === false ? "offline" : "blocked"); }
+  if (res.status === 404) return [];
+  if (res.status === 401 || res.status === 403) throw new IdentifyError("bad_key");
+  if (res.status === 429) throw new IdentifyError("quota");
+  if (!res.ok) throw new IdentifyError("failed");
+  const data = await res.json();
+  return (data.results || []).map((r) => ({ code: r.name || "", name: r.description || r.name || "", score: r.score || 0 }));
+}
+
 const ORGANS = { leaf: "Leaf", flower: "Flower", fruit: "Fruit", bark: "Bark", habit: "Whole plant", other: "" };
 // Pl@ntNet reference photo: small and large URL plus the credit their terms ask for.
 function refImage(img) {

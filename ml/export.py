@@ -15,6 +15,15 @@ rows = load_index(); F = feats(name)
 G = build_groups(feats("mobilenetv2"))
 ids = [r["id"] for r in rows if r["source"] in TRAIN_SOURCES and (r["kind"] == "orig" or (use_aug and r["kind"] == "aug" and r["id"] in G))]
 R = {r["id"]: r for r in rows}
+# Leaves in the Lab's test set (testpack.py) never take part in training, nor do their augmented copies.
+import os
+if os.path.exists(f"{DATA}/testpack.json"):
+    pack = json.load(open(f"{DATA}/testpack.json"))
+    # every leaf group (recomputed from the current features) that contains a test photo
+    held = {G[x["id"]] for x in pack if x["group"] and x["id"] in G}
+    before = len(ids)
+    ids = [i for i in ids if G.get(i) not in held]
+    print("held out for the Lab:", before - len(ids), "photos", file=sys.stderr)
 y = [symptom(R[i]["cls"]) for i in ids]
 m = LogisticRegression(C=C, max_iter=3000, class_weight="balanced").fit(np.stack([F[i] for i in ids]), y)
 classes = list(m.classes_)
@@ -51,6 +60,7 @@ p_onnx = sess.run(["probs"], {sess.get_inputs()[0].name: x})[0]
 p_py = m.predict_proba(np.stack([F[r["id"]] for r in test]))
 t = time.time(); [sess.run(["probs"], {sess.get_inputs()[0].name: x[:1]}) for _ in range(20)]
 info = dict(backbone=name, C=C, trained_on=len(ids), with_provided_aug=use_aug, classes=classes,
+            lab_photos_held_out=os.path.exists(f"{DATA}/testpack.json"),
             input=dict(size=224, layout=BACKBONES[name][1], normalise=BACKBONES[name][3]),
             max_abs_diff_vs_python=float(np.abs(p_onnx - p_py).max()),
             ms_per_photo_cpu=round((time.time() - t) / 20 * 1000, 1),

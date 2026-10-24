@@ -20,6 +20,8 @@ Options compared (October 2026):
 | Groq / Cloudflare Workers AI (Llama vision) | free daily limits | general model, decent | Meta's licence excludes EU-based users for the multimodal Llama models; US servers |
 | Own model in the browser | free | as good as the training data | photo never leaves the phone |
 
+**Shipped in 2.2.0 (beta):** the own model runs in the health check; the beta's Lab compares it with Pl@ntNet and Kindwise.
+
 First results (own model, MobileNetV2, 14 MB): tells healthy from sick well, also on unseen plants; the exact
 symptom only on the five species it was trained on. Details: [ml/REPORT.md](ml/REPORT.md).
 

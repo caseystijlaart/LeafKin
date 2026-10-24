@@ -2,8 +2,13 @@
 // Bump VERSION whenever app files change, so phones pick up the new version.
 // The test copy at /beta/ has its own worker and caches; the live worker leaves /beta/ alone.
 const BETA = self.location.pathname.includes("/beta/");
-const VERSION = (BETA ? "leafkin-beta-" : "leafkin-") + "v2.1.0";
+const VERSION = (BETA ? "leafkin-beta-" : "leafkin-") + "v2.2.0";
 const mine = (k) => k.startsWith("leafkin-beta-") === BETA; // only clean up our own old caches
+// The photo check's model and runtime (25 MB) are cached on first use, separately from the app files, so app
+// updates don't download them again. Change ML_VERSION when models/ or js/vendor/ort/ change.
+const ML_VERSION = "2026-10-24";
+const ML_CACHE = (BETA ? "leafkin-beta-" : "leafkin-") + "ml-" + ML_VERSION;
+const isML = (url) => /\/(models|js\/vendor\/ort)\//.test(url.pathname);
 const SHELL = [
   "./",
   "./index.html",
@@ -28,6 +33,7 @@ const SHELL = [
   "./js/cloud.js",
   "./js/push.js",
   "./js/privacy.js",
+  "./js/diagnose.js",
   "./js/vendor/supabase.js",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
@@ -43,7 +49,7 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => mine(k) && !k.startsWith(VERSION)).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => mine(k) && !k.startsWith(VERSION) && k !== ML_CACHE).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -62,6 +68,18 @@ self.addEventListener("fetch", (event) => {
   // Page loads: try the network first so updates show quickly, fall back to the cached shell offline.
   if (req.mode === "navigate") {
     event.respondWith(fetch(req).catch(() => caches.match("./index.html")));
+    return;
+  }
+
+  // Photo check model and runtime: cache on first use.
+  if (url.origin === self.location.origin && isML(url)) {
+    event.respondWith(caches.open(ML_CACHE).then(async (cache) => {
+      const hit = await cache.match(req);
+      if (hit) return hit;
+      const res = await fetch(req);
+      if (res.ok) cache.put(req, res.clone());
+      return res;
+    }));
     return;
   }
 

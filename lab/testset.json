@@ -1,0 +1,1125 @@
+{
+ "about": "Lab test photos: never used to train the photo check model (ml/testpack.py). Ordered so any first N is balanced.",
+ "photos": [
+  {
+   "file": "photos/13af09962f42bd47.jpg",
+   "label": "healthy",
+   "species": "Aloe",
+   "cls": "Aloe_Healthy",
+   "source": "Aloe Vera Leaf Disease Detection Dataset (Khan et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/6c919be23cdb5ec1.jpg",
+   "label": "scorch",
+   "species": "Aloe",
+   "cls": "Aloe_Sunburn",
+   "source": "Aloe Vera Leaf Disease Detection Dataset (Khan et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/360185deeef1c1a3.jpg",
+   "label": "spots",
+   "species": "Aloe",
+   "cls": "Aloe_Anthracnose",
+   "source": "Aloe Vera Leaf Disease Detection Dataset (Khan et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/821a6508f852bbfe.jpg",
+   "label": "healthy",
+   "species": "Cactus",
+   "cls": "Cactus_Healthy",
+   "source": "Cactus dataset (Benali & Jdey), CC BY 4.0"
+  },
+  {
+   "file": "photos/7dfb05323a322e7a.jpg",
+   "label": "pests",
+   "species": "Cactus",
+   "cls": "Cactus_Dactylopius_Opuntia",
+   "source": "Cactus dataset (Benali & Jdey), CC BY 4.0"
+  },
+  {
+   "file": "photos/21197ba63599cc88.jpg",
+   "label": "healthy",
+   "species": "Money",
+   "cls": "Money_Plant_Healthy",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/50dfe9b9f6e8e62b.jpg",
+   "label": "spots",
+   "species": "Money",
+   "cls": "Money_Plant_Manganese_Toxicity",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/766426858eb805ed.jpg",
+   "label": "wilting",
+   "species": "Money",
+   "cls": "Money_Plant_Bacterial_wilt_disease",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/80f11b44aa5a87e3.jpg",
+   "label": "healthy",
+   "species": "Snake",
+   "cls": "Snake_Plant_Healthy",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/b0624cab2a2ed369.jpg",
+   "label": "spots",
+   "species": "Snake",
+   "cls": "Snake_Plant_Anthracnose",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/cba50b2103ace9e2.jpg",
+   "label": "wilting",
+   "species": "Snake",
+   "cls": "Snake_Plant_Leaf_Withering",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/3d1d350e0aa337f0.jpg",
+   "label": "brown_tips",
+   "species": "Spider",
+   "cls": "Spider_Plant_Leaf_Tip_Necrosis",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/182426a5b0b5d503.jpg",
+   "label": "healthy",
+   "species": "Spider",
+   "cls": "Spider_Plant_Healthy",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/c77877005996a99b.jpg",
+   "label": "spots",
+   "species": "Spider",
+   "cls": "Spider_Plant_Fungal_leaf_spot",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/6f8b01519f3f6b05.jpg",
+   "label": "healthy",
+   "species": "other",
+   "cls": "healthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/31712e655249143b.jpg",
+   "label": "sick",
+   "species": "other",
+   "cls": "unhealthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/af86b8c020c61bca.jpg",
+   "label": "healthy",
+   "species": "Aloe",
+   "cls": "Aloe_Healthy",
+   "source": "Aloe Vera Leaf Disease Detection Dataset (Khan et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/059c075e1a3938ec.jpg",
+   "label": "scorch",
+   "species": "Aloe",
+   "cls": "Aloe_Sunburn",
+   "source": "Aloe Vera Leaf Disease Detection Dataset (Khan et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/de861e744aacb11d.jpg",
+   "label": "spots",
+   "species": "Aloe",
+   "cls": "Aloe_Rust",
+   "source": "Aloe Vera Leaf Disease Detection Dataset (Khan et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/325696b7ef12e702.jpg",
+   "label": "healthy",
+   "species": "Cactus",
+   "cls": "Cactus_Healthy",
+   "source": "Cactus dataset (Benali & Jdey), CC BY 4.0"
+  },
+  {
+   "file": "photos/e316fedfc183a392.jpg",
+   "label": "pests",
+   "species": "Cactus",
+   "cls": "Cactus_Dactylopius_Opuntia",
+   "source": "Cactus dataset (Benali & Jdey), CC BY 4.0"
+  },
+  {
+   "file": "photos/1be55b593e8bc404.jpg",
+   "label": "healthy",
+   "species": "Money",
+   "cls": "Money_Plant_Healthy",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/7603946c9207ecd6.jpg",
+   "label": "spots",
+   "species": "Money",
+   "cls": "Money_Plant_Manganese_Toxicity",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/e10480a99336e768.jpg",
+   "label": "wilting",
+   "species": "Money",
+   "cls": "Money_Plant_Bacterial_wilt_disease",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/13473e73eb0972c7.jpg",
+   "label": "healthy",
+   "species": "Snake",
+   "cls": "Snake_Plant_Healthy",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/2c2e93ab3e057532.jpg",
+   "label": "spots",
+   "species": "Snake",
+   "cls": "Snake_Plant_Anthracnose",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/f5f449c38a3af977.jpg",
+   "label": "wilting",
+   "species": "Snake",
+   "cls": "Snake_Plant_Leaf_Withering",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/debb2459d28a6b42.jpg",
+   "label": "brown_tips",
+   "species": "Spider",
+   "cls": "Spider_Plant_Leaf_Tip_Necrosis",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/fe977b5150152b3e.jpg",
+   "label": "healthy",
+   "species": "Spider",
+   "cls": "Spider_Plant_Healthy",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/0f295378d2887e6a.jpg",
+   "label": "spots",
+   "species": "Spider",
+   "cls": "Spider_Plant_Fungal_leaf_spot",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/71ddf8a19c3ea7a7.jpg",
+   "label": "healthy",
+   "species": "other",
+   "cls": "healthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/10ec8689cc0b1d91.jpg",
+   "label": "sick",
+   "species": "other",
+   "cls": "unhealthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/c4b195d7866472b8.jpg",
+   "label": "healthy",
+   "species": "Aloe",
+   "cls": "Aloe_Healthy",
+   "source": "Aloe Vera Leaf Disease Detection Dataset (Khan et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/1b390acfe9cd9de6.jpg",
+   "label": "scorch",
+   "species": "Aloe",
+   "cls": "Aloe_Sunburn",
+   "source": "Aloe Vera Leaf Disease Detection Dataset (Khan et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/d327397ff066dd2d.jpg",
+   "label": "spots",
+   "species": "Aloe",
+   "cls": "Aloe_LeafSpot",
+   "source": "Aloe Vera Leaf Disease Detection Dataset (Khan et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/6006b3e8fc8a19dd.jpg",
+   "label": "healthy",
+   "species": "Cactus",
+   "cls": "Cactus_Healthy",
+   "source": "Cactus dataset (Benali & Jdey), CC BY 4.0"
+  },
+  {
+   "file": "photos/fa062cfa8e1d8c5e.jpg",
+   "label": "pests",
+   "species": "Cactus",
+   "cls": "Cactus_Dactylopius_Opuntia",
+   "source": "Cactus dataset (Benali & Jdey), CC BY 4.0"
+  },
+  {
+   "file": "photos/b14552edb99ef1f0.jpg",
+   "label": "healthy",
+   "species": "Money",
+   "cls": "Money_Plant_Healthy",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/c7384376bde33b9d.jpg",
+   "label": "spots",
+   "species": "Money",
+   "cls": "Money_Plant_Manganese_Toxicity",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/838e471e2ab13950.jpg",
+   "label": "wilting",
+   "species": "Money",
+   "cls": "Money_Plant_Bacterial_wilt_disease",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/0540fb5f720c5875.jpg",
+   "label": "healthy",
+   "species": "Snake",
+   "cls": "Snake_Plant_Healthy",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/54a1badddbdfa2b3.jpg",
+   "label": "spots",
+   "species": "Snake",
+   "cls": "Snake_Plant_Anthracnose",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/c9737c01b8385487.jpg",
+   "label": "wilting",
+   "species": "Snake",
+   "cls": "Snake_Plant_Leaf_Withering",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/f9731f5666a9c9bd.jpg",
+   "label": "brown_tips",
+   "species": "Spider",
+   "cls": "Spider_Plant_Leaf_Tip_Necrosis",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/aa9f5f9a2f8061e3.jpg",
+   "label": "healthy",
+   "species": "Spider",
+   "cls": "Spider_Plant_Healthy",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/52d97176460c598a.jpg",
+   "label": "spots",
+   "species": "Spider",
+   "cls": "Spider_Plant_Fungal_leaf_spot",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/5becfad5523e255a.jpg",
+   "label": "healthy",
+   "species": "other",
+   "cls": "healthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/fc62e10cd48a16be.jpg",
+   "label": "sick",
+   "species": "other",
+   "cls": "unhealthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/f73232d9b2c2e91d.jpg",
+   "label": "healthy",
+   "species": "Aloe",
+   "cls": "Aloe_Healthy",
+   "source": "Aloe Vera Leaf Disease Detection Dataset (Khan et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/6e4d2756aff6aea3.jpg",
+   "label": "scorch",
+   "species": "Aloe",
+   "cls": "Aloe_Sunburn",
+   "source": "Aloe Vera Leaf Disease Detection Dataset (Khan et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/be41ff27ce15c8f8.jpg",
+   "label": "spots",
+   "species": "Aloe",
+   "cls": "Aloe_Anthracnose",
+   "source": "Aloe Vera Leaf Disease Detection Dataset (Khan et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/a0edd3d7fb01c1f7.jpg",
+   "label": "healthy",
+   "species": "Cactus",
+   "cls": "Cactus_Healthy",
+   "source": "Cactus dataset (Benali & Jdey), CC BY 4.0"
+  },
+  {
+   "file": "photos/8ab6413bae06e3a6.jpg",
+   "label": "pests",
+   "species": "Cactus",
+   "cls": "Cactus_Dactylopius_Opuntia",
+   "source": "Cactus dataset (Benali & Jdey), CC BY 4.0"
+  },
+  {
+   "file": "photos/849bc51143352dbc.jpg",
+   "label": "healthy",
+   "species": "Money",
+   "cls": "Money_Plant_Healthy",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/e9fec8dd4aaea3e3.jpg",
+   "label": "spots",
+   "species": "Money",
+   "cls": "Money_Plant_Manganese_Toxicity",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/db23a07e17313961.jpg",
+   "label": "wilting",
+   "species": "Money",
+   "cls": "Money_Plant_Bacterial_wilt_disease",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/6dc6ccfdfa5bdd0f.jpg",
+   "label": "healthy",
+   "species": "Snake",
+   "cls": "Snake_Plant_Healthy",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/d166bcecf0a75b61.jpg",
+   "label": "spots",
+   "species": "Snake",
+   "cls": "Snake_Plant_Anthracnose",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/395b80baeec71734.jpg",
+   "label": "wilting",
+   "species": "Snake",
+   "cls": "Snake_Plant_Leaf_Withering",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/be56448555b0207e.jpg",
+   "label": "brown_tips",
+   "species": "Spider",
+   "cls": "Spider_Plant_Leaf_Tip_Necrosis",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/8b474862e1802069.jpg",
+   "label": "healthy",
+   "species": "Spider",
+   "cls": "Spider_Plant_Healthy",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/f9bcf24e189147e9.jpg",
+   "label": "spots",
+   "species": "Spider",
+   "cls": "Spider_Plant_Fungal_leaf_spot",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/520dcbd2f8308672.jpg",
+   "label": "healthy",
+   "species": "other",
+   "cls": "healthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/e7ddcf5c19e54226.jpg",
+   "label": "sick",
+   "species": "other",
+   "cls": "unhealthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/4503f9065c45a078.jpg",
+   "label": "healthy",
+   "species": "Aloe",
+   "cls": "Aloe_Healthy",
+   "source": "Aloe Vera Leaf Disease Detection Dataset (Khan et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/90420c582b93bd23.jpg",
+   "label": "scorch",
+   "species": "Aloe",
+   "cls": "Aloe_Sunburn",
+   "source": "Aloe Vera Leaf Disease Detection Dataset (Khan et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/80834ee307c55e26.jpg",
+   "label": "spots",
+   "species": "Aloe",
+   "cls": "Aloe_Rust",
+   "source": "Aloe Vera Leaf Disease Detection Dataset (Khan et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/2e4019a0738b02d3.jpg",
+   "label": "healthy",
+   "species": "Cactus",
+   "cls": "Cactus_Healthy",
+   "source": "Cactus dataset (Benali & Jdey), CC BY 4.0"
+  },
+  {
+   "file": "photos/ff871aa95a222fc4.jpg",
+   "label": "pests",
+   "species": "Cactus",
+   "cls": "Cactus_Dactylopius_Opuntia",
+   "source": "Cactus dataset (Benali & Jdey), CC BY 4.0"
+  },
+  {
+   "file": "photos/f45fc52b4f8a26c7.jpg",
+   "label": "healthy",
+   "species": "Money",
+   "cls": "Money_Plant_Healthy",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/cfcb364e2cffb707.jpg",
+   "label": "spots",
+   "species": "Money",
+   "cls": "Money_Plant_Manganese_Toxicity",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/5d7b7dd0e1257ac1.jpg",
+   "label": "wilting",
+   "species": "Money",
+   "cls": "Money_Plant_Bacterial_wilt_disease",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/d790ffbe685d9ae9.jpg",
+   "label": "healthy",
+   "species": "Snake",
+   "cls": "Snake_Plant_Healthy",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/dbf129aa14de56fe.jpg",
+   "label": "spots",
+   "species": "Snake",
+   "cls": "Snake_Plant_Anthracnose",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/ae22fff7ace517ca.jpg",
+   "label": "wilting",
+   "species": "Snake",
+   "cls": "Snake_Plant_Leaf_Withering",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/82376349f3f49077.jpg",
+   "label": "brown_tips",
+   "species": "Spider",
+   "cls": "Spider_Plant_Leaf_Tip_Necrosis",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/a8c7830daf3beeda.jpg",
+   "label": "healthy",
+   "species": "Spider",
+   "cls": "Spider_Plant_Healthy",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/47155c9b3f213469.jpg",
+   "label": "spots",
+   "species": "Spider",
+   "cls": "Spider_Plant_Fungal_leaf_spot",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/ed5795fbde66fb00.jpg",
+   "label": "healthy",
+   "species": "other",
+   "cls": "healthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/304de8ffa2d1e7ed.jpg",
+   "label": "sick",
+   "species": "other",
+   "cls": "unhealthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/afdd49b1fc84a97b.jpg",
+   "label": "healthy",
+   "species": "Aloe",
+   "cls": "Aloe_Healthy",
+   "source": "Aloe Vera Leaf Disease Detection Dataset (Khan et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/60c8d82f4f18cb80.jpg",
+   "label": "scorch",
+   "species": "Aloe",
+   "cls": "Aloe_Sunburn",
+   "source": "Aloe Vera Leaf Disease Detection Dataset (Khan et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/d63df0e5ed0e2b9b.jpg",
+   "label": "spots",
+   "species": "Aloe",
+   "cls": "Aloe_LeafSpot",
+   "source": "Aloe Vera Leaf Disease Detection Dataset (Khan et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/9ca7e6bf39a42ad3.jpg",
+   "label": "healthy",
+   "species": "Cactus",
+   "cls": "Cactus_Healthy",
+   "source": "Cactus dataset (Benali & Jdey), CC BY 4.0"
+  },
+  {
+   "file": "photos/01ee7d6ef038a087.jpg",
+   "label": "pests",
+   "species": "Cactus",
+   "cls": "Cactus_Dactylopius_Opuntia",
+   "source": "Cactus dataset (Benali & Jdey), CC BY 4.0"
+  },
+  {
+   "file": "photos/7d2a14cdbe0565fe.jpg",
+   "label": "healthy",
+   "species": "Money",
+   "cls": "Money_Plant_Healthy",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/577372a15860a3a7.jpg",
+   "label": "spots",
+   "species": "Money",
+   "cls": "Money_Plant_Manganese_Toxicity",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/eb60453911c10e47.jpg",
+   "label": "wilting",
+   "species": "Money",
+   "cls": "Money_Plant_Bacterial_wilt_disease",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/eac40e149d53c7d5.jpg",
+   "label": "healthy",
+   "species": "Snake",
+   "cls": "Snake_Plant_Healthy",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/90a6a05de3766933.jpg",
+   "label": "spots",
+   "species": "Snake",
+   "cls": "Snake_Plant_Anthracnose",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/76ea34879e782fa8.jpg",
+   "label": "wilting",
+   "species": "Snake",
+   "cls": "Snake_Plant_Leaf_Withering",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/706eb56406acad2d.jpg",
+   "label": "brown_tips",
+   "species": "Spider",
+   "cls": "Spider_Plant_Leaf_Tip_Necrosis",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/5ad1ca16b125c0e3.jpg",
+   "label": "healthy",
+   "species": "Spider",
+   "cls": "Spider_Plant_Healthy",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/86dbf2f1582a397d.jpg",
+   "label": "spots",
+   "species": "Spider",
+   "cls": "Spider_Plant_Fungal_leaf_spot",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/13169ded1e641004.jpg",
+   "label": "healthy",
+   "species": "other",
+   "cls": "healthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/635b0c9c41047dff.jpg",
+   "label": "sick",
+   "species": "other",
+   "cls": "unhealthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/0827a8afd86a1a24.jpg",
+   "label": "healthy",
+   "species": "Aloe",
+   "cls": "Aloe_Healthy",
+   "source": "Aloe Vera Leaf Disease Detection Dataset (Khan et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/c8a6e689ac2a695e.jpg",
+   "label": "scorch",
+   "species": "Aloe",
+   "cls": "Aloe_Sunburn",
+   "source": "Aloe Vera Leaf Disease Detection Dataset (Khan et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/d4e16eb1f0cdfc7a.jpg",
+   "label": "spots",
+   "species": "Aloe",
+   "cls": "Aloe_Anthracnose",
+   "source": "Aloe Vera Leaf Disease Detection Dataset (Khan et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/f926cb87cd80af75.jpg",
+   "label": "healthy",
+   "species": "Cactus",
+   "cls": "Cactus_Healthy",
+   "source": "Cactus dataset (Benali & Jdey), CC BY 4.0"
+  },
+  {
+   "file": "photos/9dadffa83d2ba28a.jpg",
+   "label": "pests",
+   "species": "Cactus",
+   "cls": "Cactus_Dactylopius_Opuntia",
+   "source": "Cactus dataset (Benali & Jdey), CC BY 4.0"
+  },
+  {
+   "file": "photos/5bae098aa7030512.jpg",
+   "label": "healthy",
+   "species": "Money",
+   "cls": "Money_Plant_Healthy",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/2d35d28bc60aa3e3.jpg",
+   "label": "spots",
+   "species": "Money",
+   "cls": "Money_Plant_Manganese_Toxicity",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/ebd4aa6a151b9354.jpg",
+   "label": "wilting",
+   "species": "Money",
+   "cls": "Money_Plant_Bacterial_wilt_disease",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/ee6713424e6da1da.jpg",
+   "label": "healthy",
+   "species": "Snake",
+   "cls": "Snake_Plant_Healthy",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/c4d985acaf23ad96.jpg",
+   "label": "spots",
+   "species": "Snake",
+   "cls": "Snake_Plant_Anthracnose",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/d8eae7e0fc69dd1b.jpg",
+   "label": "wilting",
+   "species": "Snake",
+   "cls": "Snake_Plant_Leaf_Withering",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/455d8601bff35bd7.jpg",
+   "label": "brown_tips",
+   "species": "Spider",
+   "cls": "Spider_Plant_Leaf_Tip_Necrosis",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/552369dd2bf8fc1d.jpg",
+   "label": "healthy",
+   "species": "Spider",
+   "cls": "Spider_Plant_Healthy",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/77165a6f27f3dfcd.jpg",
+   "label": "spots",
+   "species": "Spider",
+   "cls": "Spider_Plant_Fungal_leaf_spot",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/2cfd5df562140720.jpg",
+   "label": "healthy",
+   "species": "other",
+   "cls": "healthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/729560a8c087fc2a.jpg",
+   "label": "sick",
+   "species": "other",
+   "cls": "unhealthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/9c6444160935986e.jpg",
+   "label": "healthy",
+   "species": "Aloe",
+   "cls": "Aloe_Healthy",
+   "source": "Aloe Vera Leaf Disease Detection Dataset (Khan et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/b061117b57589594.jpg",
+   "label": "scorch",
+   "species": "Aloe",
+   "cls": "Aloe_Sunburn",
+   "source": "Aloe Vera Leaf Disease Detection Dataset (Khan et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/96e7f152bb99e692.jpg",
+   "label": "spots",
+   "species": "Aloe",
+   "cls": "Aloe_Rust",
+   "source": "Aloe Vera Leaf Disease Detection Dataset (Khan et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/0c23f215fec53956.jpg",
+   "label": "healthy",
+   "species": "Cactus",
+   "cls": "Cactus_Healthy",
+   "source": "Cactus dataset (Benali & Jdey), CC BY 4.0"
+  },
+  {
+   "file": "photos/5f031bb7f17647d6.jpg",
+   "label": "pests",
+   "species": "Cactus",
+   "cls": "Cactus_Dactylopius_Opuntia",
+   "source": "Cactus dataset (Benali & Jdey), CC BY 4.0"
+  },
+  {
+   "file": "photos/92ab374474d2b061.jpg",
+   "label": "healthy",
+   "species": "Money",
+   "cls": "Money_Plant_Healthy",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/f80e9bcf1b2fcf7d.jpg",
+   "label": "spots",
+   "species": "Money",
+   "cls": "Money_Plant_Manganese_Toxicity",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/f60b2ae1898f7953.jpg",
+   "label": "wilting",
+   "species": "Money",
+   "cls": "Money_Plant_Bacterial_wilt_disease",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/71c4ef55fe382b63.jpg",
+   "label": "healthy",
+   "species": "Snake",
+   "cls": "Snake_Plant_Healthy",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/21c447f99f73c746.jpg",
+   "label": "spots",
+   "species": "Snake",
+   "cls": "Snake_Plant_Anthracnose",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/fc1cb9e29eec772c.jpg",
+   "label": "wilting",
+   "species": "Snake",
+   "cls": "Snake_Plant_Leaf_Withering",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/cdcf7d778a48ed89.jpg",
+   "label": "brown_tips",
+   "species": "Spider",
+   "cls": "Spider_Plant_Leaf_Tip_Necrosis",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/71ec976af1b806e9.jpg",
+   "label": "healthy",
+   "species": "Spider",
+   "cls": "Spider_Plant_Healthy",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/f01953463c9d13f7.jpg",
+   "label": "spots",
+   "species": "Spider",
+   "cls": "Spider_Plant_Fungal_leaf_spot",
+   "source": "Indoor Plant Disease Image Dataset (Mahmud Opu et al.), CC BY 4.0"
+  },
+  {
+   "file": "photos/e4aa1e0c3c5b4783.jpg",
+   "label": "healthy",
+   "species": "other",
+   "cls": "healthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/30f8aae106894270.jpg",
+   "label": "sick",
+   "species": "other",
+   "cls": "unhealthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/07efe97874234609.jpg",
+   "label": "healthy",
+   "species": "other",
+   "cls": "healthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/5aa4c7d94dea234d.jpg",
+   "label": "sick",
+   "species": "other",
+   "cls": "unhealthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/66a9324c0ea101e3.jpg",
+   "label": "healthy",
+   "species": "other",
+   "cls": "healthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/b3612cc9b1523e56.jpg",
+   "label": "sick",
+   "species": "other",
+   "cls": "unhealthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/1d845d0105d3e10f.jpg",
+   "label": "healthy",
+   "species": "other",
+   "cls": "healthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/2e057b3b8355cdca.jpg",
+   "label": "sick",
+   "species": "other",
+   "cls": "unhealthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/ba9485d40e434104.jpg",
+   "label": "healthy",
+   "species": "other",
+   "cls": "healthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/c2406fd159ab4bbc.jpg",
+   "label": "sick",
+   "species": "other",
+   "cls": "unhealthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/9f779fa14448b328.jpg",
+   "label": "healthy",
+   "species": "other",
+   "cls": "healthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/305395eeb0186ef8.jpg",
+   "label": "sick",
+   "species": "other",
+   "cls": "unhealthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/c281386f41f0526c.jpg",
+   "label": "healthy",
+   "species": "other",
+   "cls": "healthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/1796eb1db6885bb0.jpg",
+   "label": "sick",
+   "species": "other",
+   "cls": "unhealthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/0c7cce357d661349.jpg",
+   "label": "healthy",
+   "species": "other",
+   "cls": "healthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/1933d9daa04562aa.jpg",
+   "label": "sick",
+   "species": "other",
+   "cls": "unhealthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/9e4f57b92fac4690.jpg",
+   "label": "healthy",
+   "species": "other",
+   "cls": "healthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/c5aa24fcb7765d5e.jpg",
+   "label": "sick",
+   "species": "other",
+   "cls": "unhealthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/8ee51f44f3151428.jpg",
+   "label": "healthy",
+   "species": "other",
+   "cls": "healthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/4cda695e28d643c5.jpg",
+   "label": "sick",
+   "species": "other",
+   "cls": "unhealthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/b7ab7aed070d97a9.jpg",
+   "label": "healthy",
+   "species": "other",
+   "cls": "healthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/2c871801205088fd.jpg",
+   "label": "sick",
+   "species": "other",
+   "cls": "unhealthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/d9930be6c0019345.jpg",
+   "label": "healthy",
+   "species": "other",
+   "cls": "healthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/dbd46d73ae24dd30.jpg",
+   "label": "sick",
+   "species": "other",
+   "cls": "unhealthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/e93d2b7bd9acad52.jpg",
+   "label": "healthy",
+   "species": "other",
+   "cls": "healthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/46cd29c3fb684743.jpg",
+   "label": "sick",
+   "species": "other",
+   "cls": "unhealthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/cf96541724567853.jpg",
+   "label": "healthy",
+   "species": "other",
+   "cls": "healthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/d44bb2c2b80eb70a.jpg",
+   "label": "sick",
+   "species": "other",
+   "cls": "unhealthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/3a4fca6b7fe51a13.jpg",
+   "label": "healthy",
+   "species": "other",
+   "cls": "healthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/e059a0066f75bc72.jpg",
+   "label": "sick",
+   "species": "other",
+   "cls": "unhealthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/cd73b9b842deb9e2.jpg",
+   "label": "healthy",
+   "species": "other",
+   "cls": "healthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/f01d19f1b0f91b3a.jpg",
+   "label": "sick",
+   "species": "other",
+   "cls": "unhealthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/e08efdb1b768d381.jpg",
+   "label": "healthy",
+   "species": "other",
+   "cls": "healthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  },
+  {
+   "file": "photos/5f27ef27d73335d3.jpg",
+   "label": "sick",
+   "species": "other",
+   "cls": "unhealthy",
+   "source": "Indoor Plant Leaf Health Dataset (Saklani, Kaggle), CC BY-SA 4.0"
+  }
+ ]
+}

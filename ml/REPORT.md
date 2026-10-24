@@ -90,12 +90,22 @@ A small gain on unseen species, so the final model uses them.
 
 - Classifier: logistic regression on unit-length features, class-balanced, C = 30 (best of 1, 3, 10, 30 on E3a for all
   three networks; 30 is the edge of that range, so a little optimism in E3a is possible).
-- Exported model `leafkin-symptoms.onnx`: network + normalisation + classifier + softmax in one file. Its outputs match
+- Exported model `models/leafkin-symptoms.onnx`: network + normalisation + classifier + softmax in one file. Its outputs match
   the Python classifier to 0.0000002.
 - Input: RGB photo, shorter side to 224 px, centre crop 224×224, ImageNet normalisation, NCHW.
 - Licences: trained only on CC BY 4.0 data (Aloe, Cactus, Nursery sets). The CC BY-SA "indoor plant leaf health" set
   was used for testing only. Credit in the app: Aloe Vera Leaf Disease Detection Dataset (Khan et al.), Cactus dataset
   (Benali & Jdey), Indoor Plant Disease Image Dataset (Mahmud Opu et al.), combined by Abdul Ahad on Kaggle.
+
+## In the app (2.2.0)
+
+- Preprocessing changed to an exact area-average resize (PIL's BOX filter), reimplemented in `js/diagnose.js`, so the
+  browser gives the same probabilities as Python (checked on 20 photos: difference 0.000). Re-extracting the features
+  this way didn't change the conclusions.
+- The shipped model is retrained without the Lab's 160 test leaves (and their copies). On those photos: healthy vs sick
+  AUC 0.99, balanced accuracy 96%, right symptom first on known plants 93%.
+- 8-bit quantisation (3.8 MB instead of 14 MB) was tried and rejected: right symptom dropped from 94% to 86%.
+- The beta's Lab page (Settings → Lab) compares it with Pl@ntNet diseases and Kindwise on the same test photos.
 
 ## Recommended next steps
 

@@ -10,6 +10,7 @@ export const SYMPTOMS = [
   ["droop", "Drooping or wilting"],
   ["mushy", "Soft, mushy stems or base"],
   ["spots", "Brown or black spots"],
+  ["scorch", "Pale, bleached or scorched patches"],
   ["curl", "Curling leaves"],
   ["drop", "Dropping leaves"],
   ["leggy", "Long, stretched stems"],
@@ -69,6 +70,9 @@ export function assess(plant, symptoms) {
 
   if (set.has("spots")) add(c.light === "full" ? "Sunburn or leaf spot" : "Leaf spot", "Spots come from fungus, bacteria or (in strong sun) burning.",
     ["Remove the affected leaves.", "Water the soil, not the leaves, and give it some airflow."]);
+
+  if (set.has("scorch")) add("Sunburn", "Bleached or papery patches appear where strong sun hits a leaf, often after a move to a sunnier spot.",
+    [c.light === "full" ? "Even sun lovers need a week or two to get used to more sun: shade it for a while." : "Move it out of direct midday sun, or filter the light with a sheer curtain.", "Burnt patches don't recover; trim them if they bother you."]);
 
   if (set.has("curl") && !thirsty) add("Heat, sun or pests", "Leaves curl to protect themselves.",
     ["Check the leaf undersides for bugs.", "Move it out of hot, direct afternoon sun."]);

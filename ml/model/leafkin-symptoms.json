@@ -1,7 +1,7 @@
 {
  "backbone": "mobilenetv2",
  "C": 30.0,
- "trained_on": 10773,
+ "trained_on": 10003,
  "with_provided_aug": true,
  "classes": [
   "brown_tips",
@@ -11,12 +11,13 @@
   "spots",
   "wilting"
  ],
+ "lab_photos_held_out": true,
  "input": {
   "size": 224,
   "layout": "NCHW",
   "normalise": "imagenet"
  },
- "max_abs_diff_vs_python": 2.384185791015625e-07,
- "ms_per_photo_cpu": 5.1,
+ "max_abs_diff_vs_python": 1.7881393432617188e-07,
+ "ms_per_photo_cpu": 4.8,
  "mb": 14.0
 }

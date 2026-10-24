@@ -25,11 +25,11 @@ def feature_model(name):
     return m
 
 def preprocess(img, name):
-    """Shorter side to 224, centre crop 224×224 — the same steps the app will do on the phone."""
-    w, h = img.size; s = 224 / min(w, h)
-    img = img.resize((max(224, round(w * s)), max(224, round(h * s))), Image.BICUBIC)
-    w, h = img.size; l, t = (w - 224) // 2, (h - 224) // 2
-    x = np.asarray(img.crop((l, t, l + 224, t + 224)), np.float32)
+    """Centre square crop, then scale to 224×224 with PIL's BOX filter (an area average). js/diagnose.js does
+    exactly the same in the browser, so the phone sees the same numbers as these experiments."""
+    w, h = img.size; side = min(w, h); l, t = (w - side) // 2, (h - side) // 2
+    img = img.crop((l, t, l + side, t + side)).resize((224, 224), Image.BOX)
+    x = np.asarray(img, np.float32)
     x = (x / 255 - MEAN) / STD if BACKBONES[name][3] == "imagenet" else (x - 127) / 128
     return x.transpose(2, 0, 1) if BACKBONES[name][1] == "NCHW" else x
 

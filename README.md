@@ -1,6 +1,6 @@
 # LeafKin
 
-**Version 2.1.0** · see the [changelog](#changelog)
+**Version 2.2.0** · see the [changelog](#changelog)
 
 A plant care app that installs on your iPhone home screen as a Progressive Web App (PWA). No App Store, no developer certificates.
 From 2.0, plants live in a shared **household** on Supabase: everyone in it sees the same plants, on every device.
@@ -19,7 +19,7 @@ From 2.0, plants live in a shared **household** on Supabase: everyone in it sees
 - **Varieties** (cultivars such as Peace lily 'Diamond Sensation'): pick one after a scan or type it; each plant is saved as its exact type. Pl@ntNet itself only identifies species.
 - **Fills care in automatically** from a built-in library of 245 plants and 89 varieties (houseplants, succulents, orchids, herbs, balcony plants): light, direct sun hours, watering style, humidity, pet safety, watering and feeding intervals
 - Watering and feeding reminders in the app, sorted by what needs attention first, with one-tap logging and undo
-- **Health check**: take a photo, tick what you see, and get the likely causes and a few short fixes
+- **Health check**: take a close-up of a leaf and a small model on the phone says whether it looks healthy and pre-ticks likely symptoms; confirm what you see and get the likely causes and a few short fixes
 - **Growth timeline**: dated photos and heights, a height chart, and a then-and-now comparison; one photo per plant per week or month (replace the latest any time)
 - Light-aware care: the light and direct sun at the plant's spot (and a bathroom or outdoor room) adjust the watering and feeding interval
 - Compact list grouped by what's due, with search and room filters for big collections
@@ -117,6 +117,16 @@ Do this once before deploying the `v2` branch.
 
 Free plan limits: 500 MB database, 1 GB photos, 5 GB transfer a month. A project with no activity for a week is paused; restore it from the dashboard.
 
+## Photo health check and the Lab
+
+The health check runs a small image model on the phone (`js/diagnose.js`, model in `models/`, runtime in
+`js/vendor/ort/`); it loads the first time it's used (about 25 MB) and is then cached for offline use. How it was
+built and tested: `ml/PLAN.md` and `ml/REPORT.md`. When `models/` changes, bump `ML_VERSION` in `sw.js`.
+
+The beta has a **Lab** (Settings → Lab) that runs the same 160 labelled test photos (`lab/`, never used for training)
+through the own model, Pl@ntNet's disease API and Kindwise's plant.health API, and shows a score table plus a CSV.
+Kindwise needs a key from admin.kindwise.com (100 free credits), entered in the Lab and stored on that device only.
+
 ## Daily reminders (push notifications)
 
 The app subscribes each phone that turns reminders on (Settings → Reminders) and stores it with the chosen hour. The Edge Function `supabase/functions/send-reminders` runs every hour, finds the devices whose hour it is, works out which plants are due (same rules as the app, including winter care and "still damp") and sends one notification. Nothing due, nothing sent.
@@ -144,6 +154,7 @@ node tests/check-version.mjs             # README, app and service worker show t
 
 On `beta` the top entry can be ahead of `live` until it's merged. Each version merged into `live` gets a GitHub release with the same tag (e.g. `v2.1.0`).
 
+- **2.2.0**: photo health check on the phone (own model, suggests symptoms to confirm), sunburn symptom; beta-only Lab to compare it with Pl@ntNet and Kindwise
 - **2.1.0**: privacy policy in the app, consent when creating an account, guest privacy note; fonts served with the app (nothing loaded from Google)
 - **2.0.0**: accounts with email codes, shared households, sync and offline queue, guest mode, daily push reminders, household activity, delete account, beta site
 - **1.5.1**: last version without accounts (plants stored on the phone only)

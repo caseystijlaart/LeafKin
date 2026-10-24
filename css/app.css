@@ -296,3 +296,16 @@ body.gated .scrim { z-index: 40; } /* the privacy policy opens on top of the sta
 .policy p, .policy ul { margin: 0; }
 .policy ul { padding-left: 18px; display: flex; flex-direction: column; gap: 6px; }
 .policy a { color: var(--leaf); }
+.ai-note { border-radius: 12px; padding: 10px 12px; background: var(--surface); border: 1px solid var(--line); font-size: .92rem; display: flex; flex-direction: column; gap: 6px; }
+.ai-note.off { background: var(--wash-food); border-color: transparent; }
+.ai-note.ok { background: var(--wash-ok); border-color: transparent; }
+.ai-note details summary { cursor: pointer; }
+.chipbtn[data-ai="1"]::after { content: " ✦"; }
+.spin { display: inline-block; width: 12px; height: 12px; border: 2px solid var(--line); border-top-color: var(--leaf); border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -1px; margin-right: 4px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.tablewrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -4px; }
+.labtable { border-collapse: collapse; width: 100%; font-size: .88rem; }
+.labtable th, .labtable td { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.labtable th { font-size: .8rem; color: var(--muted); }
+.labtable.small { font-size: .8rem; }
+.labtable img { border-radius: 6px; object-fit: cover; }

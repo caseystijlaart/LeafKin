@@ -5,10 +5,11 @@ import * as plantnet from "./plantnet.js";
 import * as push from "./push.js";
 import { privacyHtml, PRIVACY_VERSION } from "./privacy.js";
 import { SYMPTOMS, assess, STATUS_LABEL } from "./health.js";
+import * as photoCheck from "./diagnose.js";
 import { ROOMS, adjustForConditions, fitText } from "./conditions.js";
 import { waterDue, feedDue, urgency, waterInterval, feedInterval, winterActive, winterModeOn, setWinterMode, snoozeDate, repotDue, photoDue, lastPhotoAt, isWinter as inWinter, PHOTO_PERIODS, photoPeriod, setPhotoPeriod, blockingPhoto, nextPhotoDate } from "./schedule.js";
 
-const APP_VERSION = "2.1.0";
+const APP_VERSION = "2.2.0";
 const $ = (s, root = document) => root.querySelector(s);
 const state = { plants: [] };
 const isWinter = () => inWinter();
@@ -628,7 +629,9 @@ function openHealth(id) {
     <div class="sheet-head"><h2>Check ${esc(p.name)}</h2><button class="x" id="hBack" aria-label="Back">×</button></div>
     <input type="file" id="hIn" accept="image/*" hidden>
     <button class="btn" id="hCam">${camSvg} Take a photo</button>
+    <p class="hint" id="hTip">For the photo check, take a close-up of one leaf that fills the frame.</p>
     <img class="preview" id="hPrev" alt="Photo of ${esc(p.name)}" hidden>
+    <div class="ai-note" id="hAi" hidden></div>
     <label class="check" id="hKeepRow" hidden><input type="checkbox" id="hKeep" ${blk ? "" : "checked"}> ${blk ? `Replace the timeline photo from ${fmtDate(blk.at)} (one per ${periodWord()})` : "Add photo to the growth timeline"}</label>
     <h3>What do you see?</h3>
     <div class="chipset" role="group" aria-label="Symptoms">${SYMPTOMS.map(([k, label]) => `<button type="button" class="chipbtn" aria-pressed="false" data-k="${k}">${esc(label)}</button>`).join("")}</div>
@@ -643,10 +646,41 @@ function openHealth(id) {
     prev.src = URL.createObjectURL(file); prev.hidden = false;
     s.querySelector("#hKeepRow").hidden = false;
     s.querySelector("#hCam").lastChild.textContent = " Change photo";
+    runPhotoCheck(file);
   };
+  // The on-device model suggests symptoms; they're pre-ticked and the person stays in charge.
+  const aiBox = s.querySelector("#hAi");
+  let aiTicked = new Set();
+  const label = (k) => SYMPTOMS.find(([x]) => x === k)?.[1] || k;
+  async function runPhotoCheck(photo) {
+    aiBox.hidden = false; aiBox.className = "ai-note";
+    aiBox.innerHTML = `<span class="spin"></span> Looking at the photo…<span class="hint" id="hAiSlow"></span>`;
+    const slow = setTimeout(() => { const el = aiBox.querySelector("#hAiSlow"); if (el) el.textContent = " The first time, the photo check downloads (about 25 MB); after that it works offline."; }, 1500);
+    try {
+      const r = await photoCheck.diagnose(photo);
+      if (!isOpen("health")) return;
+      // Undo earlier suggestions from a previous photo, unless the person changed them.
+      aiTicked.forEach((k) => { const b = s.querySelector(`.chipbtn[data-k="${k}"]`); if (b?.dataset.ai === "1") { b.setAttribute("aria-pressed", "false"); picked.delete(k); delete b.dataset.ai; } });
+      aiTicked = new Set();
+      const sugg = r.verdict === "off" ? r.suggestions : [];
+      sugg.forEach(({ symptom }) => {
+        const b = s.querySelector(`.chipbtn[data-k="${symptom}"]`);
+        if (b && b.getAttribute("aria-pressed") !== "true") { b.setAttribute("aria-pressed", "true"); b.dataset.ai = "1"; picked.add(symptom); aiTicked.add(symptom); }
+      });
+      aiBox.className = "ai-note " + (r.verdict === "off" ? "off" : "ok");
+      aiBox.innerHTML = r.verdict === "off"
+        ? `<div><b>Photo check: something seems off</b> (${Math.round(r.sick * 100)}% sure).${sugg.length ? ` Suggested: ${sugg.map((x) => esc(label(x.symptom).toLowerCase())).join(" and ")}, ticked below. Change them if they don't match.` : " Tick what you see below."}</div>`
+        : `<div><b>Photo check: the leaf looks healthy</b> (${Math.round((1 - r.sick) * 100)}% sure). Still tick anything you notice.</div>`;
+      aiBox.insertAdjacentHTML("beforeend", `<details class="hint"><summary>About the photo check</summary>It runs on your phone; the photo isn't sent anywhere. It's trained on leaf close-ups of aloe, cactus, money plant, snake plant and spider plant, so on other plants treat its symptom suggestions as a hint. ${esc(photoCheck.CREDITS)}</details>`);
+    } catch {
+      aiBox.className = "ai-note"; aiBox.innerHTML = navigator.onLine === false
+        ? "The photo check needs a connection the first time (it downloads once). Tick what you see below."
+        : "The photo check didn't work this time. Tick what you see below.";
+    } finally { clearTimeout(slow); }
+  }
   s.querySelectorAll(".chipbtn").forEach((b) => (b.onclick = () => {
     const on = b.getAttribute("aria-pressed") !== "true";
-    b.setAttribute("aria-pressed", String(on));
+    b.setAttribute("aria-pressed", String(on)); delete b.dataset.ai;
     on ? picked.add(b.dataset.k) : picked.delete(b.dataset.k);
   }));
   s.querySelector("#hGo").onclick = async (e) => {
@@ -911,6 +945,17 @@ async function saveFile(filename, blob) {
   return true;
 }
 
+/* ---------- Lab (beta only): compare photo health checks ---------- */
+async function openLab() {
+  const s = sheet("lab", `<p class="muted">Opening the Lab…</p>`);
+  try {
+    const { renderLab } = await import("./lab.js");
+    if (!isOpen("lab")) return;
+    renderLab(s, { closeBack: openSettings });
+    s.querySelector("[data-close]").onclick = closeSheet;
+  } catch { s.innerHTML = `<p>The Lab couldn't be loaded. Are you online?</p><button class="btn" data-close>Close</button>`; s.querySelector("[data-close]").onclick = closeSheet; }
+}
+
 /* ---------- privacy policy ---------- */
 // Opens on top of everything, including the start screen. `back` reopens what was open before.
 function openPrivacy(back) {
@@ -1124,6 +1169,11 @@ async function openSettings() {
       <input type="file" id="impIn" accept="application/json,.json" hidden>
       <p class="hint" id="bMsg">${mb ? `Using about ${mb} MB.` : ""}</p>
     </div>
+    ${BETA ? `<div class="card">
+      <h3>Lab <span class="pill food">Beta only</span></h3>
+      <p>Compare the photo check with Pl@ntNet and Kindwise on the same test photos.</p>
+      <button class="btn" id="labBtn">Open the Lab</button>
+    </div>` : ""}
     <div class="card">
       <h3>Privacy</h3>
       <p>${db.isGuest() ? "As a guest, nothing is stored on LeafKin's servers: your plants stay on this phone only." : "LeafKin only stores what it needs to share your plants with your household. No ads, no tracking."} Scanned photos go to Pl@ntNet for identification.</p>
@@ -1142,6 +1192,7 @@ async function openSettings() {
   s.querySelector("#winterOn").onchange = (e) => { setWinterMode(e.target.checked); render(); push.syncWinter(); };
   if (hh && push.configured()) renderPushCard(s.querySelector("#pushCard"));
   s.querySelector("#privBtn").onclick = () => openPrivacy(openSettings);
+  s.querySelector("#labBtn")?.addEventListener("click", openLab);
   s.querySelector("#splashOn").onchange = (e) => { try { localStorage.setItem("leafkin.splash", e.target.checked ? "on" : "off"); } catch {} };
   s.querySelector("#badgeBtn")?.addEventListener("click", async (e) => {
     const r = await Notification.requestPermission().catch(() => "denied");
