@@ -1,0 +1,22 @@
+{
+ "backbone": "mobilenetv2",
+ "C": 30.0,
+ "trained_on": 10773,
+ "with_provided_aug": true,
+ "classes": [
+  "brown_tips",
+  "healthy",
+  "pests",
+  "scorch",
+  "spots",
+  "wilting"
+ ],
+ "input": {
+  "size": 224,
+  "layout": "NCHW",
+  "normalise": "imagenet"
+ },
+ "max_abs_diff_vs_python": 2.384185791015625e-07,
+ "ms_per_photo_cpu": 5.1,
+ "mb": 14.0
+}

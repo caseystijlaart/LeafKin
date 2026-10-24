@@ -20,6 +20,9 @@ Options compared (October 2026):
 | Groq / Cloudflare Workers AI (Llama vision) | free daily limits | general model, decent | Meta's licence excludes EU-based users for the multimodal Llama models; US servers |
 | Own model in the browser | free | as good as the training data | photo never leaves the phone |
 
+First results (own model, MobileNetV2, 14 MB): tells healthy from sick well, also on unseen plants; the exact
+symptom only on the five species it was trained on. Details: [ml/REPORT.md](ml/REPORT.md).
+
 Plan:
 1. Try Pl@ntNet diseases first: no cost, no new provider, a few lines of code. Check how many houseplant problems it knows.
 2. Build an own on-device model that recognises *symptoms* (yellowing, brown tips, spots, wilting, webbing/pests, mildew,
