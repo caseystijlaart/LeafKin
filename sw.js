@@ -33,6 +33,7 @@ const SHELL = [
   "./js/cloud.js",
   "./js/push.js",
   "./js/privacy.js",
+  "./js/credits.js",
   "./js/diagnose.js",
   "./js/leaf-colour.js",
   "./js/vendor/supabase.js",

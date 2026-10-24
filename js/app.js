@@ -4,6 +4,7 @@ import { PLANTS, SPECIES, CULTIVARS, LIGHT, SUN, SUN_SHORT, WATER, HUMIDITY, PET
 import * as plantnet from "./plantnet.js";
 import * as push from "./push.js";
 import { privacyHtml, PRIVACY_VERSION } from "./privacy.js";
+import { creditsHtml } from "./credits.js";
 import { SYMPTOMS, EXTENT, WHERE, assess, STATUS_LABEL } from "./health.js";
 import * as photoCheck from "./diagnose.js";
 import { naturalLeafColour } from "./leaf-colour.js";
@@ -718,7 +719,7 @@ function openHealth(id) {
         ? `<div><b>Photo check: something seems off</b> (${Math.round(r.sick * 100)}% sure).${sugg.length ? ` Suggested: ${sugg.map((x) => esc(label(x.symptom).toLowerCase())).join(" and ")}, ticked below. Change them if they don't match.` : " Tick what you see below."} Then say how much of the plant looks like this: one old leaf is usually just ageing.</div>`
         : `<div><b>Photo check: the leaf looks healthy</b> (${Math.round((1 - r.sick) * 100)}% sure). Still tick anything you notice.</div>`;
       if (colourful) aiBox.insertAdjacentHTML("beforeend", `<div class="hint">This plant naturally has ${esc(colourful)} leaves, so the photo check is extra careful${r.maybe?.length ? `. If it's not the leaf's normal look, consider: ${r.maybe.map((x) => esc(label(x.symptom).toLowerCase())).join(", ")}` : ""}.</div>`);
-      aiBox.insertAdjacentHTML("beforeend", `<details class="hint"><summary>About the photo check</summary>It runs on your phone; the photo isn't sent anywhere. It's trained on leaf close-ups of aloe, cactus, money plant, snake plant and spider plant, plus real-world photos of garden and crop plants, so on other plants treat its symptom suggestions as a hint.${BETA ? ` Beta: model ${choice === "AB" ? "A+B" : choice} (change in Settings → Lab).` : ""} ${esc(photoCheck.CREDITS)}</details>`);
+      aiBox.insertAdjacentHTML("beforeend", `<details class="hint"><summary>About the photo check</summary>It runs on your phone; the photo isn't sent anywhere. It's trained on leaf close-ups of aloe, cactus, money plant, snake plant and spider plant, plus real-world photos of garden and crop plants, so on other plants treat its symptom suggestions as a hint.${BETA ? ` Beta: model ${choice === "AB" ? "A+B" : choice} (change in Settings → Lab).` : ""} The training photos and software are credited in Settings → Credits &amp; licences.</details>`);
   }
   s.querySelectorAll(".chipbtn[data-k]").forEach((b) => (b.onclick = () => {
     const on = b.getAttribute("aria-pressed") !== "true";
@@ -1022,6 +1023,20 @@ function openPrivacy(back) {
   s.querySelector("[data-close]").onclick = done;
 }
 
+/* ---------- credits ---------- */
+function openCredits(back) {
+  const s = sheet("credits", `
+    <div class="sheet-head"><h2>Credits &amp; licences</h2><button class="x" data-close aria-label="Close">×</button></div>
+    <div class="policy">
+      <p>LeafKin is built on work that others shared openly. Thank you.</p>
+      ${creditsHtml(esc)}
+    </div>
+    <button class="btn" id="credClose">${back ? "Back" : "Close"}</button>`);
+  const done = () => { closeSheet(); back?.(); };
+  s.querySelector("#credClose").onclick = done;
+  s.querySelector("[data-close]").onclick = done;
+}
+
 /* ---------- backup ---------- */
 async function saveBackup() {
   await saveFile(`leafkin-backup-${new Date().toISOString().slice(0, 10)}.json`, await db.exportBackup());
@@ -1234,6 +1249,7 @@ async function openSettings() {
       <h3>Privacy</h3>
       <p>${db.isGuest() ? "As a guest, nothing is stored on LeafKin's servers: your plants stay on this phone only." : "LeafKin only stores what it needs to share your plants with your household. No ads, no tracking."} Scanned photos go to Pl@ntNet for identification.</p>
       <button class="btn" id="privBtn">Read the privacy policy</button>
+      <button class="btn" id="credBtn">Credits &amp; licences</button>
     </div>
     <p class="hint">LeafKin ${APP_VERSION} · ${SPECIES.length} plants and ${CULTIVARS.length} varieties in the care library</p>`);
   s.querySelector("#pnSave").onclick = () => {
@@ -1248,6 +1264,7 @@ async function openSettings() {
   s.querySelector("#winterOn").onchange = (e) => { setWinterMode(e.target.checked); render(); push.syncWinter(); };
   if (hh && push.configured()) renderPushCard(s.querySelector("#pushCard"));
   s.querySelector("#privBtn").onclick = () => openPrivacy(openSettings);
+  s.querySelector("#credBtn").onclick = () => openCredits(openSettings);
   s.querySelector("#labBtn")?.addEventListener("click", openLab);
   s.querySelector("#photoModel")?.addEventListener("change", (e) => { try { localStorage.setItem("leafkin.photoModel", e.target.value); } catch {} toast("Photo check model changed"); });
   s.querySelector("#splashOn").onchange = (e) => { try { localStorage.setItem("leafkin.splash", e.target.checked ? "on" : "off"); } catch {} };

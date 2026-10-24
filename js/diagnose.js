@@ -161,5 +161,4 @@ export async function diagnose(photo) {
   return { ...main, variants: { A, B }, guard, ms };
 }
 
-export const CREDITS = "Trained on the Aloe Vera Leaf Disease Detection Dataset (Khan et al.), the Cactus dataset (Benali & Jdey), " +
-  "the Indoor Plant Disease Image Dataset (Mahmud Opu et al.) and PlantDoc (Singh et al.), all CC BY 4.0. Runs with ONNX Runtime Web (MIT).";
+// Credits for the training data and libraries: js/credits.js (Settings → Credits & licences).

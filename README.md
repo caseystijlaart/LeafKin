@@ -166,3 +166,8 @@ On `beta` the top entry can be ahead of `live` until it's merged. Each version m
 ## Roadmap
 
 Planned and possible features, starting with AI health diagnosis from a photo: see [ROADMAP.md](ROADMAP.md).
+
+## Credits and licences
+
+Training data (Aloe, Cactus, Indoor Plant Disease, PlantDoc: all CC BY 4.0), MobileNetV2, ONNX Runtime Web,
+Pl@ntNet, supabase-js and the fonts: see [CREDITS.md](CREDITS.md). In the app: Settings → Credits & licences.

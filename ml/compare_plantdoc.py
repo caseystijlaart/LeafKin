@@ -48,39 +48,40 @@ def score(P, labels, symptoms=None):
         out["symptom_f1"] = float(f1_score(symptoms, top, labels=sorted(set(symptoms)), average="macro", zero_division=0))
     return out
 
-res = {}
-# T1: the Lab photos; both models retrained without those leaves
-not_pack = lambda ids: [i for i in ids if G.get(i) not in pack_groups]
-A1, B1 = fit(not_pack(house)), fit(not_pack(house) + not_pack(pd_train))
-pid = [x["id"] for x in pack]
-lab_labels = [x["label"] if x["label"] in SYMPTOMS else "sick" for x in pack]
-known = [i for i, x in enumerate(pack) if x["species"] != "other"]
-for name, m in [("A", A1), ("B", B1)]:
-    P = probs(m, pid)
-    r = score(P, [x["label"] if x["label"] != "sick" else "sick" for x in pack])
-    r["known_symptom_top1"] = float(np.mean([SYMPTOMS[P[i].argmax()] == pack[i]["label"] for i in known]))
-    res[f"T1_lab|{name}"] = r
-# T2 + T3: trained on everything that isn't a test photo
-A, B = fit(house), fit(house + pd_train)
-for name, m in [("A", A), ("B", B)]:
-    res[f"T2_plantdoc_test|{name}"] = score(probs(m, pd_test), [symptom(R[i]["cls"]) for i in pd_test], [symptom(R[i]["cls"]) for i in pd_test])
-    other = [r["id"] for r in rows if r["source"] == "binary"]
-    res[f"T3_other_plants|{name}"] = score(probs(m, other), ["healthy" if R[i]["cls"] == "healthy" else "sick" for i in other])
-# T4: leave one houseplant species out
-for name, extra in [("A", []), ("B", pd_train)]:
-    per = {}
-    for sp in ["Aloe", "Cactus", "Money", "Snake", "Spider"]:
-        tr = [i for i in house if R[i]["species"] != sp] + extra
-        te = [i for i in house if R[i]["species"] == sp and R[i]["kind"] == "orig"]
-        per[sp] = score(probs(fit(tr), te), [symptom(R[i]["cls"]) for i in te], [symptom(R[i]["cls"]) for i in te])
-    res[f"T4_unseen_houseplant|{name}"] = dict(per_species=per, **{k: float(np.mean([p[k] for p in per.values() if p.get(k) is not None]))
-                                                for k in ["auc", "balanced", "false_alarm", "miss", "symptom_f1", "symptom_top1_sick"]})
-json.dump(res, open(f"{DATA}/compare_plantdoc.json", "w"), indent=1)
-f = lambda v: "–" if v is None else f"{v:.2f}"
-for t in ["T1_lab", "T2_plantdoc_test", "T3_other_plants", "T4_unseen_houseplant"]:
+if __name__ == "__main__":
+    res = {}
+    # T1: the Lab photos; both models retrained without those leaves
+    not_pack = lambda ids: [i for i in ids if G.get(i) not in pack_groups]
+    A1, B1 = fit(not_pack(house)), fit(not_pack(house) + not_pack(pd_train))
+    pid = [x["id"] for x in pack]
+    lab_labels = [x["label"] if x["label"] in SYMPTOMS else "sick" for x in pack]
+    known = [i for i, x in enumerate(pack) if x["species"] != "other"]
+    for name, m in [("A", A1), ("B", B1)]:
+        P = probs(m, pid)
+        r = score(P, [x["label"] if x["label"] != "sick" else "sick" for x in pack])
+        r["known_symptom_top1"] = float(np.mean([SYMPTOMS[P[i].argmax()] == pack[i]["label"] for i in known]))
+        res[f"T1_lab|{name}"] = r
+    # T2 + T3: trained on everything that isn't a test photo
+    A, B = fit(house), fit(house + pd_train)
+    for name, m in [("A", A), ("B", B)]:
+        res[f"T2_plantdoc_test|{name}"] = score(probs(m, pd_test), [symptom(R[i]["cls"]) for i in pd_test], [symptom(R[i]["cls"]) for i in pd_test])
+        other = [r["id"] for r in rows if r["source"] == "binary"]
+        res[f"T3_other_plants|{name}"] = score(probs(m, other), ["healthy" if R[i]["cls"] == "healthy" else "sick" for i in other])
+    # T4: leave one houseplant species out
+    for name, extra in [("A", []), ("B", pd_train)]:
+        per = {}
+        for sp in ["Aloe", "Cactus", "Money", "Snake", "Spider"]:
+            tr = [i for i in house if R[i]["species"] != sp] + extra
+            te = [i for i in house if R[i]["species"] == sp and R[i]["kind"] == "orig"]
+            per[sp] = score(probs(fit(tr), te), [symptom(R[i]["cls"]) for i in te], [symptom(R[i]["cls"]) for i in te])
+        res[f"T4_unseen_houseplant|{name}"] = dict(per_species=per, **{k: float(np.mean([p[k] for p in per.values() if p.get(k) is not None]))
+                                                    for k in ["auc", "balanced", "false_alarm", "miss", "symptom_f1", "symptom_top1_sick"]})
+    json.dump(res, open(f"{DATA}/compare_plantdoc.json", "w"), indent=1)
+    f = lambda v: "–" if v is None else f"{v:.2f}"
+    for t in ["T1_lab", "T2_plantdoc_test", "T3_other_plants", "T4_unseen_houseplant"]:
+        for n in "AB":
+            r = res[f"{t}|{n}"]
+            print(f"{t:22} {n}  AUC {f(r.get('auc'))}  balanced {f(r.get('balanced'))}  false alarms {f(r.get('false_alarm'))}  misses {f(r.get('miss'))}"
+                  f"  symptom top1 {f(r.get('symptom_top1_sick', r.get('known_symptom_top1')))}  symptom F1 {f(r.get('symptom_f1'))}")
     for n in "AB":
-        r = res[f"{t}|{n}"]
-        print(f"{t:22} {n}  AUC {f(r.get('auc'))}  balanced {f(r.get('balanced'))}  false alarms {f(r.get('false_alarm'))}  misses {f(r.get('miss'))}"
-              f"  symptom top1 {f(r.get('symptom_top1_sick', r.get('known_symptom_top1')))}  symptom F1 {f(r.get('symptom_f1'))}")
-for n in "AB":
-    print("T4", n, {sp: f(v["auc"]) for sp, v in res[f"T4_unseen_houseplant|{n}"]["per_species"].items()})
+        print("T4", n, {sp: f(v["auc"]) for sp, v in res[f"T4_unseen_houseplant|{n}"]["per_species"].items()})
