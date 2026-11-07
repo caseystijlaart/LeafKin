@@ -7,7 +7,7 @@ const COLOURFUL = {
   // aroids
   "Epipremnum aureum": "streaked", "Scindapsus pictus": "silver-spotted", "Scindapsus treubii": "silver-marked",
   "Philodendron erubescens": "red-tinted", "Philodendron melanochrysum": "dark, veined", "Philodendron micans": "bronze",
-  "Philodendron birkin": "striped", "Syngonium podophyllum": "variegated or pink", "Aglaonema": "patterned or red",
+  "Philodendron birkin": "striped", "Philodendron 'Ring of Fire'": "marbled", "Syngonium podophyllum": "variegated or pink", "Aglaonema": "patterned or red",
   "Dieffenbachia": "variegated", "Anthurium clarinervium": "white-veined", "Alocasia amazonica": "dark, white-veined",
   "Alocasia zebrina": "patterned", "Caladium": "coloured", "Monstera standleyana": "variegated",
   // prayer plants
@@ -43,5 +43,5 @@ export function naturalLeafColour(plant) {
   if (lib?.variegated) return "variegated";
   if (PLAIN.has(sci)) return "";
   const base = lib?.base || sci.replace(/\s*'.*$/, "");
-  return COLOURFUL[base] || COLOURFUL[base.split(" ")[0]] || "";
+  return COLOURFUL[sci] || COLOURFUL[base] || COLOURFUL[base.split(" ")[0]] || "";
 }

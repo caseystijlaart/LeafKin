@@ -3,7 +3,7 @@
 export const CREDITS = [
   {
     title: "Photo health check: training data",
-    note: "The model is trained on these photo collections (the photos themselves aren't in the app). Changes: photos resized, labels grouped into symptoms.",
+    note: "The model is trained on these photo collections. The example photos under \"What to look out for\" (10 photos) come from the Indoor Plant Disease and Aloe Vera sets. Changes: photos resized, labels grouped into symptoms.",
     items: [
       { name: "Aloe Vera Leaf Disease Detection Dataset", by: "Khan, Reza, Mojumdar et al.", where: "Mendeley Data", url: "https://doi.org/10.17632/7w6t4zx33n.1", licence: "CC BY 4.0" },
       { name: "Cactus dataset", by: "Benali & Jdey", where: "Mendeley Data", url: "https://doi.org/10.17632/jgt7ghdmg5.1", licence: "CC BY 4.0" },

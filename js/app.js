@@ -8,6 +8,7 @@ import { creditsHtml } from "./credits.js";
 import { SYMPTOMS, EXTENT, WHERE, assess, STATUS_LABEL } from "./health.js";
 import * as photoCheck from "./diagnose.js";
 import { naturalLeafColour } from "./leaf-colour.js";
+import { EXAMPLES, exampleUrl } from "./symptom-examples.js";
 import { ROOMS, adjustForConditions, fitText } from "./conditions.js";
 import { waterDue, feedDue, urgency, waterInterval, feedInterval, winterActive, winterModeOn, setWinterMode, snoozeDate, repotDue, photoDue, lastPhotoAt, isWinter as inWinter, PHOTO_PERIODS, photoPeriod, setPhotoPeriod, blockingPhoto, nextPhotoDate } from "./schedule.js";
 
@@ -718,8 +719,30 @@ function openHealth(id) {
       aiBox.innerHTML = r.verdict === "off"
         ? `<div><b>Photo check: something seems off</b> (${Math.round(r.sick * 100)}% sure).${sugg.length ? ` Suggested: ${sugg.map((x) => esc(label(x.symptom).toLowerCase())).join(" and ")}, ticked below. Change them if they don't match.` : " Tick what you see below."} Then say how much of the plant looks like this: one old leaf is usually just ageing.</div>`
         : `<div><b>Photo check: the leaf looks healthy</b> (${Math.round((1 - r.sick) * 100)}% sure). Still tick anything you notice.</div>`;
-      if (colourful) aiBox.insertAdjacentHTML("beforeend", `<div class="hint">This plant naturally has ${esc(colourful)} leaves, so the photo check is extra careful${r.maybe?.length ? `. If it's not the leaf's normal look, consider: ${r.maybe.map((x) => esc(label(x.symptom).toLowerCase())).join(", ")}` : ""}.</div>`);
+      if (colourful) aiBox.insertAdjacentHTML("beforeend", `<div class="hint">This plant naturally has ${esc(colourful)} leaves, so the photo check is extra careful: spots and pale patches are only ticked for you if it's very sure.</div>`);
+      aiBox.insertAdjacentHTML("beforeend", lookOutFor(raw, colourful));
+      aiBox.querySelectorAll("[data-see]").forEach((b) => (b.onclick = () => {
+        const chip = s.querySelector(`.chipbtn[data-k="${b.dataset.see}"]`);
+        if (chip && chip.getAttribute("aria-pressed") !== "true") chip.click();
+        else if (chip) delete chip.dataset.ai;   // already ticked by the photo check: now confirmed by the person
+        b.textContent = "Ticked below ✓";
+      }));
+      aiBox.querySelectorAll(".lf-imgs img").forEach((im) => (im.onclick = () => im.classList.toggle("big")));
       aiBox.insertAdjacentHTML("beforeend", `<details class="hint"><summary>About the photo check</summary>It runs on your phone; the photo isn't sent anywhere. It's trained on leaf close-ups of aloe, cactus, money plant, snake plant and spider plant, plus real-world photos of garden and crop plants, so on other plants treat its symptom suggestions as a hint.${BETA ? ` Beta: model ${choice === "AB" ? "A+B" : choice} (change in Settings → Lab).` : ""} The training photos and software are credited in Settings → Credits &amp; licences.</details>`);
+  }
+  // The three problems the photo is closest to, with example photos, so the person knows what to look for.
+  function lookOutFor(r, colourful) {
+    const top = Object.entries(r.probs).filter(([c]) => photoCheck.TO_SYMPTOM[c] && EXAMPLES[photoCheck.TO_SYMPTOM[c]])
+      .map(([c, v]) => ({ k: photoCheck.TO_SYMPTOM[c], p: v })).sort((a, b) => b.p - a.p).slice(0, 3);
+    const COLOUR = ["spots", "scorch", "yellow_all"];
+    return `<div class="lookfor"><h4>What to look out for</h4>
+      <p class="hint">The three problems this photo is closest to. Compare your leaf with the examples; tap a photo to enlarge it.</p>
+      ${top.map(({ k, p: v }) => { const ex = EXAMPLES[k]; return `<div class="lf">
+        ${ex.photos.length ? `<div class="lf-imgs">${ex.photos.map(([f, alt]) => `<img src="${exampleUrl(f)}" alt="${esc(alt)}" title="${esc(alt)}" loading="lazy">`).join("")}</div>` : ""}
+        <div class="lf-text"><b>${esc(label(k))}</b> <span class="pct">${Math.max(1, Math.round(v * 100))}%</span>
+          <p>${esc(ex.look)}${colourful && COLOUR.includes(k) ? ` On this plant, only count marks that look different from its normal ${esc(colourful)} pattern.` : ""}</p>
+          <button type="button" class="linkbtn" data-see="${k}">I see this on my plant</button></div></div>`; }).join("")}
+    </div>`;
   }
   s.querySelectorAll(".chipbtn[data-k]").forEach((b) => (b.onclick = () => {
     const on = b.getAttribute("aria-pressed") !== "true";

@@ -311,3 +311,15 @@ body.gated .scrim { z-index: 40; } /* the privacy policy opens on top of the sta
 .labtable img { border-radius: 6px; object-fit: cover; }
 .scope { display: flex; flex-direction: column; gap: 8px; }
 .scope h3 { margin-top: 6px; }
+
+/* Photo check: "What to look out for" with example photos */
+.lookfor { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+.lookfor h4 { margin: 0; font-size: 1rem; }
+.lookfor .hint { margin: 0; }
+.lf { display: flex; flex-direction: column; gap: 8px; padding-top: 10px; border-top: 1px solid color-mix(in srgb, currentColor 15%, transparent); }
+.lf-imgs { display: flex; gap: 6px; flex-wrap: wrap; }
+.lf-imgs img { width: 72px; height: 72px; object-fit: cover; border-radius: 8px; cursor: zoom-in; background: #fff; }
+.lf-imgs img.big { width: 100%; max-width: 320px; height: auto; object-fit: contain; cursor: zoom-out; }
+.lf-text { min-width: 0; }
+.lf-text p { margin: 4px 0; font-size: .92rem; }
+.lf .pct { font-family: "JetBrains Mono", monospace; font-size: .85rem; opacity: .8; }

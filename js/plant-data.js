@@ -23,6 +23,7 @@ export const PLANT_ROWS = [
   ["Philodendron melanochrysum", "Black gold philodendron", "Philodendron melanochrysum", "bright", "0-2", "moist", 6, 21, "high", "toxic", "Climber; humid air gives bigger leaves."],
   ["Philodendron micans", "Velvet heartleaf", "Philodendron micans", "half", "0-2", "topdry", 7, 28, "normal", "toxic", "Same care as heartleaf philodendron."],
   ["Philodendron xanadu", "Philodendron xanadu", "Philodendron xanadu", "bright", "0-2", "topdry", 7, 28, "normal", "toxic", "Compact and bushy; no pole needed."],
+  ["Philodendron 'Ring of Fire'", "Philodendron Ring of Fire", "Philodendron Ring of Fire", "bright", "0-2", "topdry", 7, 21, "normal", "toxic", "Variegated hybrid: bright, indirect light keeps the cream and orange marbling."],
   ["Philodendron birkin", "Philodendron birkin", "Philodendron birkin", "bright", "0-2", "topdry", 7, 28, "normal", "toxic", "White stripes fade in low light."],
   ["Thaumatophyllum bipinnatifidum", "Philodendron selloum", "Philodendron selloum", "bright", "0-2", "topdry", 7, 21, "normal", "toxic", "Needs space; rotate for even growth."],
   ["Syngonium podophyllum", "Arrowhead plant", "Syngonium", "half", "0-2", "topdry", 7, 21, "normal", "toxic", "Pinch tips to keep it compact."],

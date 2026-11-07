@@ -5,7 +5,8 @@ LeafKin uses the following work by others. The same list is shown in the app und
 
 ## Photo health check: training data
 
-The model in `models/` is trained on these collections. The photos themselves are not part of the app.
+The model in `models/` is trained on these collections. The 10 example photos in `img/symptoms/` ("What to look out for"
+under the photo check) come from the Indoor Plant Disease Image Dataset and the Aloe Vera Leaf Disease Detection Dataset.
 Changes made: photos resized (longest side 320 px), disease labels grouped into symptoms (see `ml/REPORT.md`).
 
 | Dataset | Authors | Source | Licence |
