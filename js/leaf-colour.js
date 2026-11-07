@@ -29,6 +29,9 @@ const COLOURFUL = {
   "Senecio serpens": "blue-grey",
 };
 
+// Varieties with plain green leaves of a species that is listed above as coloured.
+const PLAIN = new Set(["Philodendron erubescens 'Green Princess'", "Epipremnum pinnatum 'Cebu Blue'", "Epipremnum pinnatum 'Baltic Blue'"]);
+
 // Returns a short description ("patterned", "silver-spotted", …) or "" for plain green leaves.
 // A setting on the plant (care.leafColour: "yes" | "no") overrides the library.
 export function naturalLeafColour(plant) {
@@ -38,6 +41,7 @@ export function naturalLeafColour(plant) {
   const sci = plant?.sci || "";
   const lib = PLANTS.find((x) => x.sci === sci);
   if (lib?.variegated) return "variegated";
+  if (PLAIN.has(sci)) return "";
   const base = lib?.base || sci.replace(/\s*'.*$/, "");
   return COLOURFUL[base] || COLOURFUL[base.split(" ")[0]] || "";
 }
