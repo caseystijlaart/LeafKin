@@ -35,6 +35,8 @@ const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[\u0
 // Autocomplete: best matches for what the user typed, in English, Dutch or Latin, in any word order.
 // Every typed word must be the start of some word in the plant's names, so
 // "spathiphyllum diamond", "peace lily dia" and "diamond" all find 'Diamond Sensation'.
+const VARIEGATED_WORDS = ["variegated", "variegata", "variegate", "variegation", "bont", "bonte", "panaché"].map(norm);
+
 export function searchPlants(q, limit = 10) {
   const n = norm(q);
   if (n.length < 2) return [];
@@ -42,7 +44,8 @@ export function searchPlants(q, limit = 10) {
   const scored = [];
   for (const p of PLANTS) {
     const names = [p.en, p.nl, p.sci, p.cultivar].filter(Boolean).map(norm);
-    const words = new Set(names.join(" ").split(" "));
+    // Variegated cultivars also match the words people use for them ("marble variegated", "bonte pothos").
+    const words = new Set([...names.join(" ").split(" "), ...(p.variegated ? VARIEGATED_WORDS : [])]);
     let score = -1;
     if (names.some((name) => name.startsWith(n))) score = 3;
     else if (tokens.every((t) => [...words].some((w) => w.startsWith(t)))) score = 2;
