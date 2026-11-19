@@ -37,8 +37,8 @@ function line(stack, text, opts = {}) {
   const t = stack.addText(text);
   t.font = opts.font || Font.systemFont(13);
   t.textColor = opts.color || TEXT;
-  t.lineLimit = 1;
-  t.minimumScaleFactor = 0.8;
+  t.lineLimit = opts.lines || 1;
+  t.minimumScaleFactor = 0.75;
   return t;
 }
 
@@ -63,9 +63,20 @@ function build(data, family) {
 
   const small = family === "small";
   const today = data.today || [], soon = data.soon || [];
+  if (small && !today.length) {
+    line(w, "✓", { font: Font.boldSystemFont(30), color: LEAF });
+    line(w, "Nothing to do today", { font: Font.semiboldSystemFont(13), color: LEAF, lines: 2 });
+    if (soon.length) {
+      w.addSpacer(4);
+      line(w, soon[0].name, { font: Font.systemFont(12) });
+      line(w, when(soon[0]), { font: Font.systemFont(11), color: MUTED });
+    }
+    w.addSpacer();
+    return w;
+  }
   if (small) {
     line(w, String(today.length), { font: Font.boldSystemFont(34), color: today.length ? GREEN : MUTED });
-    line(w, today.length === 1 ? "plant needs care today" : "plants need care today", { font: Font.systemFont(12), color: MUTED });
+    line(w, today.length === 1 ? "plant needs care today" : "plants need care today", { font: Font.systemFont(12), color: MUTED, lines: 2 });
     w.addSpacer(4);
     for (const x of today.slice(0, 2)) line(w, `${what(x)} ${x.name}`, { font: Font.systemFont(12) });
     if (today.length > 2) line(w, `+${today.length - 2} more`, { font: Font.systemFont(11), color: MUTED });
