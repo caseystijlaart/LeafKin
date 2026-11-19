@@ -1,6 +1,6 @@
 // Checks the reminder rules of the send-reminders Edge Function (pure parts only; no network).
 // Usage: node tests/functions/test-reminders.mjs   (Node 22.18+ runs the TypeScript file directly)
-import { duePlants, reminderMessage, localDate, localHour, nameList } from "../../supabase/functions/send-reminders/index.ts";
+import { duePlants, reminderMessage, localDate, localHour, nameList, widgetPlan } from "../../supabase/functions/send-reminders/index.ts";
 
 let pass = 0, fail = 0;
 const ok = (c, m) => { c ? pass++ : fail++; console.log(`${c ? "✓" : "✗"} ${m}`); };
@@ -39,6 +39,19 @@ const m = reminderMessage({ water: ["Fern", "Basil"], feed: ["Pothos"] });
 ok(m.title === "2 plants to water today" && m.body === "Fern and Basil. Feed: Pothos." && m.count === 3, `message: "${m.title}" / "${m.body}"`);
 ok(reminderMessage({ water: [], feed: ["Pothos"] }).title === "1 plant to feed today", "food-only message");
 ok(reminderMessage({ water: [], feed: [] }) === null, "nothing due → no notification");
+
+// Widget: today vs the next 3 days, agreeing with the reminders
+const w = widgetPlan([
+  P("Fern", { last_watered: "2026-06-08T19:00:00Z" }),       // due today
+  P("Cactus", { last_watered: "2026-06-10T09:00:00Z" }),     // in 2 days
+  P("Basil", {}),                                           // never watered → today
+  P("Lily", { last_watered: "2026-06-01T09:00:00Z", snooze_until: "2026-06-17T00:00:00Z" }), // snoozed → in 2 days
+  P("Yucca", { water_every: 21, last_watered: "2026-06-14T09:00:00Z" }),                     // in 20 days → not shown
+  P("Pothos", { water_every: 0, feed_every: 14, last_fed: "2026-05-30T10:00:00Z" }),         // feed today
+], june, tz, true);
+ok(w.today.map((x) => x.name).join() === "Basil,Fern,Pothos", "widget: today = same plants as the reminder");
+ok(w.soon.map((x) => `${x.name}:${x.water}`).join() === "Cactus:2,Lily:2" && w.plants === 6, "widget: coming days, with snooze, far-off plants left out");
+ok(w.today.find((x) => x.name === "Pothos").feed === 0 && w.today.find((x) => x.name === "Pothos").water === null, "widget: food due shown separately from water");
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

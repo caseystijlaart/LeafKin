@@ -1137,6 +1137,63 @@ function openActivity() {
 }
 
 /* ---------- reminders card in Settings ---------- */
+// Home screen widget via the free Scriptable app: iOS only allows real widgets from native apps.
+// The script gets a personal secret; the reminder function answers it with the plants that need care.
+async function renderWidgetCard(card, script = "") {
+  if (!card) return;
+  const head = `<h3>Home screen widget</h3>`;
+  const steps = `<ol class="steps">
+      <li>Install <a href="https://apps.apple.com/app/scriptable/id1405459188" target="_blank" rel="noopener">Scriptable</a> from the App Store (free).</li>
+      <li>In Scriptable, tap <b>+</b>, paste the script and name it <b>LeafKin</b>.</li>
+      <li>On your Home Screen: hold an empty spot → <b>Edit</b> → <b>Add Widget</b> → Scriptable → pick a size.</li>
+      <li>Tap the new widget, choose Script → <b>LeafKin</b>.</li>
+    </ol>`;
+  if (script) {
+    card.innerHTML = head + `<p>Your widget script is ready. Copy it now: it holds a personal link that LeafKin doesn't show again.</p>
+      <textarea class="code" id="wScript" readonly rows="5">${esc(script)}</textarea>
+      <button class="btn primary" id="wCopy">Copy widget script</button>${steps}
+      <p class="hint">Anyone with this script can see which of your plants need care, nothing else. Making a new one or turning it off stops the old one.</p>
+      <button class="btn" id="wDone">Done</button>`;
+    card.querySelector("#wCopy").onclick = async (e) => {
+      try { await navigator.clipboard.writeText(script); e.target.textContent = "Copied ✓"; }
+      catch { const t = card.querySelector("#wScript"); t.focus(); t.select(); e.target.textContent = "Select all and copy"; }
+    };
+    card.querySelector("#wDone").onclick = () => renderWidgetCard(card);
+    return;
+  }
+  let link = null;
+  try { link = await db.hasWidgetLink(); }
+  catch (er) { card.innerHTML = head + `<p class="muted">Not available right now. Are you online?</p>` + dev(`(${er?.message || er}) Has the widget migration been run?`); return; }
+  const make = async (e) => {
+    e.target.disabled = true;
+    try {
+      const [token, text] = await Promise.all([
+        db.makeWidgetLink(Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Amsterdam", winterModeOn()),
+        fetch(new URL("../widget/leafkin-widget.js", import.meta.url)).then((r) => { if (!r.ok) throw new Error("script " + r.status); return r.text(); }),
+      ]);
+      renderWidgetCard(card, text.replace("%%FUNCTION_URL%%", db.widgetFunctionUrl()).replace("%%WIDGET_TOKEN%%", token)
+        .replace("%%APP_URL%%", location.origin + location.pathname.replace(/[^/]*$/, "")));
+    } catch (er) {
+      e.target.disabled = false;
+      card.querySelector("#wMsg").textContent = "Couldn't make the widget script. Are you online?" + dev(`(${er?.message || er})`);
+    }
+  };
+  if (link) {
+    card.innerHTML = head + `<p>Your widget is set up${link.last_used_at ? `; it last updated ${esc(fmtDateTime(link.last_used_at))}` : ", but hasn't loaded yet"}.</p>
+      <div class="btnrow"><button class="btn grow" id="wNew">New widget script</button><button class="btn grow" id="wOff">Turn off</button></div>
+      <p class="hint" id="wMsg">A new script replaces the old one: update it in Scriptable too.</p>`;
+    card.querySelector("#wNew").onclick = make;
+    card.querySelector("#wOff").onclick = async () => {
+      try { await db.removeWidgetLink(); toast("Widget turned off"); renderWidgetCard(card); }
+      catch { card.querySelector("#wMsg").textContent = "Couldn't turn it off. Are you online?"; }
+    };
+    return;
+  }
+  card.innerHTML = head + `<p>See which plants need water or food today, right on your Home Screen. iPhone only allows widgets from App Store apps, so this uses the free Scriptable app.</p>
+    <button class="btn primary" id="wMake">Make widget script</button><p class="hint" id="wMsg"></p>`;
+  card.querySelector("#wMake").onclick = make;
+}
+
 async function renderPushCard(card) {
   if (!card) return;
   const hourSelect = (h) => `<select id="pushHour">${Array.from({ length: 17 }, (_, i) => i + 6).map((x) => `<option value="${x}" ${x === h ? "selected" : ""}>${String(x).padStart(2, "0")}:00</option>`).join("")}</select>`;
@@ -1218,7 +1275,8 @@ async function openSettings() {
         : "This deletes your account, the household and all its plants and photos for good. Save a backup first if you want to keep them."}</span>
         <button class="btn danger" id="delYes">Delete for good</button><button class="btn" id="delNo">Cancel</button></div>
     </div>
-    ${push.configured() ? `<div class="card" id="pushCard"><h3>Reminders</h3><p class="muted">Checking…</p></div>` : ""}` : ""}
+    ${push.configured() ? `<div class="card" id="pushCard"><h3>Reminders</h3><p class="muted">Checking…</p></div>` : ""}
+    <div class="card" id="widgetCard"><h3>Home screen widget</h3><p class="muted">Checking…</p></div>` : ""}
     ${db.isGuest() ? `<div class="card">
       <h3>Guest mode</h3>
       <p>Your plants are only saved on this phone and can be lost. Create an account to keep them safe and share them; your plants come along.</p>
@@ -1284,8 +1342,9 @@ async function openSettings() {
   s.querySelector("#photoPeriod").onchange = (e) => setPhotoPeriod(e.target.value);
   if (hh) wireAccountSettings(s, owner);
   s.querySelector("#guestAcct")?.addEventListener("click", () => { closeSheet(); gateWelcome(); });
-  s.querySelector("#winterOn").onchange = (e) => { setWinterMode(e.target.checked); render(); push.syncWinter(); };
+  s.querySelector("#winterOn").onchange = (e) => { setWinterMode(e.target.checked); render(); push.syncWinter(); if (hh) db.updateWidgetLink({ winter: e.target.checked }).catch(() => {}); };
   if (hh && push.configured()) renderPushCard(s.querySelector("#pushCard"));
+  if (hh) renderWidgetCard(s.querySelector("#widgetCard"));
   s.querySelector("#privBtn").onclick = () => openPrivacy(openSettings);
   s.querySelector("#credBtn").onclick = () => openCredits(openSettings);
   s.querySelector("#labBtn")?.addEventListener("click", openLab);

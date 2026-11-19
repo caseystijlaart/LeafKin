@@ -73,6 +73,24 @@ export async function sendTestPush() {
   throw new Error(detail);
 }
 
+// ---- home screen widget (Scriptable) ----
+// A random secret goes into the widget script; only its SHA-256 hash is stored (table widget_tokens).
+export const functionUrl = (name) => `${BASE_URL}/functions/v1/${name}`;
+export async function hasWidgetLink(userId) {
+  const { data, error } = await sb.from("widget_tokens").select("created_at, last_used_at").eq("user_id", userId).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+export async function makeWidgetLink(userId, tz, winter) {
+  const bytes = crypto.getRandomValues(new Uint8Array(32));
+  const token = btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  const hash = [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(token)))].map((b) => b.toString(16).padStart(2, "0")).join("");
+  check(await sb.from("widget_tokens").upsert({ user_id: userId, token_hash: hash, tz, winter, created_at: new Date().toISOString(), last_used_at: null }, { onConflict: "user_id" }));
+  return token;
+}
+export const updateWidgetLink = async (userId, fields) => check(await sb.from("widget_tokens").update(fields).eq("user_id", userId));
+export const removeWidgetLink = async (userId) => check(await sb.from("widget_tokens").delete().eq("user_id", userId));
+
 export const setDisplayName = async (userId, name) => check(await sb.from("profiles").update({ display_name: name }).eq("id", userId));
 
 // ---- data ----

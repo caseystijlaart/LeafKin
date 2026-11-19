@@ -10,6 +10,7 @@ From 2.0, plants live in a shared **household** on Supabase: everyone in it sees
 - **Households**: sign in with a 6-digit email code, create a household or join one with an invite code; everyone sees the same plants, photos and care log, with who did what ("Watered · Bob")
 - **Start screen**: create an account, sign in, or continue as a guest (plants stay on the phone only; guests get a monthly backup reminder and can move their plants into an account later)
 - **Daily reminders**: a push notification at a time you pick, on days when plants need water or food (iPhone: LeafKin on the Home Screen, iOS 16.4+)
+- **Home screen widget**: plants that need care today and in the next days, via the free Scriptable app (iOS only allows real widgets from App Store apps)
 - **Household activity**: what housemates did recently on the main screen, the full log in Settings
 - **Privacy**: a privacy policy in the app (`js/privacy.js`), accepted with a checkbox when creating an account (the accepted version and time are saved on the account); guests are told nothing leaves their phone. Fonts are served with the app, so it loads nothing from Google or other third parties
 - **Delete account** in Settings
@@ -142,6 +143,17 @@ One-time setup:
 5. **Schedule**: **Integrations → Cron → Create job**: name `send-reminders`, schedule `0 * * * *` (every hour), type **Supabase Edge Function**, function `send-reminders`, method POST. (Enable the Cron integration first if asked.)
 6. In LeafKin (on the Home Screen): Settings → Reminders → **Turn on reminders**, then **Send a test**.
 
+## Home screen widget (Scriptable)
+
+iOS only allows widgets from native apps, so LeafKin's widget runs in [Scriptable](https://scriptable.app) (free).
+Settings → **Home screen widget** → **Make widget script** creates a random secret, stores only its SHA-256 hash
+(table `widget_tokens`) and fills it into `widget/leafkin-widget.js`. The script calls `send-reminders` with header
+`x-widget-token`; the function answers with that person's household plants due today and in the next 3 days (same rules
+as the reminders), nothing else. A new script or **Turn off** stops the old one; deleting the account removes it.
+
+Setup (once): run `supabase/migrations/20261120120000_widget.sql` in the SQL Editor, and update the `send-reminders`
+function with the current `index.ts` (Edge Functions → send-reminders → Code → paste → Deploy).
+
 ## Tests
 
 ```sh
@@ -158,7 +170,7 @@ node tests/health/test-leaf-colour.mjs   # which plants naturally have coloured 
 
 On `beta` the top entry can be ahead of `live` until it's merged. Each version merged into `live` gets a GitHub release with the same tag (e.g. `v2.1.0`).
 
-- **2.2.0**: photo health check on the phone (own model trained on houseplant sets and PlantDoc, suggests symptoms to confirm: spots, brown tips, wilting, sunburn, mildew, yellowing), with a leaf check first and a "how much of the plant?" question (one or two old leaves = normal ageing), and extra care for plants with naturally coloured, patterned or spotted leaves (`js/leaf-colour.js`, or set per plant); beta-only Lab to compare it with Pl@ntNet
+- **2.2.0**: home screen widget via Scriptable (Settings → Home screen widget); "What to look out for" under the photo check (top 3 problems with example photos); credits page; more varieties in the library; photo health check on the phone (own model trained on houseplant sets and PlantDoc, suggests symptoms to confirm: spots, brown tips, wilting, sunburn, mildew, yellowing), with a leaf check first and a "how much of the plant?" question (one or two old leaves = normal ageing), and extra care for plants with naturally coloured, patterned or spotted leaves (`js/leaf-colour.js`, or set per plant); beta-only Lab to compare it with Pl@ntNet
 - **2.1.0**: privacy policy in the app, consent when creating an account, guest privacy note; fonts served with the app (nothing loaded from Google)
 - **2.0.0**: accounts with email codes, shared households, sync and offline queue, guest mode, daily push reminders, household activity, delete account, beta site
 - **1.5.1**: last version without accounts (plants stored on the phone only)

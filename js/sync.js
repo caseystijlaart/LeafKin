@@ -344,6 +344,12 @@ export const savePushDevice = (row) => cloud.savePushDevice(row);
 export const updatePushDevice = (endpoint, fields) => cloud.updatePushDevice(endpoint, fields);
 export const deletePushDevice = (endpoint) => cloud.deletePushDevice(endpoint);
 export const sendTestPush = () => cloud.sendTestPush();
+// Home screen widget link (Settings → Home screen widget).
+export const hasWidgetLink = () => cloud.hasWidgetLink(st.user.id);
+export const makeWidgetLink = (tz, winter) => cloud.makeWidgetLink(st.user.id, tz, winter);
+export const removeWidgetLink = () => cloud.removeWidgetLink(st.user.id);
+export const updateWidgetLink = (fields) => cloud.updateWidgetLink(st.user.id, fields);
+export const widgetFunctionUrl = () => cloud.functionUrl("send-reminders");
 export async function removeMember(id) { await cloud.removeMember(id); st.members = await cloud.members(st.household.id); emit("members"); }
 export async function renameHousehold(name) {
   await cloud.renameHousehold(st.household.id, name);

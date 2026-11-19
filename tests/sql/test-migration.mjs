@@ -110,5 +110,19 @@ ok((await as("eve", "select * from plants")).rows.length === 1, "eve keeps the p
 await as("eve", "select delete_account()");
 ok((await db.query("select count(*)::int n from households where id = $1", [hFlat])).rows[0].n === 0, "the last account deleted takes the household with it");
 
+// Widget links: each person sees and changes only their own; signed-out visitors nothing
+const H = (c) => c.repeat(64);
+await as("ann", "insert into widget_tokens (token_hash, tz) values ($1, 'Europe/Amsterdam')", [H("a")]);
+await as("bob", "insert into widget_tokens (token_hash) values ($1)", [H("b")]);
+ok((await as("ann", "select * from widget_tokens")).rows.length === 1, "ann only sees her own widget link");
+await fails("ann", "insert into widget_tokens (user_id, token_hash) values ($1, $2)", [ids.bob, H("c")], "ann can't make a widget link for bob");
+await as("ann", "update widget_tokens set winter = false where user_id = $1", [ids.bob]);
+ok((await db.query("select winter from widget_tokens where user_id = $1", [ids.bob])).rows[0].winter === true, "ann can't change bob's widget link");
+await fails("ann", "insert into widget_tokens (token_hash) values ('not-a-hash')", [], "only a SHA-256 hash can be stored", "");
+await as("bob", "select delete_account()");
+ok((await db.query("select count(*)::int n from widget_tokens where token_hash = $1", [H("b")])).rows[0].n === 0, "a deleted account takes its widget link with it");
+try { await db.exec("set role anon;"); await db.query("select * from widget_tokens"); ok(false, "signed-out visitors can't read widget links"); }
+catch (e) { ok(true, `signed-out visitors can't read widget links → ${e.message}`); } finally { await db.exec("reset role;"); }
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

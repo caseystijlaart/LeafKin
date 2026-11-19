@@ -2,6 +2,8 @@
 // Runs every hour (Supabase Cron). Each device gets one push per day, at the hour picked in the app,
 // listing the household's plants that need water or food today. Nothing due → nothing sent.
 // POST { "test": true } with a signed-in user's token sends a test notification to that person's devices.
+// GET with header "x-widget-token" (a widget link made in Settings) returns the household's plants that need
+// care soon, for the home screen widget (Scriptable, see widget/leafkin-widget.js).
 //
 // Secrets (Edge Functions → Secrets): VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT (mailto:you@example.com).
 // SUPABASE_URL and the server key are provided by Supabase automatically.
@@ -40,6 +42,25 @@ export function duePlants(plants: Plant[], now: Date, tz: string, winterSetting:
     if (F && (!p.last_fed || F - daysSince(p.last_fed) <= 0)) feed.push(p.name);
   }
   return { water, feed };
+}
+
+// For the widget: every plant with the days until it needs water / food (0 = today or overdue, null = never).
+export function widgetPlan(plants: Plant[], now: Date, tz: string, winterSetting: boolean, horizon = 3) {
+  const today = localDate(now, tz);
+  const winter = winterSetting && isWinter(today);
+  const daysSince = (iso: string) => dayNumber(today) - dayNumber(localDate(new Date(iso), tz));
+  const items = plants.map((p) => {
+    const W = p.water_every ? (winter ? Math.round(p.water_every * 1.5) : p.water_every) : 0;
+    let water: number | null = W ? (p.last_watered ? Math.max(0, W - daysSince(p.last_watered)) : 0) : null;
+    if (water !== null && p.snooze_until) water = Math.max(water, dayNumber(localDate(new Date(p.snooze_until), tz)) - dayNumber(today));
+    const F = winter ? 0 : p.feed_every || 0;
+    const feed: number | null = F ? (p.last_fed ? Math.max(0, F - daysSince(p.last_fed)) : 0) : null;
+    return { name: p.name, water, feed };
+  });
+  const soonest = (x: { water: number | null; feed: number | null }) => Math.min(x.water ?? Infinity, x.feed ?? Infinity);
+  const today_ = items.filter((x) => soonest(x) === 0).sort((a, b) => a.name.localeCompare(b.name));
+  const soon = items.filter((x) => soonest(x) > 0 && soonest(x) <= horizon).sort((a, b) => soonest(a) - soonest(b) || a.name.localeCompare(b.name));
+  return { date: today, today: today_, soon, plants: plants.length };
 }
 
 export function nameList(names: string[], max = 4): string {
@@ -81,8 +102,8 @@ if (typeof Deno !== "undefined") {
 
   const cors = {
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-widget-token",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   };
   const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
 
@@ -100,6 +121,22 @@ if (typeof Deno !== "undefined") {
 
   Deno.serve(async (req: Request) => {
     if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+
+    // Home screen widget: the link's secret is hashed and looked up; only that person's household is read.
+    const widgetToken = req.headers.get("x-widget-token");
+    if (widgetToken) {
+      const hash = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(widgetToken.trim()))))
+        .map((b) => b.toString(16).padStart(2, "0")).join("");
+      const { data: link } = await sb.from("widget_tokens").select("user_id, tz, winter").eq("token_hash", hash).maybeSingle();
+      if (!link) return json({ error: "unknown_widget_link" }, 401);
+      const { data: m } = await sb.from("household_members").select("household_id").eq("user_id", link.user_id).maybeSingle();
+      const { data: plants } = m
+        ? await sb.from("plants").select("name, water_every, feed_every, last_watered, last_fed, snooze_until").eq("household_id", m.household_id)
+        : { data: [] };
+      await sb.from("widget_tokens").update({ last_used_at: new Date().toISOString() }).eq("user_id", link.user_id);
+      return json(widgetPlan(plants || [], new Date(), link.tz, link.winter));
+    }
+
     if (setupError) return json({ error: setupError }, 500);
     let body: any = {};
     try { body = await req.json(); } catch { /* cron sends an empty body */ }
