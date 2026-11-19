@@ -63,23 +63,23 @@ function build(data, family) {
 
   const small = family === "small";
   const today = data.today || [], soon = data.soon || [];
-  if (small && !today.length) {
-    line(w, "✓", { font: Font.boldSystemFont(30), color: LEAF });
-    line(w, "Nothing to do today", { font: Font.semiboldSystemFont(13), color: LEAF, lines: 2 });
-    if (soon.length) {
-      w.addSpacer(4);
+  if (small) {
+    // A big number (or ✓) with its label beside it, then the plants.
+    const top = w.addStack(); top.centerAlignContent();
+    line(top, today.length ? String(today.length) : "✓", { font: Font.boldSystemFont(today.length ? 36 : 28), color: LEAF });
+    top.addSpacer(8);
+    const label = top.addStack(); label.layoutVertically();
+    const words = today.length ? [today.length === 1 ? "plant needs" : "plants need", "care today"] : ["Nothing to do", "today"];
+    for (const x of words) line(label, x, { font: Font.semiboldSystemFont(12), color: today.length ? MUTED : LEAF });
+    w.addSpacer(6);
+    if (today.length) {
+      for (const x of today.slice(0, 2)) line(w, `${what(x)} ${x.name}`, { font: Font.systemFont(12) });
+      if (today.length > 2) line(w, `+${today.length - 2} more`, { font: Font.systemFont(11), color: MUTED });
+    } else if (soon.length) {
+      line(w, "Next up", { font: Font.semiboldSystemFont(11), color: MUTED });
       line(w, soon[0].name, { font: Font.systemFont(12) });
       line(w, when(soon[0]), { font: Font.systemFont(11), color: MUTED });
     }
-    w.addSpacer();
-    return w;
-  }
-  if (small) {
-    line(w, String(today.length), { font: Font.boldSystemFont(34), color: today.length ? GREEN : MUTED });
-    line(w, today.length === 1 ? "plant needs care today" : "plants need care today", { font: Font.systemFont(12), color: MUTED, lines: 2 });
-    w.addSpacer(4);
-    for (const x of today.slice(0, 2)) line(w, `${what(x)} ${x.name}`, { font: Font.systemFont(12) });
-    if (today.length > 2) line(w, `+${today.length - 2} more`, { font: Font.systemFont(11), color: MUTED });
     w.addSpacer();
     return w;
   }
