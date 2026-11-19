@@ -72,8 +72,8 @@ function build(data, family) {
     const words = today.length ? [today.length === 1 ? "plant needs" : "plants need", "care today"] : ["Nothing to do", "today"];
     for (const x of words) line(label, x, { font: Font.semiboldSystemFont(12), color: today.length ? MUTED : LEAF });
     w.addSpacer(6);
-    // Room for about 4 short lines below the top row.
-    const ROWS = 4;
+    // Room for about 5 short lines below the top row.
+    const ROWS = 5;
     if (today.length) {
       const shown = today.length <= ROWS ? today : today.slice(0, ROWS - 1);
       for (const x of shown) line(w, `${what(x)} ${x.name}`, { font: Font.systemFont(12) });
@@ -95,7 +95,7 @@ function build(data, family) {
     return w;
   }
 
-  const max = family === "large" ? 12 : 4;
+  const max = family === "large" ? 12 : 6;
   if (today.length) {
     line(w, "Today", { font: Font.semiboldSystemFont(12), color: MUTED });
     for (const x of today.slice(0, max)) line(w, `${what(x)}  ${x.name}`);
