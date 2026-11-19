@@ -1169,7 +1169,8 @@ async function renderWidgetCard(card, script = "") {
     try {
       const [token, text] = await Promise.all([
         db.makeWidgetLink(Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Amsterdam", winterModeOn()),
-        fetch(new URL("../widget/leafkin-widget.js", import.meta.url)).then((r) => { if (!r.ok) throw new Error("script " + r.status); return r.text(); }),
+        fetch(new URL("../widget/leafkin-widget.js", import.meta.url), { cache: "no-store" })   // GitHub Pages lets browsers keep files for 10 minutes
+       .then((r) => { if (!r.ok) throw new Error("script " + r.status); return r.text(); }),
       ]);
       renderWidgetCard(card, text.replace("%%FUNCTION_URL%%", db.widgetFunctionUrl()).replace("%%WIDGET_TOKEN%%", token)
         .replace("%%APP_URL%%", location.origin + location.pathname.replace(/[^/]*$/, "")));
