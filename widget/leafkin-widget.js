@@ -72,13 +72,24 @@ function build(data, family) {
     const words = today.length ? [today.length === 1 ? "plant needs" : "plants need", "care today"] : ["Nothing to do", "today"];
     for (const x of words) line(label, x, { font: Font.semiboldSystemFont(12), color: today.length ? MUTED : LEAF });
     w.addSpacer(6);
+    // Room for about 4 short lines below the top row.
+    const ROWS = 4;
     if (today.length) {
-      for (const x of today.slice(0, 2)) line(w, `${what(x)} ${x.name}`, { font: Font.systemFont(12) });
-      if (today.length > 2) line(w, `+${today.length - 2} more`, { font: Font.systemFont(11), color: MUTED });
+      const shown = today.length <= ROWS ? today : today.slice(0, ROWS - 1);
+      for (const x of shown) line(w, `${what(x)} ${x.name}`, { font: Font.systemFont(12) });
+      if (today.length > shown.length) line(w, `+${today.length - shown.length} more`, { font: Font.systemFont(11), color: MUTED });
     } else if (soon.length) {
-      line(w, "Next up", { font: Font.semiboldSystemFont(11), color: MUTED });
-      line(w, soon[0].name, { font: Font.systemFont(12) });
-      line(w, when(soon[0]), { font: Font.systemFont(11), color: MUTED });
+      // Grouped by day ("In 3 days" + names), as many as fit.
+      let rows = ROWS, i = 0;
+      while (i < soon.length && rows >= 2) {
+        const day = when(soon[i]);
+        line(w, day[0].toUpperCase() + day.slice(1), { font: Font.semiboldSystemFont(11), color: MUTED }); rows--;
+        while (i < soon.length && when(soon[i]) === day && rows > 0) {
+          const left = soon.length - i;
+          if (rows === 1 && left > 1) { line(w, `+${left} more`, { font: Font.systemFont(11), color: MUTED }); rows = 0; i = soon.length; break; }
+          line(w, soon[i].name, { font: Font.systemFont(12) }); rows--; i++;
+        }
+      }
     }
     w.addSpacer();
     return w;
