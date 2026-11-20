@@ -1146,7 +1146,9 @@ async function renderWidgetCard(card, script = "") {
       <li>Install <a href="https://apps.apple.com/app/scriptable/id1405459188" target="_blank" rel="noopener">Scriptable</a> from the App Store (free).</li>
       <li>In Scriptable, tap <b>+</b>, paste the script and name it <b>LeafKin</b>.</li>
       <li>On your Home Screen: hold an empty spot → <b>Edit</b> → <b>Add Widget</b> → Scriptable → pick a size.</li>
-      <li>Tap the new widget, choose Script → <b>LeafKin</b>.</li>
+      <li>Tap the new widget, choose Script → <b>LeafKin</b> and When Interacting → <b>Run Script</b>.</li>
+    </ol>
+    <p class="hint">Tapping the widget reloads it in Scriptable. It can't open LeafKin itself: iPhone only lets you open a Home Screen web app from its own icon.</p><ol class="steps" hidden>
     </ol>`;
   if (script) {
     card.innerHTML = head + `<p>Your widget script is ready. Copy it now: it holds a personal link that LeafKin doesn't show again.</p>
@@ -1172,8 +1174,7 @@ async function renderWidgetCard(card, script = "") {
         fetch(new URL("../widget/leafkin-widget.js", import.meta.url), { cache: "no-store" })   // GitHub Pages lets browsers keep files for 10 minutes
        .then((r) => { if (!r.ok) throw new Error("script " + r.status); return r.text(); }),
       ]);
-      renderWidgetCard(card, text.replace("%%FUNCTION_URL%%", db.widgetFunctionUrl()).replace("%%WIDGET_TOKEN%%", token)
-        .replace("%%APP_URL%%", location.origin + location.pathname.replace(/[^/]*$/, "")));
+      renderWidgetCard(card, text.replace("%%FUNCTION_URL%%", db.widgetFunctionUrl()).replace("%%WIDGET_TOKEN%%", token));
     } catch (er) {
       e.target.disabled = false;
       card.querySelector("#wMsg").textContent = "Couldn't make the widget script. Are you online?" + dev(`(${er?.message || er})`);

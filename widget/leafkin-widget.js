@@ -1,11 +1,12 @@
 // LeafKin home screen widget for Scriptable (free iOS app: https://scriptable.app).
 // The app fills in the three settings below: Settings → Home screen widget → Copy widget script.
-// Shows which plants need water or food today and in the next few days. Tap it to open LeafKin.
+// Shows which plants need water or food today and in the next few days.
+// Tapping it can't open LeafKin: iOS doesn't let other apps open a Home Screen web app (only Safari, which has a
+// separate, signed-out LeafKin). So a tap opens Scriptable, which reloads the plants and shows a preview.
 // Works for small and medium widgets; keeps the last answer for when the phone is offline.
 
 const FUNCTION_URL = "%%FUNCTION_URL%%";   // the LeafKin reminder service
 const WIDGET_TOKEN = "%%WIDGET_TOKEN%%";   // your personal widget link: keep it to yourself
-const APP_URL = "%%APP_URL%%";             // opened when you tap the widget
 
 const GREEN = new Color("#2f5d3a"), LEAF = new Color("#7fb98a");
 const BG = Color.dynamic(new Color("#f4f1e8"), new Color("#15201a"));
@@ -45,7 +46,6 @@ function line(stack, text, opts = {}) {
 function build(data, family) {
   const w = new ListWidget();
   w.backgroundColor = BG;
-  w.url = APP_URL;
   w.setPadding(12, 14, 12, 14);
   w.refreshAfterDate = new Date(Date.now() + 60 * 60 * 1000);
 
