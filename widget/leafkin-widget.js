@@ -56,7 +56,7 @@ function build(data, family) {
   w.addSpacer(6);
 
   if (data.error) {
-    line(w, data.error === "unknown_widget_link" ? "This widget link was turned off. Make a new one in LeafKin → Settings." : "Can't reach LeafKin right now.", { color: MUTED });
+    line(w, data.error === "unknown_widget_link" ? "This widget script is out of date. Make a new one in LeafKin → Settings → Home screen widget." : "Can't reach LeafKin right now.", { color: MUTED, font: Font.systemFont(12), lines: 5 });
     w.addSpacer();
     return w;
   }
