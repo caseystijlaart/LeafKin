@@ -1148,8 +1148,7 @@ async function renderWidgetCard(card, script = "") {
       <li>On your Home Screen: hold an empty spot → <b>Edit</b> → <b>Add Widget</b> → Scriptable → pick a size.</li>
       <li>Tap the new widget, choose Script → <b>LeafKin</b> and When Interacting → <b>Run Script</b>.</li>
     </ol>
-    <p class="hint">Tapping the widget reloads it in Scriptable. It can't open LeafKin itself: iPhone only lets you open a Home Screen web app from its own icon.</p><ol class="steps" hidden>
-    </ol>`;
+    <p class="hint">Tapping the widget reloads it in Scriptable. It can't open LeafKin itself: iPhone only lets you open a Home Screen web app from its own icon.</p>`;
   if (script) {
     card.innerHTML = head + `<p>Your widget script is ready. Copy it now: it holds a personal link that LeafKin doesn't show again.</p>
       <textarea class="code" id="wScript" readonly rows="5">${esc(script)}</textarea>
